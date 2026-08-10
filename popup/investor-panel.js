@@ -1,3 +1,4 @@
+import { POPUP } from '../labels/popup-labels.js';
 ﻿// popup/investor-panel.js
 export class InvestorPanel {
   constructor() {

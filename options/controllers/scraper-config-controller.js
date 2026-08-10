@@ -1,3 +1,4 @@
+import { OPTIONS } from '../labels/options-labels.js';
 ﻿// options/controllers/scraper-config-controller.js
 export class ScraperConfigController {
   constructor() {

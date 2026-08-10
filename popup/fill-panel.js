@@ -1,6 +1,8 @@
 ﻿// popup/fill-panel.js
 import { ChromeStorageRepository } from '../infrastructure/chrome-storage-repository.js';
 import { UrlMatcher } from '../shared/url-matcher.js';
+import { POPUP } from '../labels/popup-labels.js';
+import { COMMON } from '../labels/common-labels.js';
 
 export class FillPanel {
   constructor() {

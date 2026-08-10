@@ -1,3 +1,4 @@
+import { CONTENT } from '../labels/content-labels.js';
 // Основной content script.
 // Выполняется на странице и принимает команды от background/popup:
 // заполнить поля, выполнить спецвставку, выбрать элемент или сделать preview шаблона.

@@ -1,3 +1,4 @@
+import { OPTIONS } from '../labels/options-labels.js';
 ﻿// options/controllers/special-insertions-controller.js
 export class SpecialInsertionsController {
   constructor() {

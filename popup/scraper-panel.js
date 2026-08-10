@@ -1,3 +1,4 @@
+import { POPUP } from '../labels/popup-labels.js';
 ﻿// popup/scraper-panel.js
 export class ScraperPanel {
   constructor() {

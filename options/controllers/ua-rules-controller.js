@@ -1,3 +1,4 @@
+import { OPTIONS } from '../labels/options-labels.js';
 ﻿// options/controllers/ua-rules-controller.js
 export class UaRulesController {
   constructor() {

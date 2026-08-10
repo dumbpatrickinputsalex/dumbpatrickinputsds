@@ -1,3 +1,4 @@
+import { OPTIONS } from '../labels/options-labels.js';
 ﻿// options/controllers/snapshots-controller.js
 export class SnapshotsController {
   constructor() {

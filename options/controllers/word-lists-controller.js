@@ -1,3 +1,4 @@
+import { OPTIONS } from '../labels/options-labels.js';
 ﻿// options/controllers/word-lists-controller.js
 export class WordListsController {
   constructor() {

@@ -1,3 +1,4 @@
+import { POPUP } from '../labels/popup-labels.js';
 ﻿// popup/copyfx-panel.js
 export class CopyfxPanel {
   constructor() {

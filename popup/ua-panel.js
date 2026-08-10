@@ -1,3 +1,4 @@
+import { POPUP } from '../labels/popup-labels.js';
 ﻿// popup/ua-panel.js
 export class UaPanel {
   constructor() {

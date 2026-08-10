@@ -7,6 +7,7 @@ import { MessageProxyController } from './message-proxy-controller.js';
 import { ChromeStorageRepository } from '../infrastructure/chrome-storage-repository.js';
 import { StateMigrator } from '../domain/state-migrator.js';
 import { DEFAULT_STATE } from '../domain/state-schema.js';
+import { BACKGROUND } from '../labels/background-labels.js';
 
 export class BackgroundApp {
   constructor() {

@@ -1,3 +1,4 @@
+import { OPTIONS } from '../labels/options-labels.js';
 ﻿// options/controllers/rules-controller.js
 export class RulesController {
   constructor() {
