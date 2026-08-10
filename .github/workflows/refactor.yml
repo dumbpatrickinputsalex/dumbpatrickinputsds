@@ -28,23 +28,22 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Apply stage
         run: |
           STAGE=${{ github.event.inputs.stage }}
           echo "🚀 Applying stage $STAGE..."
           
-          # Скачиваем скрипт для конкретного этапа
-          curl -s -O https://raw.githubusercontent.com/dumbpatrickinputsalex/dumbpatrickinputsds/main/scripts/stage-$STAGE.sh
-          chmod +x stage-$STAGE.sh
-          ./stage-$STAGE.sh
+          # Даём права на выполнение всем скриптам в папке scripts/
+          chmod +x scripts/*.sh
+          
+          # Запускаем нужный скрипт
+          ./scripts/stage-$STAGE.sh
           
           echo "✅ Stage $STAGE applied!"
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v6
+        uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "refactor: apply stage ${{ github.event.inputs.stage }}"
