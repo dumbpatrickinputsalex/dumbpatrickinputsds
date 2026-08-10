@@ -1,1 +1,0 @@
-Act as Agent A (Implementer). Perform a self-check on the recent changes according to Section 4.3 of docs/ai-refactoring-harness.md and format the Implementer Self-check report.
