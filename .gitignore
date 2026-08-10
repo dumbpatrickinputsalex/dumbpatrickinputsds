@@ -1,0 +1,33 @@
+﻿# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node.js
+node_modules/
+npm-debug.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Build
+dist/
+build/
+*.zip
+*.crx
+*.pem
+
+# Test
+coverage/
+*.log
+
+# Temporary
+*.tmp
+*.bak
+.env
+.env.local
