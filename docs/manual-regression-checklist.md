@@ -1,54 +1,40 @@
-# Manual Regression Checklist
+﻿# Manual Regression Checklist
 
 ## Before each change
-
-- [ ] Расширение загружается в chrome://extensions без ошибок
-- [ ] Popup открывается (клик по иконке)
-- [ ] Options открываются (правый клик → Options)
+- [ ] Extension loads in chrome://extensions
+- [ ] Popup opens
+- [ ] Options page opens
 
 ## Core functionality
+- [ ] Ctrl+Shift+F fills form
+- [ ] Ctrl+Shift+1 runs special insertion
+- [ ] Popup shows active rules count
 
-- [ ] Ctrl+Shift+F заполняет поля на форме
-- [ ] Ctrl+Shift+1 выполняет спецвставку
-- [ ] Popup показывает количество активных правил
-
-## Rules (Options → Rules)
-
-- [ ] Создание правила работает
-- [ ] Редактирование правила работает
-- [ ] Удаление правила работает
-- [ ] Перемещение правила (drag) работает
+## Rules
+- [ ] Create rule works
+- [ ] Edit rule works
+- [ ] Delete rule works
 
 ## Special Insertions
-
-- [ ] Создание спецвставки работает
-- [ ] Fill Special заполняет поля
-- [ ] Picker выбирает элемент
+- [ ] Create insertion works
+- [ ] Fill Special works
+- [ ] Picker works
 
 ## Counters
-
-- [ ] Counter увеличивается при fill
-- [ ] Seq (smart counter) увеличивается и пишет history
-- [ ] После перезагрузки страницы счётчики сохраняются
+- [ ] Counter increments
+- [ ] Seq (smart counter) works
 
 ## Import/Export
+- [ ] Export works
+- [ ] Import works
 
-- [ ] Export state работает (сохраняется JSON)
-- [ ] Import state работает (проверить на exported JSON)
-- [ ] После импорта все правила/вставки на месте
-
-## CopyFX (если включено в настройках)
-
-- [ ] Трейдеры загружаются в popup
-- [ ] Инвесторы загружаются в popup
-- [ ] Данные кэшируются на сессию
+## CopyFX
+- [ ] Traders load
+- [ ] Investors load
 
 ## UA Rules
-
-- [ ] UA toggle переключает User-Agent (проверить в DevTools → Network)
+- [ ] UA toggle works
 
 ## Stability
-
-- [ ] Нет ошибок в консоли после каждого действия
-- [ ] Расширение не падает после перезагрузки страницы
-- [ ] Service worker не падает (проверить в chrome://extensions)
+- [ ] No console errors
+- [ ] Extension doesn't crash

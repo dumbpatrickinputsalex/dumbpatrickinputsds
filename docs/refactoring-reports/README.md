@@ -1,15 +1,3 @@
-# Отчёты по этапам рефакторинга
+﻿# Refactoring Reports
 
-Здесь будут храниться отчёты каждого этапа:
-
-- `stage-00-baseline.md` — Этап 0
-- `stage-01-infrastructure.md` — Этап 1
-- `stage-02-shared-utils.md` — Этап 2
-- и т.д.
-
-Каждый отчёт содержит:
-- Что сделано
-- Какие файлы изменены
-- Acceptance criteria
-- Результаты проверок
-- Коммит
+Stage reports go here.
