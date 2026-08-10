@@ -2,6 +2,7 @@
 import { ChromeStorageRepository } from '../infrastructure/chrome-storage-repository.js';
 import { StateMigrator } from '../domain/state-migrator.js';
 import { RulesController } from './controllers/rules-controller.js';
+import { FoldersController } from './controllers/folders-controller.js';
 
 export class OptionsApp {
   constructor() {
@@ -17,7 +18,6 @@ export class OptionsApp {
       state = this.migrator.ensureShape(defaultState);
       await this.storage.saveState(state);
     }
-
     this.controllers = this._createControllers(state);
     this.controllers.forEach(controller => {
       if (controller.init) controller.init(state);
@@ -27,7 +27,7 @@ export class OptionsApp {
   }
 
   _createControllers(state) {
-    return [ new RulesController() ];
+    return [ new RulesController(), new FoldersController() ];
   }
 
   async _saveAll() {
