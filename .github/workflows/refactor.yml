@@ -37,7 +37,7 @@ jobs:
           STAGE=${{ github.event.inputs.stage }}
           echo "🚀 Applying stage $STAGE..."
           
-          # Даём права на выполнение всем скриптам
+          # Даем права на выполнение скриптам
           chmod +x scripts/*.sh
           
           # Запускаем скрипт
@@ -45,30 +45,10 @@ jobs:
           
           echo "✅ Stage $STAGE applied!"
 
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v7
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "refactor: apply stage ${{ github.event.inputs.stage }}"
-          branch: refactor/stage-${{ github.event.inputs.stage }}
-          title: "Рефакторинг: этап ${{ github.event.inputs.stage }}"
-          body: |
-            Автоматический рефакторинг от AI.
-            
-            ## Что сделано
-            - Применён этап ${{ github.event.inputs.stage }}
-            
-            ## Проверка
-            - [ ] Расширение загружается
-            - [ ] Popup работает
-            - [ ] Options работают
-            - [ ] Fill All работает
-            - [ ] Нет ошибок в консоли
-            
-            ## Следующий шаг
-            После мержа этого PR запусти следующий этап.
-          base: master
-          delete-branch: true
-          labels: |
-            automated
-            refactoring
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git diff --staged --quiet || git commit -m "refactor: apply stage ${{ github.event.inputs.stage }}"
+          git push origin master
