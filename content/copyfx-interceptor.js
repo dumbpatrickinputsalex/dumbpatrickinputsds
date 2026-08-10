@@ -1,4 +1,9 @@
-﻿// content/copyfx-interceptor.js
+﻿// content/copyfx-interceptor./**
+ * Выполняет операцию "js".
+ * @param {*} function ( - Описание параметра.
+ * @returns {void}
+ */
+js
 (function () {
   // Guard: предотвращаем повторную установку
   if (window.__dpi_copyfx_interceptor_installed) {
@@ -15,24 +20,45 @@
   };
 
   // Проверка URL на принадлежность к CopyFX API
-  function isCopyfxUrl(url) {
+  /**
+ * Выполняет операцию "isCopyfxUrl".
+ * @param {*} url - Описание параметра.
+ * @returns {*} Результат операции.
+ */
+function isCopyfxUrl(url) {
     if (!url) return false;
     const patterns = ['/api/traders', '/api/investors', '/api/copyfx', '/api/fx'];
     return patterns.some(pattern => url.includes(pattern));
   }
 
   // Безопасный парсинг JSON
-  function safeJsonParse(text) {
+  /**
+ * Выполняет операцию "safeJsonParse".
+ * @param {*} text - Описание параметра.
+ * @returns {void}
+ */
+function safeJsonParse(text) {
     if (!text) return null;
     try {
       return JSON.parse(text);
-    } catch (_) {
+    } /**
+ * Выполняет операцию "catch".
+ * @param {*} _ - Описание параметра.
+ * @returns {void}
+ */
+catch (_) {
       return null;
     }
   }
 
   // Сохранение данных в кэш
-  function storeData(url, data) {
+  /**
+ * Выполняет операцию "storeData".
+ * @param {*} url - Описание параметра.
+ * @param {*} data - Описание параметра.
+ * @returns {void}
+ */
+function storeData(url, data) {
     if (!data) return;
 
     const historyEntry = {
@@ -67,7 +93,12 @@
           if (data) {
             storeData(url, data);
           }
-        } catch (error) {
+        } /**
+ * Выполняет операцию "catch".
+ * @param {*} error - Описание параметра.
+ * @returns {void}
+ */
+catch (error) {
           // Тихо игнорируем ошибки парсинга
         }
       }
@@ -85,7 +116,13 @@
   };
 
   XMLHttpRequest.prototype.send = function (body) {
-    this.addEventListener('load', function () {
+    this./**
+ * Выполняет операцию "addEventListener".
+ * @param {*} 'load' - Описание параметра.
+ * @param {*} function ( - Описание параметра.
+ * @returns {void}
+ */
+addEventListener('load', function () {
       if (!this._dpi_url) return;
       if (!isCopyfxUrl(this._dpi_url)) return;
 

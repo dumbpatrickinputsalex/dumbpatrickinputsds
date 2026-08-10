@@ -5,7 +5,11 @@ import { POPUP } from '../labels/popup-labels.js';
 import { COMMON } from '../labels/common-labels.js';
 
 export class FillPanel {
-  constructor() {
+  /**
+ * Создаёт экземпляр класса.
+ * @returns {void}
+ */
+constructor() {
     this.storage = new ChromeStorageRepository();
     this.urlMatcher = new UrlMatcher();
     
@@ -19,12 +23,20 @@ export class FillPanel {
     };
   }
 
-  async init() {
+  /**
+ * Инициализирует компонент.
+ * @returns {void}
+ */
+async init() {
     this._bindEvents();
     await this._updateStatus();
   }
 
-  _bindEvents() {
+  /**
+ * (приватный) Выполняет операцию "_bindEvents".
+ * @returns {void}
+ */
+_bindEvents() {
     if (this.elements.fillAll) {
       this.elements.fillAll.addEventListener('click', () => this._handleFillAll());
     }
@@ -38,17 +50,29 @@ export class FillPanel {
     }
   }
 
-  async _handleFillAll() {
+  /**
+ * (приватный) Выполняет операцию "_handleFillAll".
+ * @returns {void}
+ */
+async _handleFillAll() {
     const result = await this._sendMessage('FILL_ALL');
     this._showResult(result);
   }
 
-  async _handleFillSpecial() {
+  /**
+ * (приватный) Выполняет операцию "_handleFillSpecial".
+ * @returns {void}
+ */
+async _handleFillSpecial() {
     const result = await this._sendMessage('FILL_SPECIAL');
     this._showResult(result);
   }
 
-  async _updateStatus() {
+  /**
+ * (приватный) Выполняет операцию "_updateStatus".
+ * @returns {void}
+ */
+async _updateStatus() {
     const state = await this.storage.getState();
     if (!state) return;
     
@@ -63,13 +87,24 @@ export class FillPanel {
     }
   }
 
-  _sendMessage(type, payload) {
+  /**
+ * (приватный) Выполняет операцию "_sendMessage".
+ * @param {*} type - Описание параметра.
+ * @param {*} payload - Описание параметра.
+ * @returns {void}
+ */
+_sendMessage(type, payload) {
     return new Promise((resolve) => {
       chrome.runtime.sendMessage({ type, payload }, resolve);
     });
   }
 
-  _showResult(result) {
+  /**
+ * (приватный) Выполняет операцию "_showResult".
+ * @param {*} result - Описание параметра.
+ * @returns {void}
+ */
+_showResult(result) {
     if (!result || !this.elements.resultDetails) return;
     
     this.elements.resultDetails.style.display = 'block';

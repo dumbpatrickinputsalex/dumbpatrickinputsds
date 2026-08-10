@@ -1,18 +1,31 @@
 import { OPTIONS } from '../labels/options-labels.js';
 ﻿// options/controllers/smart-counters-controller.js
 export class SmartCountersController {
-  constructor() {
+  /**
+ * Создаёт экземпляр класса.
+ * @returns {void}
+ */
+constructor() {
     this.counters = [];
     this.container = document.getElementById('smartCountersContainer');
   }
 
-  init(state) {
+  /**
+ * Инициализирует компонент.
+ * @param {*} state - Описание параметра.
+ * @returns {void}
+ */
+init(state) {
     this.counters = state.smartCounters || [];
     this.render();
     this._bindEvents();
   }
 
-  render() {
+  /**
+ * Отрисовывает интерфейс.
+ * @returns {void}
+ */
+render() {
     if (!this.container) return;
     this.container.innerHTML = '';
     this.counters.forEach((counter, index) => {
@@ -21,7 +34,13 @@ export class SmartCountersController {
     });
   }
 
-  _createCard(counter, index) {
+  /**
+ * (приватный) Выполняет операцию "_createCard".
+ * @param {*} counter - Описание параметра.
+ * @param {*} index - Описание параметра.
+ * @returns {void}
+ */
+_createCard(counter, index) {
     const card = document.createElement('div');
     card.className = 'counter-card';
     card.dataset.index = index;
@@ -40,7 +59,11 @@ export class SmartCountersController {
     return card;
   }
 
-  _bindEvents() {
+  /**
+ * (приватный) Выполняет операцию "_bindEvents".
+ * @returns {void}
+ */
+_bindEvents() {
     this.container?.addEventListener('click', (e) => {
       if (e.target.classList.contains('counter-delete')) {
         const index = parseInt(e.target.dataset.index);
@@ -59,19 +82,33 @@ export class SmartCountersController {
     }
   }
 
-  save(state) {
+  /**
+ * Сохраняет данные.
+ * @param {*} state - Описание параметра.
+ * @returns {void}
+ */
+save(state) {
     state.smartCounters = this.counters;
     return state;
   }
 
-  _escapeHtml(text) {
+  /**
+ * (приватный) Выполняет операцию "_escapeHtml".
+ * @param {*} text - Описание параметра.
+ * @returns {void}
+ */
+_escapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
   }
 
-  _save() {
+  /**
+ * (приватный) Выполняет операцию "_save".
+ * @returns {void}
+ */
+_save() {
     document.dispatchEvent(new Event('options-save'));
   }
 }

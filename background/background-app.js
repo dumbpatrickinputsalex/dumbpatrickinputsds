@@ -10,7 +10,11 @@ import { DEFAULT_STATE } from '../domain/state-schema.js';
 import { BACKGROUND } from '../labels/background-labels.js';
 
 export class BackgroundApp {
-  constructor() {
+  /**
+ * Создаёт экземпляр класса.
+ * @returns {void}
+ */
+constructor() {
     this.storage = new ChromeStorageRepository();
     this.migrator = new StateMigrator();
     this.injector = new ContentScriptInjector();
@@ -23,7 +27,11 @@ export class BackgroundApp {
     this._setupMessageHandlers();
   }
 
-  async boot() {
+  /**
+ * Запускает приложение.
+ * @returns {void}
+ */
+async boot() {
     // Инициализируем состояние
     const state = await this.storage.getState();
     if (!state) {
@@ -43,7 +51,11 @@ export class BackgroundApp {
     });
   }
 
-  _setupCommands() {
+  /**
+ * (приватный) Выполняет операцию "_setupCommands".
+ * @returns {void}
+ */
+_setupCommands() {
     this.commandController.register('fill-all', async tab => {
       await this.injector.ensureInjected(tab.id);
       await this._sendToTab(tab.id, { type: 'FILL_ALL' });
@@ -55,7 +67,11 @@ export class BackgroundApp {
     });
   }
 
-  _setupMessageHandlers() {
+  /**
+ * (приватный) Выполняет операцию "_setupMessageHandlers".
+ * @returns {void}
+ */
+_setupMessageHandlers() {
     this.messageProxy.register('COPYFX_GET_TRADERS', async payload => {
       return this.copyfxService.getTraders(payload);
     });
@@ -77,7 +93,12 @@ export class BackgroundApp {
     });
   }
 
-  async _handleCommand(command) {
+  /**
+ * (приватный) Выполняет операцию "_handleCommand".
+ * @param {*} command - Описание параметра.
+ * @returns {void}
+ */
+async _handleCommand(command) {
     const tab = await this._getActiveTab();
     if (!tab) return;
 
@@ -89,21 +110,41 @@ export class BackgroundApp {
     await this.commandController.handleCommand(command, tab);
   }
 
-  async _sendToTab(tabId, message) {
+  /**
+ * (приватный) Выполняет операцию "_sendToTab".
+ * @param {*} tabId - Описание параметра.
+ * @param {*} message - Описание параметра.
+ * @returns {void}
+ */
+async _sendToTab(tabId, message) {
     try {
       return await chrome.tabs.sendMessage(tabId, message);
-    } catch (error) {
+    } /**
+ * Выполняет операцию "catch".
+ * @param {*} error - Описание параметра.
+ * @returns {void}
+ */
+catch (error) {
       console.error('Failed to send message to tab:', error);
       return { error: error.message };
     }
   }
 
-  async _getActiveTab() {
+  /**
+ * (приватный) Выполняет операцию "_getActiveTab".
+ * @returns {void}
+ */
+async _getActiveTab() {
     const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
     return tabs[0] || null;
   }
 
-  _isSupportedUrl(url) {
+  /**
+ * (приватный) Выполняет операцию "_isSupportedUrl".
+ * @param {*} url - Описание параметра.
+ * @returns {void}
+ */
+_isSupportedUrl(url) {
     if (!url) return false;
     const unsupported = ['chrome://', 'edge://', 'about:', 'chrome-extension://'];
     return !unsupported.some(u => url.startsWith(u));

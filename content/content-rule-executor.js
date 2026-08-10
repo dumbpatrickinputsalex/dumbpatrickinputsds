@@ -8,7 +8,11 @@ import { EmailGenerator } from '../domain/generators/email-generator.js';
 import { PhoneGenerator } from '../domain/generators/phone-generator.js';
 
 export class ContentRuleExecutor {
-  constructor() {
+  /**
+ * Создаёт экземпляр класса.
+ * @returns {void}
+ */
+constructor() {
     this.valueSetter = new DomValueSetter();
     this.highlighter = new FieldHighlighter();
     this.generatorRegistry = new GeneratorRegistry();
@@ -47,7 +51,12 @@ export class ContentRuleExecutor {
     return { filled, matched: matches.length };
   }
 
-  _findMatches(rule) {
+  /**
+ * (приватный) Выполняет операцию "_findMatches".
+ * @param {*} rule - Описание параметра.
+ * @returns {void}
+ */
+_findMatches(rule) {
     // Используем RuleMatcher из domain/matching
     // Временно используем старую логику, пока не интегрируем RuleMatcher
     const elements = document.querySelectorAll('input, select, textarea, [contenteditable="true"]');
@@ -66,7 +75,12 @@ export class ContentRuleExecutor {
                 matches.push(el);
                 break;
               }
-            } catch (_) {}
+            } /**
+ * Выполняет операцию "catch".
+ * @param {*} _ - Описание параметра.
+ * @returns {void}
+ */
+catch (_) {}
           }
         }
       } else {

@@ -1,10 +1,19 @@
 ﻿// background/ua-rules-service.js
 export class UaRulesService {
-  constructor() {
+  /**
+ * Создаёт экземпляр класса.
+ * @returns {void}
+ */
+constructor() {
     this.currentRules = [];
   }
 
-  async syncFromState(state) {
+  /**
+ * Синхронизирует UA правила из состояния.
+ * @param {*} state - Описание параметра.
+ * @returns {void}
+ */
+async syncFromState(state) {
     const uaRules = state.uaRules || [];
     const rules = uaRules
       .filter(rule => rule.enabled !== false)
@@ -27,7 +36,12 @@ export class UaRulesService {
         addRules: rules,
       });
       this.currentRules = rules;
-    } catch (error) {
+    } /**
+ * Выполняет операцию "catch".
+ * @param {*} error - Описание параметра.
+ * @returns {void}
+ */
+catch (error) {
       console.error('Failed to update UA rules:', error);
     }
   }

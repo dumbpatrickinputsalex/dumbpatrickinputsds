@@ -6,11 +6,19 @@ import { InvestorPanel } from './investor-panel.js';
 import { UaPanel } from './ua-panel.js';
 
 export class PopupApp {
-  constructor() {
+  /**
+ * Создаёт экземпляр класса.
+ * @returns {void}
+ */
+constructor() {
     this.panels = [];
   }
 
-  boot() {
+  /**
+ * Запускает приложение.
+ * @returns {void}
+ */
+boot() {
     this.panels = [
       new FillPanel(),
       new ScraperPanel(),

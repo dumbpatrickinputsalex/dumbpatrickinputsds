@@ -1,18 +1,31 @@
 import { OPTIONS } from '../labels/options-labels.js';
 ﻿// options/controllers/copyfx-config-controller.js
 export class CopyfxConfigController {
-  constructor() {
+  /**
+ * Создаёт экземпляр класса.
+ * @returns {void}
+ */
+constructor() {
     this.config = {};
     this.container = document.getElementById('copyfxConfigContainer');
   }
 
-  init(state) {
+  /**
+ * Инициализирует компонент.
+ * @param {*} state - Описание параметра.
+ * @returns {void}
+ */
+init(state) {
     this.config = state.copyfxConfig || { enabled: false };
     this.render();
     this._bindEvents();
   }
 
-  render() {
+  /**
+ * Отрисовывает интерфейс.
+ * @returns {void}
+ */
+render() {
     if (!this.container) return;
     this.container.innerHTML = \
       <div class="copyfx-config">
@@ -28,7 +41,11 @@ export class CopyfxConfigController {
     \;
   }
 
-  _bindEvents() {
+  /**
+ * (приватный) Выполняет операцию "_bindEvents".
+ * @returns {void}
+ */
+_bindEvents() {
     this.container?.addEventListener('change', (e) => {
       if (e.target.classList.contains('copyfx-enabled')) {
         this.config.enabled = e.target.checked;
@@ -37,7 +54,12 @@ export class CopyfxConfigController {
     });
   }
 
-  save(state) {
+  /**
+ * Сохраняет данные.
+ * @param {*} state - Описание параметра.
+ * @returns {void}
+ */
+save(state) {
     if (this.container) {
       const enabled = this.container.querySelector('.copyfx-enabled');
       const domain = this.container.querySelector('.copyfx-domain');
@@ -48,7 +70,11 @@ export class CopyfxConfigController {
     return state;
   }
 
-  _save() {
+  /**
+ * (приватный) Выполняет операцию "_save".
+ * @returns {void}
+ */
+_save() {
     document.dispatchEvent(new Event('options-save'));
   }
 }

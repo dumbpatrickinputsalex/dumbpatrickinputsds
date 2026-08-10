@@ -1,10 +1,21 @@
 ﻿// domain/matching/condition-evaluator.js
 export class ConditionEvaluator {
-  constructor(labelResolver) {
+  /**
+ * Создаёт экземпляр класса.
+ * @param {*} labelResolver - Описание параметра.
+ * @returns {void}
+ */
+constructor(labelResolver) {
     this.labelResolver = labelResolver;
   }
 
-  evaluate(element, conditions) {
+  /**
+ * Вычисляет условия для элемента.
+ * @param {*} element - Описание параметра.
+ * @param {*} conditions - Описание параметра.
+ * @returns {void}
+ */
+evaluate(element, conditions) {
     if (!conditions || conditions.length === 0) return true;
 
     const mode = conditions.mode || 'AND';
@@ -19,14 +30,25 @@ export class ConditionEvaluator {
     }
   }
 
-  _testCondition(element, cond) {
+  /**
+ * (приватный) Выполняет операцию "_testCondition".
+ * @param {*} element - Описание параметра.
+ * @param {*} cond - Описание параметра.
+ * @returns {void}
+ */
+_testCondition(element, cond) {
     if (!cond) return true;
 
     // selector condition
     if (cond.selector) {
       try {
         return element.matches(cond.selector);
-      } catch (_) {
+      } /**
+ * Выполняет операцию "catch".
+ * @param {*} _ - Описание параметра.
+ * @returns {void}
+ */
+catch (_) {
         return false;
       }
     }
@@ -40,7 +62,12 @@ export class ConditionEvaluator {
       if (useRegex) {
         try {
           return new RegExp(pattern).test(value);
-        } catch (_) {
+        } /**
+ * Выполняет операцию "catch".
+ * @param {*} _ - Описание параметра.
+ * @returns {void}
+ */
+catch (_) {
           return false;
         }
       }
@@ -55,7 +82,12 @@ export class ConditionEvaluator {
       if (useRegex) {
         try {
           return new RegExp(pattern).test(labelText);
-        } catch (_) {
+        } /**
+ * Выполняет операцию "catch".
+ * @param {*} _ - Описание параметра.
+ * @returns {void}
+ */
+catch (_) {
           return false;
         }
       }

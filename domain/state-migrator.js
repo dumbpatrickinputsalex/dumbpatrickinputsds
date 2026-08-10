@@ -1,6 +1,11 @@
 ﻿// domain/state-migrator.js
 export class StateMigrator {
-  migrate(rawState) {
+  /**
+ * Мигрирует состояние из старого формата.
+ * @param {*} rawState - Описание параметра.
+ * @returns {void}
+ */
+migrate(rawState) {
     const state = rawState || {};
     // Миграция из старых версий (profiles → folders + rules)
     if (state.profiles && Array.isArray(state.profiles)) {
@@ -15,7 +20,12 @@ export class StateMigrator {
     return this.ensureShape(state);
   }
 
-  ensureShape(state) {
+  /**
+ * Гарантирует правильную структуру состояния.
+ * @param {*} state - Описание параметра.
+ * @returns {void}
+ */
+ensureShape(state) {
     const defaultState = {
       rules: [],
       folders: [],

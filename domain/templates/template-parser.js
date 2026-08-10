@@ -1,6 +1,11 @@
 ﻿// domain/templates/template-parser.js
 export class TemplateParser {
-  parse(template) {
+  /**
+ * Разбирает шаблон на токены и текст.
+ * @param {*} template - Описание параметра.
+ * @returns {void}
+ */
+parse(template) {
     if (!template) return [];
     const parts = [];
     let index = 0;

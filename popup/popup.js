@@ -1,11 +1,19 @@
 const $ = id => document.getElementById(id);
 
-async function currentTab() {
+async /**
+ * Выполняет операцию "currentTab".
+ * @returns {void}
+ */
+function currentTab() {
   const [t] = await chrome.tabs.query({ active: true, currentWindow: true });
   return t;
 }
 
-async function updateStatusLabel() {
+async /**
+ * Выполняет операцию "updateStatusLabel".
+ * @returns {void}
+ */
+function updateStatusLabel() {
   const tab = await currentTab();
   if (!tab || !tab.url) {
     $('profile').textContent = '—';
@@ -18,17 +26,32 @@ async function updateStatusLabel() {
   }
   const url = tab.url;
 
-  function testUrlCond(cond) {
+  /**
+ * Выполняет операцию "testUrlCond".
+ * @param {*} cond - Описание параметра.
+ * @returns {void}
+ */
+function testUrlCond(cond) {
     const val = String(cond?.value || '').trim();
     if (!val) return true;
     const pattern = val.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*');
     try {
       return new RegExp(pattern, 'i').test(url);
-    } catch (e) {
+    } /**
+ * Выполняет операцию "catch".
+ * @param {*} e - Описание параметра.
+ * @returns {void}
+ */
+catch (e) {
       return url.toLowerCase().includes(val.toLowerCase());
     }
   }
-  function urlMatchesConditions(conditions) {
+  /**
+ * Выполняет операцию "urlMatchesConditions".
+ * @param {*} conditions - Описание параметра.
+ * @returns {void}
+ */
+function urlMatchesConditions(conditions) {
     const active = (conditions || []).filter(c => c && String(c.value || '').trim());
     if (!active.length) return true;
     let acc = testUrlCond(active[0]);
@@ -39,12 +62,22 @@ async function updateStatusLabel() {
     }
     return acc;
   }
-  function urlMatchesPattern(pattern) {
+  /**
+ * Выполняет операцию "urlMatchesPattern".
+ * @param {*} pattern - Описание параметра.
+ * @returns {void}
+ */
+function urlMatchesPattern(pattern) {
     const p = String(pattern || '').trim();
     if (!p) return false;
     try {
       return new RegExp(p).test(url);
-    } catch (e) {
+    } /**
+ * Выполняет операцию "catch".
+ * @param {*} e - Описание параметра.
+ * @returns {void}
+ */
+catch (e) {
       return url.includes(p);
     }
   }
@@ -64,6 +97,11 @@ async function updateStatusLabel() {
   }
 }
 
+/**
+ * Выполняет операцию "renderResultTable".
+ * @param {*} details - Описание параметра.
+ * @returns {void}
+ */
 function renderResultTable(details) {
   const box = $('resultDetails');
   const tbl = $('resultTable');
@@ -84,11 +122,21 @@ function renderResultTable(details) {
   tbl.appendChild(tb);
   box.style.display = 'block';
 }
+/**
+ * Экранирует HTML-сущности.
+ * @param {*} s - Описание параметра.
+ * @returns {void}
+ */
 function escapeHtml(s) {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-async function send(type) {
+async /**
+ * Выполняет операцию "send".
+ * @param {*} type - Описание параметра.
+ * @returns {void}
+ */
+function send(type) {
   const s = $('status');
   $('resultDetails').style.display = 'none';
   try {
@@ -123,7 +171,12 @@ async function send(type) {
         s.className = 'status err';
       }
     }
-  } catch (e) {
+  } /**
+ * Выполняет операцию "catch".
+ * @param {*} e - Описание параметра.
+ * @returns {void}
+ */
+catch (e) {
     s.textContent = 'Ошибка: ' + e.message;
     s.className = 'status err';
   }
@@ -152,6 +205,12 @@ loadCopyfxData();
 loadInvestorData();
 loadUaStatus();
 
+/**
+ * Выполняет операцию "scraperUrlMatches".
+ * @param {*} urls - Описание параметра.
+ * @param {*} pageUrl - Описание параметра.
+ * @returns {void}
+ */
 function scraperUrlMatches(urls, pageUrl) {
   if (!urls || !urls.length) return false;
   for (const u of urls) {
@@ -160,14 +219,23 @@ function scraperUrlMatches(urls, pageUrl) {
     const regex = p.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*');
     try {
       if (new RegExp(regex, 'i').test(pageUrl)) return true;
-    } catch (e) {
+    } /**
+ * Выполняет операцию "catch".
+ * @param {*} e - Описание параметра.
+ * @returns {void}
+ */
+catch (e) {
       if (pageUrl.toLowerCase().includes(p.toLowerCase())) return true;
     }
   }
   return false;
 }
 
-async function loadScraperData() {
+async /**
+ * Выполняет операцию "loadScraperData".
+ * @returns {void}
+ */
+function loadScraperData() {
   const { state } = await chrome.storage.local.get(['state']);
   if (!state || !state.scraperConfig || !state.scraperConfig.enabled) return;
   const cfg = state.scraperConfig;
@@ -224,7 +292,12 @@ async function loadScraperData() {
       tbody.appendChild(tr);
     }
     tbl.appendChild(tbody);
-  } catch (e) {
+  } /**
+ * Выполняет операцию "catch".
+ * @param {*} e - Описание параметра.
+ * @returns {void}
+ */
+catch (e) {
     /* silent */
   }
 }
@@ -271,7 +344,12 @@ $('scraperScanBtn').addEventListener('click', async () => {
     status.textContent =
       'Найдено полей: ' + res.fields.length + '. Настройте выбор в Настройках → Спец. возможности.';
     status.className = 'scraper-scan-status ok';
-  } catch (e) {
+  } /**
+ * Выполняет операцию "catch".
+ * @param {*} e - Описание параметра.
+ * @returns {void}
+ */
+catch (e) {
     status.textContent = 'Ошибка: ' + e.message;
     status.className = 'scraper-scan-status err';
   }
@@ -721,6 +799,11 @@ const COUNTRY_NAME_TO_ALPHA2 = {
   перу: 'PE',
 };
 
+/**
+ * Выполняет операцию "countryAlpha2".
+ * @param {*} val - Описание параметра.
+ * @returns {void}
+ */
 function countryAlpha2(val) {
   const s = String(val).trim();
   if (/^[A-Za-z]{2}$/.test(s)) return s.toUpperCase();
@@ -728,6 +811,12 @@ function countryAlpha2(val) {
   return COUNTRY_NAME_TO_ALPHA2[s.toLowerCase()] || '';
 }
 
+/**
+ * Выполняет операцию "formatScraperValue".
+ * @param {*} key - Описание параметра.
+ * @param {*} val - Описание параметра.
+ * @returns {void}
+ */
 function formatScraperValue(key, val) {
   const span = document.createElement('span');
 
@@ -793,37 +882,70 @@ let copyfxAllEntries = [];
 let copyfxShownCount = 0;
 let copyfxSourceUrl = '';
 
+/**
+ * Выполняет операцию "copyfxUrlMatches".
+ * @param {*} pageUrl - Описание параметра.
+ * @param {*} configPageUrl - Описание параметра.
+ * @returns {void}
+ */
 function copyfxUrlMatches(pageUrl, configPageUrl) {
   const p = String(configPageUrl || '').trim();
   if (!p) return false;
   return pageUrl.includes(p);
 }
 
+/**
+ * Выполняет операцию "getCopyfxLang".
+ * @param {*} url - Описание параметра.
+ * @returns {*} Результат операции.
+ */
 function getCopyfxLang(url) {
   try {
     const seg = new URL(url).pathname.split('/').filter(Boolean)[0];
     if (seg && /^[a-z]{2}$/.test(seg)) return seg;
-  } catch (e) {}
+  } /**
+ * Выполняет операцию "catch".
+ * @param {*} e - Описание параметра.
+ * @returns {void}
+ */
+catch (e) {}
   return 'en';
 }
 
+/**
+ * Выполняет операцию "getCopyfxAdminDomain".
+ * @param {*} hostname - Описание параметра.
+ * @returns {*} Результат операции.
+ */
 function getCopyfxAdminDomain(hostname) {
   const m = hostname.match(/www-(\d+)/i);
   if (m) return 'https://www-' + m[1] + '.en.lk.roboforex.rbfx.co/admin123';
   return 'https://admin.lk.roboforex.rbfx.co/admin123';
 }
 
-async function copyfxSaveSession() {
+async /**
+ * Выполняет операцию "copyfxSaveSession".
+ * @returns {void}
+ */
+function copyfxSaveSession() {
   await chrome.storage.session.set({
     copyfxCache: { entries: copyfxAllEntries, sourceUrl: copyfxSourceUrl },
   });
 }
 
-async function copyfxClearSession() {
+async /**
+ * Выполняет операцию "copyfxClearSession".
+ * @returns {void}
+ */
+function copyfxClearSession() {
   await chrome.storage.session.remove('copyfxCache');
 }
 
-async function loadCopyfxData() {
+async /**
+ * Выполняет операцию "loadCopyfxData".
+ * @returns {void}
+ */
+function loadCopyfxData() {
   const { state } = await chrome.storage.local.get(['state']);
   if (!state || !state.copyfxConfig || !state.copyfxConfig.enabled) return;
   const cfg = state.copyfxConfig;
@@ -915,7 +1037,12 @@ $('copyfxGetBtn').addEventListener('click', async () => {
     clearBtn.style.display = '';
     renderCopyfxEntries(cfg);
     copyfxSaveSession();
-  } catch (e) {
+  } /**
+ * Выполняет операцию "catch".
+ * @param {*} e - Описание параметра.
+ * @returns {void}
+ */
+catch (e) {
     status.textContent = 'Ошибка: ' + e.message;
     status.className = 'scraper-scan-status err';
     getBtn.disabled = false;
@@ -941,7 +1068,13 @@ $('copyfxLoadMore').addEventListener('click', async () => {
   renderCopyfxEntries(cfg, true);
 });
 
-async function renderCopyfxEntries(cfg, append) {
+async /**
+ * Выполняет операцию "renderCopyfxEntries".
+ * @param {*} cfg - Описание параметра.
+ * @param {*} append - Описание параметра.
+ * @returns {void}
+ */
+function renderCopyfxEntries(cfg, append) {
   const container = $('copyfxEntries');
   const loadMore = $('copyfxLoadMore');
   if (!append) {
@@ -957,7 +1090,12 @@ async function renderCopyfxEntries(cfg, append) {
     const u = new URL(srcUrl);
     hostname = u.hostname;
     origin = u.origin;
-  } catch (e) {}
+  } /**
+ * Выполняет операцию "catch".
+ * @param {*} e - Описание параметра.
+ * @returns {void}
+ */
+catch (e) {}
   const adminDomain = getCopyfxAdminDomain(hostname);
   const extraFields = cfg.extraFields || [];
 
@@ -1113,27 +1251,49 @@ let investorTraderLogin = '';
 
 const COPY_MODE_MAP = { 0: 'Proportional', 1: 'Classic', 2: 'Fixed' };
 
+/**
+ * Выполняет операцию "isTraderDetailPage".
+ * @param {*} url - Описание параметра.
+ * @returns {*} Результат операции.
+ */
 function isTraderDetailPage(url) {
   try {
     const parts = new URL(url).pathname.split('/').filter(Boolean);
     const idx = parts.indexOf('traders');
     return idx !== -1 && parts.length >= idx + 3;
-  } catch (e) {
+  } /**
+ * Выполняет операцию "catch".
+ * @param {*} e - Описание параметра.
+ * @returns {void}
+ */
+catch (e) {
     return false;
   }
 }
 
-async function investorSaveSession() {
+async /**
+ * Выполняет операцию "investorSaveSession".
+ * @returns {void}
+ */
+function investorSaveSession() {
   await chrome.storage.session.set({
     investorCache: { entries: investorAllEntries, login: investorTraderLogin },
   });
 }
 
-async function investorClearSession() {
+async /**
+ * Выполняет операцию "investorClearSession".
+ * @returns {void}
+ */
+function investorClearSession() {
   await chrome.storage.session.remove('investorCache');
 }
 
-async function loadInvestorData() {
+async /**
+ * Выполняет операцию "loadInvestorData".
+ * @returns {void}
+ */
+function loadInvestorData() {
   const { state } = await chrome.storage.local.get(['state']);
   if (!state || !state.copyfxConfig || !state.copyfxConfig.enabled) return;
 
@@ -1162,6 +1322,10 @@ async function loadInvestorData() {
   getBtn.disabled = false;
 }
 
+/**
+ * Выполняет операцию "updateInvestorTitle".
+ * @returns {void}
+ */
 function updateInvestorTitle() {
   const el = $('investorTitle');
   if (investorTraderLogin) {
@@ -1235,7 +1399,12 @@ $('investorGetBtn').addEventListener('click', async () => {
     updateInvestorTitle();
     renderInvestorEntries();
     investorSaveSession();
-  } catch (e) {
+  } /**
+ * Выполняет операцию "catch".
+ * @param {*} e - Описание параметра.
+ * @returns {void}
+ */
+catch (e) {
     status.textContent = 'Ошибка: ' + e.message;
     status.className = 'scraper-scan-status err';
     getBtn.disabled = false;
@@ -1260,6 +1429,11 @@ $('investorLoadMore').addEventListener('click', () => {
   renderInvestorEntries(true);
 });
 
+/**
+ * Выполняет операцию "getCoefficient".
+ * @param {*} cmv - Описание параметра.
+ * @returns {*} Результат операции.
+ */
 function getCoefficient(cmv) {
   if (!cmv) return '—';
   if (cmv.rate) return String(cmv.rate);
@@ -1268,6 +1442,11 @@ function getCoefficient(cmv) {
   return '0';
 }
 
+/**
+ * Выполняет операцию "renderInvestorEntries".
+ * @param {*} append - Описание параметра.
+ * @returns {void}
+ */
 function renderInvestorEntries(append) {
   const container = $('investorEntries');
   const loadMore = $('investorLoadMore');
@@ -1387,7 +1566,11 @@ function renderInvestorEntries(append) {
 }
 
 /* ================ UA Rule Toggle ================ */
-async function loadUaStatus() {
+async /**
+ * Выполняет операцию "loadUaStatus".
+ * @returns {void}
+ */
+function loadUaStatus() {
   const { state } = await chrome.storage.local.get(['state']);
   if (!state || !state.uaRules || !state.uaRules.length) return;
   const rule = state.uaRules[0];

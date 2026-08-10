@@ -6,7 +6,12 @@
   let resolveFn = null;
   let overlay, label;
 
-  function buildSelector(el) {
+  /**
+ * Выполняет операцию "buildSelector".
+ * @param {*} el - Описание параметра.
+ * @returns {void}
+ */
+function buildSelector(el) {
     if (!(el instanceof Element)) return '';
     // 1) id — приоритет
     if (el.id && document.querySelectorAll('#' + CSS.escape(el.id)).length === 1) {
@@ -50,7 +55,11 @@
     return parts.join(' > ');
   }
 
-  function ensureOverlay() {
+  /**
+ * Выполняет операцию "ensureOverlay".
+ * @returns {void}
+ */
+function ensureOverlay() {
     if (overlay) return;
     overlay = document.createElement('div');
     overlay.style.cssText =
@@ -65,7 +74,12 @@
     label.textContent = 'Клик — выбрать • Esc — отмена';
   }
 
-  function onMove(e) {
+  /**
+ * Выполняет операцию "onMove".
+ * @param {*} e - Описание параметра.
+ * @returns {void}
+ */
+function onMove(e) {
     const el = document.elementFromPoint(e.clientX, e.clientY);
     if (!el || el === overlay || el === label) return;
     const r = el.getBoundingClientRect();
@@ -78,21 +92,36 @@
     label.textContent = buildSelector(el);
   }
 
-  function onClick(e) {
+  /**
+ * Выполняет операцию "onClick".
+ * @param {*} e - Описание параметра.
+ * @returns {void}
+ */
+function onClick(e) {
     e.preventDefault();
     e.stopPropagation();
     const el = document.elementFromPoint(e.clientX, e.clientY);
     stop({ ok: true, selector: buildSelector(el) });
   }
 
-  function onKey(e) {
+  /**
+ * Выполняет операцию "onKey".
+ * @param {*} e - Описание параметра.
+ * @returns {void}
+ */
+function onKey(e) {
     if (e.key === 'Escape') {
       e.preventDefault();
       stop({ ok: false, cancelled: true });
     }
   }
 
-  function stop(result) {
+  /**
+ * Выполняет операцию "stop".
+ * @param {*} result - Описание параметра.
+ * @returns {void}
+ */
+function stop(result) {
     if (!active) return;
     active = false;
     document.removeEventListener('mousemove', onMove, true);
@@ -107,8 +136,16 @@
     }
   }
 
-  function startPicker() {
-    return new Promise(resolve => {
+  /**
+ * Выполняет операцию "startPicker".
+ * @returns {void}
+ */
+function startPicker() {
+    return new /**
+ * Выполняет операцию "Promise".
+ * @returns {void}
+ */
+Promise(resolve => {
       if (active) {
         resolve({ ok: false, error: 'already-active' });
         return;

@@ -1,10 +1,19 @@
 ﻿// content/field-highlighter.js
 export class FieldHighlighter {
-  constructor() {
+  /**
+ * Создаёт экземпляр класса.
+ * @returns {void}
+ */
+constructor() {
     this.highlightedElements = new WeakSet();
   }
 
-  highlight(element) {
+  /**
+ * Подсвечивает DOM-элемент.
+ * @param {*} element - Описание параметра.
+ * @returns {void}
+ */
+highlight(element) {
     if (!element) return;
     this._removeHighlight(element);
 
@@ -24,7 +33,12 @@ export class FieldHighlighter {
     }, 2000);
   }
 
-  _removeHighlight(element) {
+  /**
+ * (приватный) Выполняет операцию "_removeHighlight".
+ * @param {*} element - Описание параметра.
+ * @returns {void}
+ */
+_removeHighlight(element) {
     if (!element) return;
     const data = this.highlightedElements.get(element);
     if (data) {

@@ -4,13 +4,21 @@ import { ChromeStorageRepository } from '../infrastructure/chrome-storage-reposi
 import { UrlMatcher } from '../shared/url-matcher.js';
 
 export class FillAllUseCase {
-  constructor() {
+  /**
+ * Создаёт экземпляр класса.
+ * @returns {void}
+ */
+constructor() {
     this.executor = new ContentRuleExecutor();
     this.storage = new ChromeStorageRepository();
     this.urlMatcher = new UrlMatcher();
   }
 
-  async execute() {
+  /**
+ * Выполняет правило заполнения.
+ * @returns {void}
+ */
+async execute() {
     const state = await this.storage.getState();
     if (!state || !state.rules) {
       return { filled: 0, matched: 0, errors: ['No rules found'] };
@@ -38,7 +46,12 @@ export class FillAllUseCase {
         const result = await this.executor.execute(rule, context, usedFields);
         totalFilled += result.filled;
         totalMatched += result.matched;
-      } catch (error) {
+      } /**
+ * Выполняет операцию "catch".
+ * @param {*} error - Описание параметра.
+ * @returns {void}
+ */
+catch (error) {
         errors.push(Rule : );
       }
     }

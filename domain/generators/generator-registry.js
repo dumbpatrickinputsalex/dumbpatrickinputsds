@@ -1,18 +1,37 @@
 ﻿// domain/generators/generator-registry.js
 export class GeneratorRegistry {
-  constructor() {
+  /**
+ * Создаёт экземпляр класса.
+ * @returns {void}
+ */
+constructor() {
     this.generators = new Map();
   }
 
-  register(name, generator) {
+  /**
+ * Регистрирует обработчики сообщений.
+ * @param {*} name - Описание параметра.
+ * @param {*} generator - Описание параметра.
+ * @returns {void}
+ */
+register(name, generator) {
     this.generators.set(name, generator);
   }
 
-  get(name) {
+  /**
+ * Выполняет операцию "get".
+ * @param {*} name - Описание параметра.
+ * @returns {*} Результат операции.
+ */
+get(name) {
     return this.generators.get(name);
   }
 
-  list() {
+  /**
+ * Выполняет операцию "list".
+ * @returns {void}
+ */
+list() {
     return Array.from(this.generators.keys());
   }
 }

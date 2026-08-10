@@ -1,10 +1,19 @@
 ﻿// background/content-script-injector.js
 export class ContentScriptInjector {
-  constructor() {
+  /**
+ * Создаёт экземпляр класса.
+ * @returns {void}
+ */
+constructor() {
     this.injectedTabs = new Set();
   }
 
-  async ensureInjected(tabId) {
+  /**
+ * Гарантирует внедрение content scripts в вкладку.
+ * @param {*} tabId - Описание параметра.
+ * @returns {void}
+ */
+async ensureInjected(tabId) {
     if (this.injectedTabs.has(tabId)) return true;
 
     try {
@@ -20,13 +29,23 @@ export class ContentScriptInjector {
       });
       this.injectedTabs.add(tabId);
       return true;
-    } catch (error) {
+    } /**
+ * Выполняет операцию "catch".
+ * @param {*} error - Описание параметра.
+ * @returns {void}
+ */
+catch (error) {
       console.error('Failed to inject content scripts:', error);
       return false;
     }
   }
 
-  async injectCopyfxInterceptor(tabId) {
+  /**
+ * Внедряет CopyFX interceptor в MAIN world.
+ * @param {*} tabId - Описание параметра.
+ * @returns {void}
+ */
+async injectCopyfxInterceptor(tabId) {
     try {
       await chrome.scripting.executeScript({
         target: { tabId },
@@ -34,13 +53,23 @@ export class ContentScriptInjector {
         files: ['content/copyfx-interceptor.js'],
       });
       return true;
-    } catch (error) {
+    } /**
+ * Выполняет операцию "catch".
+ * @param {*} error - Описание параметра.
+ * @returns {void}
+ */
+catch (error) {
       console.error('Failed to inject CopyFX interceptor:', error);
       return false;
     }
   }
 
-  clear(tabId) {
+  /**
+ * Очищает кэш внедрённых скриптов для вкладки.
+ * @param {*} tabId - Описание параметра.
+ * @returns {void}
+ */
+clear(tabId) {
     this.injectedTabs.delete(tabId);
   }
 }

@@ -1,6 +1,11 @@
 ﻿// domain/matching/field-kind-detector.js
 export class FieldKindDetector {
-  detect(element) {
+  /**
+ * Определяет тип поля.
+ * @param {*} element - Описание параметра.
+ * @returns {void}
+ */
+detect(element) {
     if (!element) return 'unknown';
 
     const tag = element.tagName?.toLowerCase() || '';

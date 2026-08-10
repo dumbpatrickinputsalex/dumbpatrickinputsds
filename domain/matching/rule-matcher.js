@@ -4,13 +4,23 @@ import { LabelResolver } from './label-resolver.js';
 import { ConditionEvaluator } from './condition-evaluator.js';
 
 export class RuleMatcher {
-  constructor() {
+  /**
+ * Создаёт экземпляр класса.
+ * @returns {void}
+ */
+constructor() {
     this.fieldKindDetector = new FieldKindDetector();
     this.labelResolver = new LabelResolver();
     this.conditionEvaluator = new ConditionEvaluator(this.labelResolver);
   }
 
-  findMatches(rule, root = document) {
+  /**
+ * Находит элементы, соответствующие правилу.
+ * @param {*} rule - Описание параметра.
+ * @param {*} root - Описание параметра.
+ * @returns {*} Результат операции.
+ */
+findMatches(rule, root = document) {
     if (!rule || !rule.conditions) return [];
 
     const fields = this._collectFields(root);
@@ -29,7 +39,12 @@ export class RuleMatcher {
     return matches;
   }
 
-  _collectFields(root) {
+  /**
+ * (приватный) Выполняет операцию "_collectFields".
+ * @param {*} root - Описание параметра.
+ * @returns {void}
+ */
+_collectFields(root) {
     const elements = root.querySelectorAll('input, select, textarea, [contenteditable="true"]');
     const fields = [];
 

@@ -23,7 +23,13 @@ import { CONTENT } from '../labels/content-labels.js';
 
   // Универсально устанавливает значение в поле и генерирует события,
   // чтобы страница обработала изменение как обычный пользовательский ввод.
-  function setValue(el, value) {
+  /**
+ * Устанавливает значение в DOM-элемент.
+ * @param {*} el - Описание параметра.
+ * @param {*} value - Описание параметра.
+ * @returns {void}
+ */
+function setValue(el, value) {
     if (el.tagName === 'INPUT') {
       const t = (el.type || 'text').toLowerCase();
       if (t === 'checkbox' || t === 'radio') {
@@ -63,7 +69,12 @@ import { CONTENT } from '../labels/content-labels.js';
     el.dispatchEvent(new Event('blur', { bubbles: true }));
   }
 
-  function highlight(el) {
+  /**
+ * Подсвечивает DOM-элемент.
+ * @param {*} el - Описание параметра.
+ * @returns {void}
+ */
+function highlight(el) {
     const old = el.style.outline;
     const oldT = el.style.transition;
     el.style.transition = 'outline 0.15s';
@@ -74,7 +85,12 @@ import { CONTENT } from '../labels/content-labels.js';
     }, 500);
   }
 
-  function isElementChecked(el) {
+  /**
+ * Выполняет операцию "isElementChecked".
+ * @param {*} el - Описание параметра.
+ * @returns {*} Результат операции.
+ */
+function isElementChecked(el) {
     if (el.tagName === 'INPUT' && (el.type === 'checkbox' || el.type === 'radio'))
       return el.checked;
     const aria = el.getAttribute('aria-checked');
@@ -88,7 +104,13 @@ import { CONTENT } from '../labels/content-labels.js';
     );
   }
 
-  function shouldClickByGuard(el, guard) {
+  /**
+ * Выполняет операцию "shouldClickByGuard".
+ * @param {*} el - Описание параметра.
+ * @param {*} guard - Описание параметра.
+ * @returns {void}
+ */
+function shouldClickByGuard(el, guard) {
     if (!guard || guard === 'none') return true;
     const checked = isElementChecked(el);
     if (guard === 'on') return !checked;
@@ -96,7 +118,12 @@ import { CONTENT } from '../labels/content-labels.js';
     return true;
   }
 
-  function buildCtx(state) {
+  /**
+ * Выполняет операцию "buildCtx".
+ * @param {*} state - Описание параметра.
+ * @returns {void}
+ */
+function buildCtx(state) {
     return {
       counters: Object.assign({}, state.counters || {}),
       smartCounters: state.smartCounters || [],
@@ -107,7 +134,12 @@ import { CONTENT } from '../labels/content-labels.js';
     };
   }
 
-  function shortSelector(el) {
+  /**
+ * Выполняет операцию "shortSelector".
+ * @param {*} el - Описание параметра.
+ * @returns {void}
+ */
+function shortSelector(el) {
     if (el.id) return '#' + el.id;
     const name = el.getAttribute('name');
     if (name) return el.tagName.toLowerCase() + '[name="' + name + '"]';
@@ -119,7 +151,11 @@ import { CONTENT } from '../labels/content-labels.js';
   let pageShortcuts = [];
 
   // Загружает горячие клавиши, которые работают прямо внутри страницы.
-  function loadPageShortcuts() {
+  /**
+ * Выполняет операцию "loadPageShortcuts".
+ * @returns {void}
+ */
+function loadPageShortcuts() {
     chrome.storage.local.get(['state'], r => {
       pageShortcuts = (r.state && r.state.pageShortcuts) || [];
     });
@@ -133,7 +169,13 @@ import { CONTENT } from '../labels/content-labels.js';
   });
 
   // Проверяет, совпадает ли текущее нажатие клавиш с сохранённой комбинацией.
-  function eventMatches(e, sc) {
+  /**
+ * Выполняет операцию "eventMatches".
+ * @param {*} e - Описание параметра.
+ * @param {*} sc - Описание параметра.
+ * @returns {void}
+ */
+function eventMatches(e, sc) {
     if ((sc.key || '').toUpperCase() !== keyOfEvent(e)) return false;
     if (!!sc.ctrl !== !!e.ctrlKey) return false;
     if (!!sc.alt !== !!e.altKey) return false;
@@ -142,7 +184,12 @@ import { CONTENT } from '../labels/content-labels.js';
   }
 
   // Нормализует клавишу из KeyboardEvent для сравнения с настройкой.
-  function keyOfEvent(e) {
+  /**
+ * Выполняет операцию "keyOfEvent".
+ * @param {*} e - Описание параметра.
+ * @returns {void}
+ */
+function keyOfEvent(e) {
     const k = e.key;
     if (!k) return '';
     if (k.length === 1) return k.toUpperCase();
@@ -151,7 +198,12 @@ import { CONTENT } from '../labels/content-labels.js';
 
   // Проверяет, находится ли фокус в поле ввода.
   // Нужно, чтобы шорткаты не мешали обычному набору текста.
-  function isEditableTarget(t) {
+  /**
+ * Выполняет операцию "isEditableTarget".
+ * @param {*} t - Описание параметра.
+ * @returns {*} Результат операции.
+ */
+function isEditableTarget(t) {
     if (!t) return false;
     if (t.isContentEditable) return true;
     const tag = t.tagName;
@@ -190,7 +242,12 @@ import { CONTENT } from '../labels/content-labels.js';
   );
 
   // Собирает комбинацию клавиш в строку для логов.
-  function formatComboFromSc(sc) {
+  /**
+ * Выполняет операцию "formatComboFromSc".
+ * @param {*} sc - Описание параметра.
+ * @returns {void}
+ */
+function formatComboFromSc(sc) {
     const parts = [];
     if (sc.ctrl) parts.push('Ctrl');
     if (sc.alt) parts.push('Alt');
@@ -202,7 +259,11 @@ import { CONTENT } from '../labels/content-labels.js';
 
   // Запускает массовое заполнение страницы всеми активными правилами,
   // которые подходят под текущий URL.
-  async function fillAll() {
+  async /**
+ * Заполняет все поля на странице.
+ * @returns {void}
+ */
+function fillAll() {
     const state = await getState();
     const dbg = !!state.debugMode;
     const url = location.href;
@@ -277,12 +338,23 @@ import { CONTENT } from '../labels/content-labels.js';
 
   // Ждёт появления элемента в DOM.
   // Используется после клика по triggerSelector, когда поле создаётся динамически.
-  function waitForElement(selector, timeoutMs) {
+  /**
+ * Выполняет операцию "waitForElement".
+ * @param {*} selector - Описание параметра.
+ * @param {*} timeoutMs - Описание параметра.
+ * @returns {void}
+ */
+function waitForElement(selector, timeoutMs) {
     return new Promise(resolve => {
       let el = null;
       try {
         el = document.querySelector(selector);
-      } catch (e) {
+      } /**
+ * Выполняет операцию "catch".
+ * @param {*} e - Описание параметра.
+ * @returns {void}
+ */
+catch (e) {
         return resolve(null);
       }
       if (el) return resolve(el);
@@ -291,7 +363,12 @@ import { CONTENT } from '../labels/content-labels.js';
         let found = null;
         try {
           found = document.querySelector(selector);
-        } catch (e) {
+        } /**
+ * Выполняет операцию "catch".
+ * @param {*} e - Описание параметра.
+ * @returns {void}
+ */
+catch (e) {
           clearInterval(iv);
           return resolve(null);
         }
@@ -308,7 +385,16 @@ import { CONTENT } from '../labels/content-labels.js';
     });
   }
 
-  async function executeRule(rule, ctx, usedFields, details, dbg) {
+  async /**
+ * Выполняет операцию "executeRule".
+ * @param {*} rule - Описание параметра.
+ * @param {*} ctx - Описание параметра.
+ * @param {*} usedFields - Описание параметра.
+ * @param {*} details - Описание параметра.
+ * @param {*} dbg - Описание параметра.
+ * @returns {void}
+ */
+function executeRule(rule, ctx, usedFields, details, dbg) {
     // Выполняет одно правило.
     // Правило может либо кликать по элементу, либо заполнять найденные поля шаблоном.
     // Click-action rules
@@ -321,13 +407,23 @@ import { CONTENT } from '../labels/content-labels.js';
         let trigger = null;
         try {
           trigger = document.querySelector(rule.clickTriggerSelector);
-        } catch (e) {
+        } /**
+ * Выполняет операцию "catch".
+ * @param {*} e - Описание параметра.
+ * @returns {void}
+ */
+catch (e) {
           /* bad selector */
         }
         if (trigger) {
           try {
             trigger.click();
-          } catch (e) {
+          } /**
+ * Выполняет операцию "catch".
+ * @param {*} e - Описание параметра.
+ * @returns {void}
+ */
+catch (e) {
             /* click failed */
           }
           const wait = Math.max(50, Number(rule.clickTriggerWait) || 500);
@@ -339,7 +435,12 @@ import { CONTENT } from '../labels/content-labels.js';
       let target = null;
       try {
         target = document.querySelector(rule.clickSelector);
-      } catch (e) {
+      } /**
+ * Выполняет операцию "catch".
+ * @param {*} e - Описание параметра.
+ * @returns {void}
+ */
+catch (e) {
         /* bad selector */
       }
       if (!target) {
@@ -367,7 +468,12 @@ import { CONTENT } from '../labels/content-labels.js';
         });
         if (dbg) console.info('[DPI]   clicked', shortSelector(target), '(rule:', rule.name + ')');
         return 1;
-      } catch (e) {
+      } /**
+ * Выполняет операцию "catch".
+ * @param {*} e - Описание параметра.
+ * @returns {void}
+ */
+catch (e) {
         console.warn('[DPI]   click error:', e);
         return 0;
       }
@@ -395,7 +501,12 @@ import { CONTENT } from '../labels/content-labels.js';
         const sel = shortSelector(el);
         details.push({ rule: rule.name || '(без имени)', selector: sel, value: String(val), kind });
         if (dbg) console.info('[DPI]   filled', sel, '=', val, '(rule:', rule.name + ')');
-      } catch (e) {
+      } /**
+ * Выполняет операцию "catch".
+ * @param {*} e - Описание параметра.
+ * @returns {void}
+ */
+catch (e) {
         console.warn('[DPI]   setValue error:', e);
       }
     }
@@ -404,7 +515,12 @@ import { CONTENT } from '../labels/content-labels.js';
 
   // Выполняет специальную вставку по id.
   // Используется для пользовательских горячих клавиш, привязанных к конкретной вставке.
-  async function fillSpecialById(insertionId) {
+  async /**
+ * Выполняет операцию "fillSpecialById".
+ * @param {*} insertionId - Описание параметра.
+ * @returns {void}
+ */
+function fillSpecialById(insertionId) {
     const state = await getState();
     const ins = (state.specialInsertions || []).find(
       i => i.id === insertionId && i.enabled !== false
@@ -414,7 +530,11 @@ import { CONTENT } from '../labels/content-labels.js';
   }
 
   // Ищет первую активную специальную вставку, подходящую под текущий URL.
-  async function fillSpecial() {
+  async /**
+ * Выполняет спецвставку.
+ * @returns {void}
+ */
+function fillSpecial() {
     const state = await getState();
     const url = location.href;
     const ins = (state.specialInsertions || []).find(
@@ -427,7 +547,13 @@ import { CONTENT } from '../labels/content-labels.js';
   // Выполняет специальную вставку:
   // находит цель, при необходимости кликает triggerSelector,
   // затем либо кликает по цели, либо вставляет значение из шаблона.
-  async function runInsertion(state, ins) {
+  async /**
+ * Выполняет операцию "runInsertion".
+ * @param {*} state - Описание параметра.
+ * @param {*} ins - Описание параметра.
+ * @returns {void}
+ */
+function runInsertion(state, ins) {
     const dbg = !!state.debugMode;
     if (dbg) console.info('[DPI] runInsertion:', ins.name || ins.id);
     if (!ins.targetSelector) return { filled: 0, reason: 'no-target-selector' };
@@ -436,7 +562,12 @@ import { CONTENT } from '../labels/content-labels.js';
     let el = null;
     try {
       el = document.querySelector(ins.targetSelector);
-    } catch (e) {
+    } /**
+ * Выполняет операцию "catch".
+ * @param {*} e - Описание параметра.
+ * @returns {void}
+ */
+catch (e) {
       return { filled: 0, reason: 'bad-selector' };
     }
 
@@ -446,13 +577,23 @@ import { CONTENT } from '../labels/content-labels.js';
       let trigger = null;
       try {
         trigger = document.querySelector(ins.triggerSelector);
-      } catch (e) {
+      } /**
+ * Выполняет операцию "catch".
+ * @param {*} e - Описание параметра.
+ * @returns {void}
+ */
+catch (e) {
         return { filled: 0, reason: 'bad-trigger-selector' };
       }
       if (!trigger) return { filled: 0, reason: 'trigger-not-found' };
       try {
         trigger.click();
-      } catch (e) {
+      } /**
+ * Выполняет операцию "catch".
+ * @param {*} e - Описание параметра.
+ * @returns {void}
+ */
+catch (e) {
         return { filled: 0, reason: 'trigger-click-failed' };
       }
       usedTrigger = true;
@@ -474,7 +615,12 @@ import { CONTENT } from '../labels/content-labels.js';
       }
       try {
         el.click();
-      } catch (e) {
+      } /**
+ * Выполняет операцию "catch".
+ * @param {*} e - Описание параметра.
+ * @returns {void}
+ */
+catch (e) {
         return { filled: 0, reason: 'click-failed' };
       }
       highlight(el);
@@ -499,7 +645,12 @@ import { CONTENT } from '../labels/content-labels.js';
 
     try {
       el.focus();
-    } catch (e) {}
+    } /**
+ * Выполняет операцию "catch".
+ * @param {*} e - Описание параметра.
+ * @returns {void}
+ */
+catch (e) {}
 
     // Перед вставкой очищаем текстовые поля, но не очищаем checkbox/radio/select.
     if (kind !== 'checkbox' && kind !== 'radio' && kind !== 'select') {
@@ -514,7 +665,11 @@ import { CONTENT } from '../labels/content-labels.js';
   }
 
   // Читает состояние расширения из chrome.storage.local.
-  function getState() {
+  /**
+ * Получает состояние из storage.
+ * @returns {*} Результат операции.
+ */
+function getState() {
     return new Promise(resolve => {
       chrome.storage.local.get(['state'], r =>
         resolve(r.state || { profiles: [], specialInsertions: [], smartCounters: [], counters: {} })
@@ -523,7 +678,13 @@ import { CONTENT } from '../labels/content-labels.js';
   }
 
   // Сохраняет изменения счётчиков после рендера шаблонов.
-  function persistCtx(state, ctx) {
+  /**
+ * Выполняет операцию "persistCtx".
+ * @param {*} state - Описание параметра.
+ * @param {*} ctx - Описание параметра.
+ * @returns {void}
+ */
+function persistCtx(state, ctx) {
     state.counters = ctx.counters;
     // state.smartCounters — тот же массив, что ctx.smartCounters, генератор мутировал его in-place.
     return new Promise(resolve => chrome.storage.local.set({ state }, resolve));
@@ -552,7 +713,12 @@ import { CONTENT } from '../labels/content-labels.js';
       const ctx = { counters: {} };
       try {
         sendResponse({ ok: true, value: FF.render(msg.template || '', ctx) });
-      } catch (e) {
+      } /**
+ * Выполняет операцию "catch".
+ * @param {*} e - Описание параметра.
+ * @returns {void}
+ */
+catch (e) {
         sendResponse({ ok: false, error: String(e) });
       }
       return false;

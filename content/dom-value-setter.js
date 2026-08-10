@@ -30,7 +30,13 @@ export class DomValueSetter {
     return this._setInputValue(element, value);
   }
 
-  _setInputValue(element, value) {
+  /**
+ * (приватный) Выполняет операцию "_setInputValue".
+ * @param {*} element - Описание параметра.
+ * @param {*} value - Описание параметра.
+ * @returns {void}
+ */
+_setInputValue(element, value) {
     // Сохраняем старый value для проверки изменений
     const oldValue = element.value;
 
@@ -49,7 +55,13 @@ export class DomValueSetter {
     return true;
   }
 
-  _setCheckboxRadio(element, value) {
+  /**
+ * (приватный) Выполняет операцию "_setCheckboxRadio".
+ * @param {*} element - Описание параметра.
+ * @param {*} value - Описание параметра.
+ * @returns {void}
+ */
+_setCheckboxRadio(element, value) {
     const shouldCheck =
       typeof value === 'boolean'
         ? value
@@ -63,7 +75,13 @@ export class DomValueSetter {
     return true;
   }
 
-  _setSelect(element, value) {
+  /**
+ * (приватный) Выполняет операцию "_setSelect".
+ * @param {*} element - Описание параметра.
+ * @param {*} value - Описание параметра.
+ * @returns {void}
+ */
+_setSelect(element, value) {
     let found = false;
     const valueStr = String(value);
 
@@ -94,13 +112,25 @@ export class DomValueSetter {
     return found;
   }
 
-  _setContentEditable(element, value) {
+  /**
+ * (приватный) Выполняет операцию "_setContentEditable".
+ * @param {*} element - Описание параметра.
+ * @param {*} value - Описание параметра.
+ * @returns {void}
+ */
+_setContentEditable(element, value) {
     element.textContent = value;
     this._dispatchEvents(element);
     return true;
   }
 
-  _dispatchEvents(element, oldValue) {
+  /**
+ * (приватный) Выполняет операцию "_dispatchEvents".
+ * @param {*} element - Описание параметра.
+ * @param {*} oldValue - Описание параметра.
+ * @returns {void}
+ */
+_dispatchEvents(element, oldValue) {
     // input event
     element.dispatchEvent(new Event('input', { bubbles: true }));
     element.dispatchEvent(new Event('change', { bubbles: true }));

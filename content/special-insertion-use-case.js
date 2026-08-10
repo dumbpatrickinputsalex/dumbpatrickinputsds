@@ -11,7 +11,11 @@ import { ChromeStorageRepository } from '../infrastructure/chrome-storage-reposi
 import { UrlMatcher } from '../shared/url-matcher.js';
 
 export class SpecialInsertionUseCase {
-  constructor() {
+  /**
+ * Создаёт экземпляр класса.
+ * @returns {void}
+ */
+constructor() {
     this.valueSetter = new DomValueSetter();
     this.highlighter = new FieldHighlighter();
     this.waiter = new ElementWaiter();
@@ -26,7 +30,12 @@ export class SpecialInsertionUseCase {
     this.generatorRegistry.register('phone', new PhoneGenerator());
   }
 
-  async execute(insertionId) {
+  /**
+ * Выполняет правило заполнения.
+ * @param {*} insertionId - Описание параметра.
+ * @returns {void}
+ */
+async execute(insertionId) {
     const state = await this.storage.getState();
     if (!state || !state.specialInsertions) {
       return { success: false, error: 'No insertions found' };
@@ -62,7 +71,13 @@ export class SpecialInsertionUseCase {
     return await this._runInsertion(insertion, state);
   }
 
-  async _runInsertion(insertion, state) {
+  /**
+ * (приватный) Выполняет операцию "_runInsertion".
+ * @param {*} insertion - Описание параметра.
+ * @param {*} state - Описание параметра.
+ * @returns {void}
+ */
+async _runInsertion(insertion, state) {
     const context = {
       counters: state.counters || {},
       url: window.location.href

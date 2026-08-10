@@ -1,6 +1,11 @@
 ﻿// domain/matching/label-resolver.js
 export class LabelResolver {
-  getLabelText(element) {
+  /**
+ * Получает текст лейбла для элемента.
+ * @param {*} element - Описание параметра.
+ * @returns {*} Результат операции.
+ */
+getLabelText(element) {
     if (!element) return '';
 
     // aria-label

@@ -1,18 +1,31 @@
 import { OPTIONS } from '../labels/options-labels.js';
 ﻿// options/controllers/folders-controller.js
 export class FoldersController {
-  constructor() {
+  /**
+ * Создаёт экземпляр класса.
+ * @returns {void}
+ */
+constructor() {
     this.folders = [];
     this.container = document.getElementById('foldersContainer');
   }
 
-  init(state) {
+  /**
+ * Инициализирует компонент.
+ * @param {*} state - Описание параметра.
+ * @returns {void}
+ */
+init(state) {
     this.folders = state.folders || [];
     this.render();
     this._bindEvents();
   }
 
-  render() {
+  /**
+ * Отрисовывает интерфейс.
+ * @returns {void}
+ */
+render() {
     if (!this.container) return;
     this.container.innerHTML = '';
     this.folders.forEach((folder, index) => {
@@ -21,7 +34,13 @@ export class FoldersController {
     });
   }
 
-  _createCard(folder, index) {
+  /**
+ * (приватный) Выполняет операцию "_createCard".
+ * @param {*} folder - Описание параметра.
+ * @param {*} index - Описание параметра.
+ * @returns {void}
+ */
+_createCard(folder, index) {
     const card = document.createElement('div');
     card.className = 'folder-card';
     card.dataset.index = index;
@@ -44,7 +63,11 @@ export class FoldersController {
     return card;
   }
 
-  _bindEvents() {
+  /**
+ * (приватный) Выполняет операцию "_bindEvents".
+ * @returns {void}
+ */
+_bindEvents() {
     this.container?.addEventListener('click', (e) => {
       if (e.target.classList.contains('folder-delete')) {
         const index = parseInt(e.target.dataset.index);
@@ -63,19 +86,33 @@ export class FoldersController {
     }
   }
 
-  save(state) {
+  /**
+ * Сохраняет данные.
+ * @param {*} state - Описание параметра.
+ * @returns {void}
+ */
+save(state) {
     state.folders = this.folders;
     return state;
   }
 
-  _escapeHtml(text) {
+  /**
+ * (приватный) Выполняет операцию "_escapeHtml".
+ * @param {*} text - Описание параметра.
+ * @returns {void}
+ */
+_escapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
   }
 
-  _save() {
+  /**
+ * (приватный) Выполняет операцию "_save".
+ * @returns {void}
+ */
+_save() {
     document.dispatchEvent(new Event('options-save'));
   }
 }

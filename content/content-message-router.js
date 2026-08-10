@@ -1,11 +1,20 @@
 ﻿// content/content-message-router.js
 export class ContentMessageRouter {
-  constructor(handlers = {}) {
+  /**
+ * Создаёт экземпляр класса.
+ * @param {*} handlers - Описание параметра.
+ * @returns {void}
+ */
+constructor(handlers = {}) {
     this.handlers = handlers;
     this._listener = null;
   }
 
-  register() {
+  /**
+ * Регистрирует обработчики сообщений.
+ * @returns {void}
+ */
+register() {
     this._listener = (message, sender, sendResponse) => {
       const handler = this.handlers[message.type];
       if (handler) {
@@ -22,7 +31,11 @@ export class ContentMessageRouter {
     chrome.runtime.onMessage.addListener(this._listener);
   }
 
-  unregister() {
+  /**
+ * Отменяет регистрацию обработчиков сообщений.
+ * @returns {void}
+ */
+unregister() {
     if (this._listener) {
       chrome.runtime.onMessage.removeListener(this._listener);
       this._listener = null;

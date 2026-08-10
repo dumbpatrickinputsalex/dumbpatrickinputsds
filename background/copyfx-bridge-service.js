@@ -1,6 +1,11 @@
 ﻿// background/copyfx-bridge-service.js
 export class CopyfxBridgeService {
-  async getTraders(payload) {
+  /**
+ * Получает данные о трейдерах из страницы.
+ * @param {*} payload - Описание параметра.
+ * @returns {*} Результат операции.
+ */
+async getTraders(payload) {
     try {
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
       if (!tabs[0]) {
@@ -15,12 +20,21 @@ export class CopyfxBridgeService {
       });
 
       return result?.[0]?.result || { error: 'No traders data found' };
-    } catch (error) {
+    } /**
+ * Выполняет операцию "catch".
+ * @param {*} error - Описание параметра.
+ * @returns {void}
+ */
+catch (error) {
       return { error: error.message };
     }
   }
 
-  async getInvestors() {
+  /**
+ * Получает данные об инвесторах из страницы.
+ * @returns {*} Результат операции.
+ */
+async getInvestors() {
     try {
       const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
       if (!tabs[0]) {
@@ -35,7 +49,12 @@ export class CopyfxBridgeService {
       });
 
       return result?.[0]?.result || { error: 'No investors data found' };
-    } catch (error) {
+    } /**
+ * Выполняет операцию "catch".
+ * @param {*} error - Описание параметра.
+ * @returns {void}
+ */
+catch (error) {
       return { error: error.message };
     }
   }

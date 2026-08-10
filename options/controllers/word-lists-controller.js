@@ -1,18 +1,31 @@
 import { OPTIONS } from '../labels/options-labels.js';
 ﻿// options/controllers/word-lists-controller.js
 export class WordListsController {
-  constructor() {
+  /**
+ * Создаёт экземпляр класса.
+ * @returns {void}
+ */
+constructor() {
     this.lists = [];
     this.container = document.getElementById('wordListsContainer');
   }
 
-  init(state) {
+  /**
+ * Инициализирует компонент.
+ * @param {*} state - Описание параметра.
+ * @returns {void}
+ */
+init(state) {
     this.lists = state.customWordLists || [];
     this.render();
     this._bindEvents();
   }
 
-  render() {
+  /**
+ * Отрисовывает интерфейс.
+ * @returns {void}
+ */
+render() {
     if (!this.container) return;
     this.container.innerHTML = '';
     this.lists.forEach((list, index) => {
@@ -21,7 +34,13 @@ export class WordListsController {
     });
   }
 
-  _createCard(list, index) {
+  /**
+ * (приватный) Выполняет операцию "_createCard".
+ * @param {*} list - Описание параметра.
+ * @param {*} index - Описание параметра.
+ * @returns {void}
+ */
+_createCard(list, index) {
     const card = document.createElement('div');
     card.className = 'wordlist-card';
     card.dataset.index = index;
@@ -44,7 +63,11 @@ export class WordListsController {
     return card;
   }
 
-  _bindEvents() {
+  /**
+ * (приватный) Выполняет операцию "_bindEvents".
+ * @returns {void}
+ */
+_bindEvents() {
     this.container?.addEventListener('click', (e) => {
       if (e.target.classList.contains('wordlist-delete')) {
         const index = parseInt(e.target.dataset.index);
@@ -63,19 +86,33 @@ export class WordListsController {
     }
   }
 
-  save(state) {
+  /**
+ * Сохраняет данные.
+ * @param {*} state - Описание параметра.
+ * @returns {void}
+ */
+save(state) {
     state.customWordLists = this.lists;
     return state;
   }
 
-  _escapeHtml(text) {
+  /**
+ * (приватный) Выполняет операцию "_escapeHtml".
+ * @param {*} text - Описание параметра.
+ * @returns {void}
+ */
+_escapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
   }
 
-  _save() {
+  /**
+ * (приватный) Выполняет операцию "_save".
+ * @returns {void}
+ */
+_save() {
     document.dispatchEvent(new Event('options-save'));
   }
 }

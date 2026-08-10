@@ -1,6 +1,12 @@
 ﻿// content/element-waiter.js
 export class ElementWaiter {
-  waitForSelector(selector, timeoutMs = 5000) {
+  /**
+ * Ожидает появления элемента по селектору.
+ * @param {*} selector - Описание параметра.
+ * @param {*} timeoutMs - Описание параметра.
+ * @returns {void}
+ */
+waitForSelector(selector, timeoutMs = 5000) {
     return new Promise(resolve => {
       const element = document.querySelector(selector);
       if (element) {

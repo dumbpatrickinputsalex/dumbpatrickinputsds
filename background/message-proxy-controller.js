@@ -1,20 +1,42 @@
 ﻿// background/message-proxy-controller.js
 export class MessageProxyController {
-  constructor() {
+  /**
+ * Создаёт экземпляр класса.
+ * @returns {void}
+ */
+constructor() {
     this.handlers = {};
   }
 
-  register(type, handler) {
+  /**
+ * Регистрирует обработчики сообщений.
+ * @param {*} type - Описание параметра.
+ * @param {*} handler - Описание параметра.
+ * @returns {void}
+ */
+register(type, handler) {
     this.handlers[type] = handler;
   }
 
-  async handleMessage(message, sender, sendResponse) {
+  /**
+ * Обрабатывает входящее сообщение.
+ * @param {*} message - Описание параметра.
+ * @param {*} sender - Описание параметра.
+ * @param {*} sendResponse - Описание параметра.
+ * @returns {void}
+ */
+async handleMessage(message, sender, sendResponse) {
     const handler = this.handlers[message.type];
     if (handler) {
       try {
         const result = await handler(message.payload, sender);
         sendResponse(result);
-      } catch (error) {
+      } /**
+ * Выполняет операцию "catch".
+ * @param {*} error - Описание параметра.
+ * @returns {void}
+ */
+catch (error) {
         sendResponse({ error: error.message });
       }
       return true;
