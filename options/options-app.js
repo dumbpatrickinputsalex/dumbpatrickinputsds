@@ -1,6 +1,7 @@
 ﻿// options/options-app.js
 import { ChromeStorageRepository } from '../infrastructure/chrome-storage-repository.js';
 import { StateMigrator } from '../domain/state-migrator.js';
+import { RulesController } from './controllers/rules-controller.js';
 
 export class OptionsApp {
   constructor() {
@@ -22,13 +23,19 @@ export class OptionsApp {
       if (controller.init) controller.init(state);
     });
 
+    document.addEventListener('options-save', () => {
+      this._saveAll();
+    });
+
     window.addEventListener('beforeunload', () => {
       this._saveAll();
     });
   }
 
   _createControllers(state) {
-    return [];
+    return [
+      new RulesController()
+    ];
   }
 
   async _saveAll() {
@@ -39,5 +46,6 @@ export class OptionsApp {
       }
     });
     await this.storage.saveState(state);
+    console.log('✅ Options saved');
   }
 }
