@@ -1,3 +1,4 @@
+﻿import { escapeHtml } from '../../shared/html-utils.js';
 import { OPTIONS } from '../labels/options-labels.js';
 ﻿// options/controllers/ua-rules-controller.js
 export class UaRulesController {
@@ -44,8 +45,8 @@ _createCard(rule, index) {
     const card = document.createElement('div');
     card.className = 'ua-rule-card';
     card.dataset.index = index;
-    const escapedUserAgent = this._escapeHtml(rule.userAgent || '');
-    const escapedUrlPattern = this._escapeHtml(rule.urlPattern || '*');
+    const escapedUserAgent = this.escapeHtml(rule.userAgent || '');
+    const escapedUrlPattern = this.escapeHtml(rule.urlPattern || '*');
     card.innerHTML = \
       <div class="ua-rule-header">
         <span class="ua-rule-index">#\</span>
@@ -122,7 +123,7 @@ save(state) {
  * @param {*} text - Описание параметра.
  * @returns {void}
  */
-_escapeHtml(text) {
+escapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');
     div.textContent = text;
@@ -137,3 +138,4 @@ _save() {
     document.dispatchEvent(new Event('options-save'));
   }
 }
+

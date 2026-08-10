@@ -57,12 +57,12 @@ async boot() {
  */
 _setupCommands() {
     this.commandController.register('fill-all', async tab => {
-      await this.injector.ensureInjected(tab.id);
+      try { await this.injector.ensureInjected(tab.id); } catch (error) { console.error("Failed to inject content scripts:", error); }
       await this._sendToTab(tab.id, { type: 'FILL_ALL' });
     });
 
     this.commandController.register('fill-special', async tab => {
-      await this.injector.ensureInjected(tab.id);
+      try { await this.injector.ensureInjected(tab.id); } catch (error) { console.error("Failed to inject content scripts:", error); }
       await this._sendToTab(tab.id, { type: 'FILL_SPECIAL' });
     });
   }
@@ -150,3 +150,4 @@ _isSupportedUrl(url) {
     return !unsupported.some(u => url.startsWith(u));
   }
 }
+

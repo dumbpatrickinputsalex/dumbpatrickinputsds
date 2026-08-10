@@ -1,3 +1,4 @@
+﻿import { escapeHtml } from '../../shared/html-utils.js';
 import { OPTIONS } from '../labels/options-labels.js';
 ﻿// options/controllers/word-lists-controller.js
 export class WordListsController {
@@ -44,11 +45,11 @@ _createCard(list, index) {
     const card = document.createElement('div');
     card.className = 'wordlist-card';
     card.dataset.index = index;
-    const escapedName = this._escapeHtml(list.name || 'Без имени');
+    const escapedName = this.escapeHtml(list.name || 'Без имени');
     const wordsCount = (list.words || []).length;
     let wordsHtml = '';
     (list.words || []).forEach(w => {
-      wordsHtml += '<span class="word-tag">' + this._escapeHtml(w) + '</span>';
+      wordsHtml += '<span class="word-tag">' + this.escapeHtml(w) + '</span>';
     });
     card.innerHTML = \
       <div class="wordlist-header">
@@ -101,7 +102,7 @@ save(state) {
  * @param {*} text - Описание параметра.
  * @returns {void}
  */
-_escapeHtml(text) {
+escapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');
     div.textContent = text;
@@ -116,3 +117,4 @@ _save() {
     document.dispatchEvent(new Event('options-save'));
   }
 }
+

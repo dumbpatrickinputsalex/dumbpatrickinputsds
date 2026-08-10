@@ -1,3 +1,4 @@
+﻿import { escapeHtml } from '../../shared/html-utils.js';
 import { OPTIONS } from '../labels/options-labels.js';
 ﻿// options/controllers/snapshots-controller.js
 export class SnapshotsController {
@@ -44,7 +45,7 @@ _createCard(snapshot, index) {
     const card = document.createElement('div');
     card.className = 'snapshot-card';
     card.dataset.index = index;
-    const escapedName = this._escapeHtml(snapshot.name || 'Снапшот ' + (index + 1));
+    const escapedName = this.escapeHtml(snapshot.name || 'Снапшот ' + (index + 1));
     const date = snapshot.date ? new Date(snapshot.date).toLocaleDateString() : 'Дата неизвестна';
     card.innerHTML = \
       <div class="snapshot-header">
@@ -108,7 +109,7 @@ save(state) {
  * @param {*} text - Описание параметра.
  * @returns {void}
  */
-_escapeHtml(text) {
+escapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');
     div.textContent = text;
@@ -123,3 +124,4 @@ _save() {
     document.dispatchEvent(new Event('options-save'));
   }
 }
+

@@ -1,3 +1,4 @@
+﻿import { escapeHtml } from '../../shared/html-utils.js';
 import { OPTIONS } from '../labels/options-labels.js';
 ﻿// options/controllers/smart-counters-controller.js
 export class SmartCountersController {
@@ -44,7 +45,7 @@ _createCard(counter, index) {
     const card = document.createElement('div');
     card.className = 'counter-card';
     card.dataset.index = index;
-    const escapedName = this._escapeHtml(counter.name || 'Без имени');
+    const escapedName = this.escapeHtml(counter.name || 'Без имени');
     const currentValue = counter.current || 0;
     card.innerHTML = \
       <div class="counter-header">
@@ -97,7 +98,7 @@ save(state) {
  * @param {*} text - Описание параметра.
  * @returns {void}
  */
-_escapeHtml(text) {
+escapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');
     div.textContent = text;
@@ -112,3 +113,4 @@ _save() {
     document.dispatchEvent(new Event('options-save'));
   }
 }
+

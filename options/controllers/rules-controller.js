@@ -1,3 +1,4 @@
+﻿import { escapeHtml } from '../../shared/html-utils.js';
 import { OPTIONS } from '../labels/options-labels.js';
 ﻿// options/controllers/rules-controller.js
 export class RulesController {
@@ -44,10 +45,10 @@ _createCard(rule, index) {
     const card = document.createElement('div');
     card.className = 'rule-card';
     card.dataset.index = index;
-    const escapedName = this._escapeHtml(rule.name || 'Без имени');
-    const escapedTemplate = this._escapeHtml(rule.template || '');
+    const escapedName = this.escapeHtml(rule.name || 'Без имени');
+    const escapedTemplate = this.escapeHtml(rule.template || '');
     const conditionsStr = JSON.stringify(rule.conditions || {}, null, 2);
-    const escapedConditions = this._escapeHtml(conditionsStr);
+    const escapedConditions = this.escapeHtml(conditionsStr);
     card.innerHTML = \
       <div class="rule-header">
         <span class="rule-name">\</span>
@@ -109,7 +110,7 @@ save(state) {
  * @param {*} text - Описание параметра.
  * @returns {void}
  */
-_escapeHtml(text) {
+escapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');
     div.textContent = text;
@@ -124,3 +125,4 @@ _save() {
     document.dispatchEvent(new Event('options-save'));
   }
 }
+

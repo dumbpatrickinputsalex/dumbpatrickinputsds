@@ -1,3 +1,4 @@
+﻿import { escapeHtml } from '../../shared/html-utils.js';
 import { OPTIONS } from '../labels/options-labels.js';
 ﻿// options/controllers/special-insertions-controller.js
 export class SpecialInsertionsController {
@@ -44,11 +45,11 @@ _createCard(insertion, index) {
     const card = document.createElement('div');
     card.className = 'insertion-card';
     card.dataset.index = index;
-    const escapedName = this._escapeHtml(insertion.name || 'Без имени');
+    const escapedName = this.escapeHtml(insertion.name || 'Без имени');
     const stepsCount = (insertion.steps || []).length;
     let stepsList = '';
     (insertion.steps || []).forEach(step => {
-      stepsList += '<li>' + this._escapeHtml(step.selector || '') + '</li>';
+      stepsList += '<li>' + this.escapeHtml(step.selector || '') + '</li>';
     });
     card.innerHTML = \
       <div class="insertion-header">
@@ -101,7 +102,7 @@ save(state) {
  * @param {*} text - Описание параметра.
  * @returns {void}
  */
-_escapeHtml(text) {
+escapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');
     div.textContent = text;
@@ -116,3 +117,4 @@ _save() {
     document.dispatchEvent(new Event('options-save'));
   }
 }
+

@@ -1,3 +1,4 @@
+﻿import { escapeHtml } from '../../shared/html-utils.js';
 import { OPTIONS } from '../labels/options-labels.js';
 ﻿// options/controllers/folders-controller.js
 export class FoldersController {
@@ -44,11 +45,11 @@ _createCard(folder, index) {
     const card = document.createElement('div');
     card.className = 'folder-card';
     card.dataset.index = index;
-    const escapedName = this._escapeHtml(folder.name || 'Без имени');
+    const escapedName = this.escapeHtml(folder.name || 'Без имени');
     const rulesCount = (folder.rules || []).length;
     let rulesList = '';
     (folder.rules || []).forEach(ruleId => {
-      rulesList += '<li>' + this._escapeHtml(ruleId) + '</li>';
+      rulesList += '<li>' + this.escapeHtml(ruleId) + '</li>';
     });
     card.innerHTML = \
       <div class="folder-header">
@@ -101,7 +102,7 @@ save(state) {
  * @param {*} text - Описание параметра.
  * @returns {void}
  */
-_escapeHtml(text) {
+escapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');
     div.textContent = text;
@@ -116,3 +117,4 @@ _save() {
     document.dispatchEvent(new Event('options-save'));
   }
 }
+
