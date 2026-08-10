@@ -34,7 +34,7 @@ export class SnapshotsController {
         <button class="snapshot-delete" data-index="\">×</button>
       </div>
       <div class="snapshot-body">
-        <button class="snapshot-restore" data-index="\">Восстановить</button>
+        <button class="snapshot-restore" data-index="\">OPTIONS.SNAPSHOTS_RESTORE</button>
       </div>
     \;
     return card;

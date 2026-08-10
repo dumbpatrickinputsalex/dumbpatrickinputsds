@@ -18,10 +18,10 @@ export class CopyfxConfigController {
       <div class="copyfx-config">
         <label>
           <input type="checkbox" class="copyfx-enabled" \>
-          Включить CopyFX
+          OPTIONS.COPYFX_ENABLED
         </label>
         <div class="copyfx-settings">
-          <label>Административный домен:</label>
+          <label>OPTIONS.COPYFX_ADMIN_DOMAIN:</label>
           <input type="text" class="copyfx-domain" value="\">
         </div>
       </div>

@@ -1,202 +1,26 @@
 const fs = require('fs');
 const path = require('path');
 
-// Карта замен для каждого файла
-const replacements = {
-    'popup/fill-panel.js': {
-        imports: [
-            "import { POPUP } from '../labels/popup-labels.js';",
-            "import { COMMON } from '../labels/common-labels.js';"
-        ],
-        replaces: [
-            { find: /['"`]Заполнить все поля['"`]/g, replace: 'POPUP.BUTTON_FILL_ALL' },
-            { find: /['"`]Спецвставка['"`]/g, replace: 'POPUP.BUTTON_FILL_SPECIAL' },
-            { find: /['"`]Открыть настройки['"`]/g, replace: 'POPUP.BUTTON_OPEN_OPTIONS' },
-            { find: /['"`]Активных правил:['"`]/g, replace: 'POPUP.STATUS_ACTIVE_RULES' },
-            { find: /['"`]Нет активных правил['"`]/g, replace: 'POPUP.STATUS_NO_ACTIVE_RULES' },
-            { find: /['"`]Заполнено:['"`]/g, replace: 'POPUP.RESULT_FILLED' },
-            { find: /['"`]Найдено:['"`]/g, replace: 'POPUP.RESULT_MATCHED' },
-            { find: /['"`]Ошибки:['"`]/g, replace: 'POPUP.RESULT_ERRORS' },
-            { find: /['"`]Нет результатов['"`]/g, replace: 'POPUP.RESULT_NO_RESULTS' },
-            { find: /['"`]Заполнение\.\.\.['"`]/g, replace: 'POPUP.STATUS_FILLING' },
-            { find: /['"`]Готово!['"`]/g, replace: 'POPUP.STATUS_DONE' },
-        ]
-    },
-    'popup/scraper-panel.js': {
-        imports: ["import { POPUP } from '../labels/popup-labels.js';"],
-        replaces: [
-            { find: /['"`]Сканировать страницу['"`]/g, replace: 'POPUP.SCRAPER_BUTTON_SCAN' },
-            { find: /['"`]Нет данных для отображения['"`]/g, replace: 'POPUP.SCRAPER_NO_DATA' },
-        ]
-    },
-    'popup/copyfx-panel.js': {
-        imports: ["import { POPUP } from '../labels/popup-labels.js';"],
-        replaces: [
-            { find: /['"`]Трейдеров:['"`]/g, replace: 'POPUP.COPYFX_TRADERS' },
-            { find: /['"`]Обновить['"`]/g, replace: 'POPUP.COPYFX_REFRESH' },
-            { find: /['"`]Нет данных CopyFX['"`]/g, replace: 'POPUP.COPYFX_NO_DATA' },
-        ]
-    },
-    'popup/investor-panel.js': {
-        imports: ["import { POPUP } from '../labels/popup-labels.js';"],
-        replaces: [
-            { find: /['"`]Инвесторы:['"`]/g, replace: 'POPUP.INVESTORS_LIST' },
-            { find: /['"`]Нет данных об инвесторах['"`]/g, replace: 'POPUP.INVESTORS_NO_DATA' },
-        ]
-    },
-    'popup/ua-panel.js': {
-        imports: ["import { POPUP } from '../labels/popup-labels.js';"],
-        replaces: [
-            { find: /['"`]Подменить User-Agent['"`]/g, replace: 'POPUP.UA_TOGGLE_LABEL' },
-            { find: /['"`]Нет правил для подмены UA['"`]/g, replace: 'POPUP.UA_NO_RULES' },
-        ]
-    },
-    'background/background-app.js': {
-        imports: ["import { BACKGROUND } from '../labels/background-labels.js';"],
-        replaces: [
-            { find: /['"`]🟢 Background service worker started['"`]/g, replace: 'BACKGROUND.STARTUP' },
-            { find: /['"`]📁 State initialized['"`]/g, replace: 'BACKGROUND.STATE_INIT' },
-            { find: /['"`]Неизвестный тип сообщения:['"`]/g, replace: 'BACKGROUND.MSG_UNKNOWN_TYPE' },
-            { find: /['"`]Нет активной вкладки['"`]/g, replace: 'BACKGROUND.COPYFX_NO_ACTIVE_TAB' },
-            { find: /['"`]Нет данных о трейдерах['"`]/g, replace: 'BACKGROUND.COPYFX_NO_TRADERS_DATA' },
-            { find: /['"`]Нет данных об инвесторах['"`]/g, replace: 'BACKGROUND.COPYFX_NO_INVESTORS_DATA' },
-        ]
-    },
-    'content/content.js': {
-        imports: ["import { CONTENT } from '../labels/content-labels.js';"],
-        replaces: [
-            { find: /['"`]🟢 Dumb Patrick Inputs: content script loaded['"`]/g, replace: 'CONTENT.CONSOLE_START' },
-            { find: /['"`]📝 Начинаем заполнение\.\.\.['"`]/g, replace: 'CONTENT.CONSOLE_FILL_START' },
-            { find: /['"`]✅ Заполнение завершено['"`]/g, replace: 'CONTENT.CONSOLE_FILL_DONE' },
-            { find: /['"`]❌ Ошибка заполнения:['"`]/g, replace: 'CONTENT.CONSOLE_FILL_ERROR' },
-            { find: /['"`]🎯 Спецвставка\.\.\.['"`]/g, replace: 'CONTENT.CONSOLE_SPECIAL_START' },
-            { find: /['"`]✅ Спецвставка завершена['"`]/g, replace: 'CONTENT.CONSOLE_SPECIAL_DONE' },
-            { find: /['"`]Заполняем поля\.\.\.['"`]/g, replace: 'CONTENT.NOTIFICATION_FILLING' },
-            { find: /['"`]✅ Готово!['"`]/g, replace: 'CONTENT.NOTIFICATION_DONE' },
-            { find: /['"`]❌ Ошибка['"`]/g, replace: 'CONTENT.NOTIFICATION_ERROR' },
-            { find: /['"`]Наведите на элемент и кликните для выбора['"`]/g, replace: 'CONTENT.PICKER_INSTRUCTION' },
-            { find: /['"`]❌ Выбор отменён['"`]/g, replace: 'CONTENT.PICKER_CANCELLED' },
-            { find: /['"`]Найдено полей:['"`]/g, replace: 'CONTENT.STATUS_FOUND' },
-            { find: /['"`]Заполнено полей:['"`]/g, replace: 'CONTENT.STATUS_FILLED' },
-            { find: /['"`]Пропущено:['"`]/g, replace: 'CONTENT.STATUS_SKIPPED' },
-        ]
-    },
-    'options/options-bootstrap.js': {
-        imports: ["import { OPTIONS } from '../labels/options-labels.js';"],
-        replaces: [
-            { find: /['"`]Настройки Dumb Patrick Inputs['"`]/g, replace: 'OPTIONS.TITLE' },
-            { find: /['"`]Управление правилами заполнения форм['"`]/g, replace: 'OPTIONS.SUBTITLE' },
-        ]
-    },
-    'options/controllers/rules-controller.js': {
-        imports: ["import { OPTIONS } from '../labels/options-labels.js';"],
-        replaces: [
-            { find: /['"`]Правила заполнения['"`]/g, replace: 'OPTIONS.RULES_TITLE' },
-            { find: /['"`]\+ Добавить правило['"`]/g, replace: 'OPTIONS.RULES_ADD_BUTTON' },
-            { find: /['"`]Нет правил\. Создайте первое правило!['"`]/g, replace: 'OPTIONS.RULES_NO_RULES' },
-            { find: /['"`]Название правила['"`]/g, replace: 'OPTIONS.RULES_NAME' },
-            { find: /['"`]Шаблон['"`]/g, replace: 'OPTIONS.RULES_TEMPLATE' },
-            { find: /['"`]Условия['"`]/g, replace: 'OPTIONS.RULES_CONDITIONS' },
-            { find: /['"`]URL условия['"`]/g, replace: 'OPTIONS.RULES_URL_CONDITIONS' },
-            { find: /['"`]Удалить правило?['"`]/g, replace: 'OPTIONS.RULES_DELETE_CONFIRM' },
-        ]
-    },
-    'options/controllers/folders-controller.js': {
-        imports: ["import { OPTIONS } from '../labels/options-labels.js';"],
-        replaces: [
-            { find: /['"`]Папки['"`]/g, replace: 'OPTIONS.FOLDERS_TITLE' },
-            { find: /['"`]\+ Добавить папку['"`]/g, replace: 'OPTIONS.FOLDERS_ADD_BUTTON' },
-            { find: /['"`]Нет папок['"`]/g, replace: 'OPTIONS.FOLDERS_NO_FOLDERS' },
-            { find: /['"`]Название папки['"`]/g, replace: 'OPTIONS.FOLDERS_NAME' },
-            { find: /['"`]Правила в папке['"`]/g, replace: 'OPTIONS.FOLDERS_RULES' },
-        ]
-    },
-    'options/controllers/special-insertions-controller.js': {
-        imports: ["import { OPTIONS } from '../labels/options-labels.js';"],
-        replaces: [
-            { find: /['"`]Спецвставки['"`]/g, replace: 'OPTIONS.INSERTIONS_TITLE' },
-            { find: /['"`]\+ Добавить спецвставку['"`]/g, replace: 'OPTIONS.INSERTIONS_ADD_BUTTON' },
-            { find: /['"`]Нет спецвставок['"`]/g, replace: 'OPTIONS.INSERTIONS_NO_INSERTIONS' },
-            { find: /['"`]Название вставки['"`]/g, replace: 'OPTIONS.INSERTIONS_NAME' },
-            { find: /['"`]Шаги вставки['"`]/g, replace: 'OPTIONS.INSERTIONS_STEPS' },
-            { find: /['"`]Селектор['"`]/g, replace: 'OPTIONS.INSERTIONS_SELECTOR' },
-            { find: /['"`]Значение['"`]/g, replace: 'OPTIONS.INSERTIONS_VALUE' },
-            { find: /['"`]Задержка \(мс\)['"`]/g, replace: 'OPTIONS.INSERTIONS_DELAY' },
-        ]
-    },
-    'options/controllers/smart-counters-controller.js': {
-        imports: ["import { OPTIONS } from '../labels/options-labels.js';"],
-        replaces: [
-            { find: /['"`]Смарт-счётчики['"`]/g, replace: 'OPTIONS.COUNTERS_TITLE' },
-            { find: /['"`]\+ Добавить счётчик['"`]/g, replace: 'OPTIONS.COUNTERS_ADD_BUTTON' },
-            { find: /['"`]Нет счётчиков['"`]/g, replace: 'OPTIONS.COUNTERS_NO_COUNTERS' },
-            { find: /['"`]Название счётчика['"`]/g, replace: 'OPTIONS.COUNTERS_NAME' },
-            { find: /['"`]Текущее значение['"`]/g, replace: 'OPTIONS.COUNTERS_CURRENT' },
-            { find: /['"`]История['"`]/g, replace: 'OPTIONS.COUNTERS_HISTORY' },
-        ]
-    },
-    'options/controllers/snapshots-controller.js': {
-        imports: ["import { OPTIONS } from '../labels/options-labels.js';"],
-        replaces: [
-            { find: /['"`]Снапшоты состояния['"`]/g, replace: 'OPTIONS.SNAPSHOTS_TITLE' },
-            { find: /['"`]\+ Создать снапшот['"`]/g, replace: 'OPTIONS.SNAPSHOTS_ADD_BUTTON' },
-            { find: /['"`]Нет снапшотов['"`]/g, replace: 'OPTIONS.SNAPSHOTS_NO_SNAPSHOTS' },
-            { find: /['"`]Название снапшота['"`]/g, replace: 'OPTIONS.SNAPSHOTS_NAME' },
-            { find: /['"`]Дата создания['"`]/g, replace: 'OPTIONS.SNAPSHOTS_DATE' },
-            { find: /['"`]Восстановить['"`]/g, replace: 'OPTIONS.SNAPSHOTS_RESTORE' },
-            { find: /['"`]Восстановить это состояние?['"`]/g, replace: 'OPTIONS.SNAPSHOTS_RESTORE_CONFIRM' },
-        ]
-    },
-    'options/controllers/word-lists-controller.js': {
-        imports: ["import { OPTIONS } from '../labels/options-labels.js';"],
-        replaces: [
-            { find: /['"`]Списки слов['"`]/g, replace: 'OPTIONS.WORDLISTS_TITLE' },
-            { find: /['"`]\+ Добавить список['"`]/g, replace: 'OPTIONS.WORDLISTS_ADD_BUTTON' },
-            { find: /['"`]Нет списков['"`]/g, replace: 'OPTIONS.WORDLISTS_NO_LISTS' },
-            { find: /['"`]Название списка['"`]/g, replace: 'OPTIONS.WORDLISTS_NAME' },
-            { find: /['"`]Слова \(через запятую или с новой строки\)['"`]/g, replace: 'OPTIONS.WORDLISTS_WORDS' },
-        ]
-    },
-    'options/controllers/scraper-config-controller.js': {
-        imports: ["import { OPTIONS } from '../labels/options-labels.js';"],
-        replaces: [
-            { find: /['"`]Настройки скрапера['"`]/g, replace: 'OPTIONS.SCRAPER_TITLE' },
-            { find: /['"`]Включить скрапер['"`]/g, replace: 'OPTIONS.SCRAPER_ENABLED' },
-            { find: /['"`]URL паттерны \(по одному на строку\)['"`]/g, replace: 'OPTIONS.SCRAPER_URL_PATTERNS' },
-        ]
-    },
-    'options/controllers/copyfx-config-controller.js': {
-        imports: ["import { OPTIONS } from '../labels/options-labels.js';"],
-        replaces: [
-            { find: /['"`]Настройки CopyFX['"`]/g, replace: 'OPTIONS.COPYFX_TITLE' },
-            { find: /['"`]Включить CopyFX['"`]/g, replace: 'OPTIONS.COPYFX_ENABLED' },
-            { find: /['"`]Административный домен['"`]/g, replace: 'OPTIONS.COPYFX_ADMIN_DOMAIN' },
-        ]
-    },
-    'options/controllers/ua-rules-controller.js': {
-        imports: ["import { OPTIONS } from '../labels/options-labels.js';"],
-        replaces: [
-            { find: /['"`]Правила подмены User-Agent['"`]/g, replace: 'OPTIONS.UA_TITLE' },
-            { find: /['"`]\+ Добавить правило['"`]/g, replace: 'OPTIONS.UA_ADD_BUTTON' },
-            { find: /['"`]Нет правил UA['"`]/g, replace: 'OPTIONS.UA_NO_RULES' },
-            { find: /['"`]User-Agent['"`]/g, replace: 'OPTIONS.UA_USER_AGENT' },
-            { find: /['"`]URL паттерн['"`]/g, replace: 'OPTIONS.UA_URL_PATTERN' },
-            { find: /['"`]Включено['"`]/g, replace: 'OPTIONS.UA_ENABLED' },
-        ]
-    },
-    'options/controllers/import-export-controller.js': {
-        imports: ["import { OPTIONS } from '../labels/options-labels.js';"],
-        replaces: [
-            { find: /['"`]Импорт и экспорт настроек['"`]/g, replace: 'OPTIONS.IMPORT_EXPORT_TITLE' },
-            { find: /['"`]Экспортировать настройки['"`]/g, replace: 'OPTIONS.IMPORT_EXPORT_EXPORT_BUTTON' },
-            { find: /['"`]Импортировать настройки['"`]/g, replace: 'OPTIONS.IMPORT_EXPORT_IMPORT_BUTTON' },
-            { find: /['"`]Выберите JSON-файл['"`]/g, replace: 'OPTIONS.IMPORT_EXPORT_SELECT_FILE' },
-            { find: /['"`]Настройки успешно импортированы['"`]/g, replace: 'OPTIONS.IMPORT_EXPORT_SUCCESS' },
-            { find: /['"`]Ошибка импорта['"`]/g, replace: 'OPTIONS.IMPORT_EXPORT_ERROR' },
-        ]
-    }
-};
+// Экранирование спецсимволов для RegExp
+function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
+// Рекурсивный обход папки для поиска всех JS-файлов
+function getAllJsFiles(dir, fileList = []) {
+    const files = fs.readdirSync(dir);
+    for (const file of files) {
+        const fullPath = path.join(dir, file);
+        if (fs.statSync(fullPath).isDirectory()) {
+            getAllJsFiles(fullPath, fileList);
+        } else if (file.endsWith('.js')) {
+            fileList.push(fullPath);
+        }
+    }
+    return fileList;
+}
+
+// Функция для добавления импортов
 function addImports(content, imports) {
     const importRegex = /^import .*?;$/gm;
     const matches = content.match(importRegex);
@@ -210,17 +34,241 @@ function addImports(content, imports) {
     }
 }
 
+// Функция для применения замен (безопасная)
 function applyReplacements(content, replaces) {
     let newContent = content;
     for (const rep of replaces) {
-        newContent = newContent.replace(rep.find, rep.replace);
+        const escapedFind = escapeRegExp(rep.find);
+        newContent = newContent.replace(new RegExp(escapedFind, 'g'), rep.replace);
     }
     return newContent;
 }
 
-const rootDir = path.resolve(__dirname, '..');
+// Карта замен: файл -> { imports: [...], replaces: [{ find: 'строка', replace: 'константа' }] }
+const replacementsMap = {
+    // POPUP
+    'popup/fill-panel.js': {
+        imports: [
+            "import { POPUP } from '../labels/popup-labels.js';",
+            "import { COMMON } from '../labels/common-labels.js';"
+        ],
+        replaces: [
+            { find: 'Заполнить все поля', replace: 'POPUP.BUTTON_FILL_ALL' },
+            { find: 'Спецвставка', replace: 'POPUP.BUTTON_FILL_SPECIAL' },
+            { find: 'Открыть настройки', replace: 'POPUP.BUTTON_OPEN_OPTIONS' },
+            { find: 'Активных правил:', replace: 'POPUP.STATUS_ACTIVE_RULES' },
+            { find: 'Нет активных правил', replace: 'POPUP.STATUS_NO_ACTIVE_RULES' },
+            { find: 'Заполнение...', replace: 'POPUP.STATUS_FILLING' },
+            { find: 'Готово!', replace: 'POPUP.STATUS_DONE' },
+            { find: 'Заполнено:', replace: 'POPUP.RESULT_FILLED' },
+            { find: 'Найдено:', replace: 'POPUP.RESULT_MATCHED' },
+            { find: 'Ошибки:', replace: 'POPUP.RESULT_ERRORS' },
+            { find: 'Нет результатов', replace: 'POPUP.RESULT_NO_RESULTS' },
+        ]
+    },
+    'popup/scraper-panel.js': {
+        imports: ["import { POPUP } from '../labels/popup-labels.js';"],
+        replaces: [
+            { find: 'Сканировать страницу', replace: 'POPUP.SCRAPER_BUTTON_SCAN' },
+            { find: 'Нет данных для отображения', replace: 'POPUP.SCRAPER_NO_DATA' },
+        ]
+    },
+    'popup/copyfx-panel.js': {
+        imports: ["import { POPUP } from '../labels/popup-labels.js';"],
+        replaces: [
+            { find: 'Трейдеров:', replace: 'POPUP.COPYFX_TRADERS' },
+            { find: 'Обновить', replace: 'POPUP.COPYFX_REFRESH' },
+            { find: 'Нет данных CopyFX', replace: 'POPUP.COPYFX_NO_DATA' },
+        ]
+    },
+    'popup/investor-panel.js': {
+        imports: ["import { POPUP } from '../labels/popup-labels.js';"],
+        replaces: [
+            { find: 'Инвесторы:', replace: 'POPUP.INVESTORS_LIST' },
+            { find: 'Нет данных об инвесторах', replace: 'POPUP.INVESTORS_NO_DATA' },
+        ]
+    },
+    'popup/ua-panel.js': {
+        imports: ["import { POPUP } from '../labels/popup-labels.js';"],
+        replaces: [
+            { find: 'Подменить User-Agent', replace: 'POPUP.UA_TOGGLE_LABEL' },
+            { find: 'Нет правил для подмены UA', replace: 'POPUP.UA_NO_RULES' },
+        ]
+    },
 
-for (const [filePath, config] of Object.entries(replacements)) {
+    // BACKGROUND
+    'background/background-app.js': {
+        imports: ["import { BACKGROUND } from '../labels/background-labels.js';"],
+        replaces: [
+            { find: '🟢 Background service worker started', replace: 'BACKGROUND.STARTUP' },
+            { find: '📁 State initialized', replace: 'BACKGROUND.STATE_INIT' },
+            { find: '📦 State migrated from old version', replace: 'BACKGROUND.STATE_MIGRATED' },
+            { find: 'Неизвестный тип сообщения:', replace: 'BACKGROUND.MSG_UNKNOWN_TYPE' },
+            { find: 'Нет активной вкладки', replace: 'BACKGROUND.COPYFX_NO_ACTIVE_TAB' },
+            { find: 'Нет данных о трейдерах', replace: 'BACKGROUND.COPYFX_NO_TRADERS_DATA' },
+            { find: 'Нет данных об инвесторах', replace: 'BACKGROUND.COPYFX_NO_INVESTORS_DATA' },
+        ]
+    },
+
+    // CONTENT
+    'content/content.js': {
+        imports: ["import { CONTENT } from '../labels/content-labels.js';"],
+        replaces: [
+            { find: '🟢 Dumb Patrick Inputs: content script loaded', replace: 'CONTENT.CONSOLE_START' },
+            { find: '📝 Начинаем заполнение...', replace: 'CONTENT.CONSOLE_FILL_START' },
+            { find: '✅ Заполнение завершено', replace: 'CONTENT.CONSOLE_FILL_DONE' },
+            { find: '❌ Ошибка заполнения:', replace: 'CONTENT.CONSOLE_FILL_ERROR' },
+            { find: '🎯 Спецвставка...', replace: 'CONTENT.CONSOLE_SPECIAL_START' },
+            { find: '✅ Спецвставка завершена', replace: 'CONTENT.CONSOLE_SPECIAL_DONE' },
+            { find: 'Заполняем поля...', replace: 'CONTENT.NOTIFICATION_FILLING' },
+            { find: '✅ Готово!', replace: 'CONTENT.NOTIFICATION_DONE' },
+            { find: '❌ Ошибка', replace: 'CONTENT.NOTIFICATION_ERROR' },
+            { find: 'Наведите на элемент и кликните для выбора', replace: 'CONTENT.PICKER_INSTRUCTION' },
+            { find: '❌ Выбор отменён', replace: 'CONTENT.PICKER_CANCELLED' },
+            { find: 'Найдено полей:', replace: 'CONTENT.STATUS_FOUND' },
+            { find: 'Заполнено полей:', replace: 'CONTENT.STATUS_FILLED' },
+            { find: 'Пропущено:', replace: 'CONTENT.STATUS_SKIPPED' },
+        ]
+    },
+
+    // OPTIONS bootstrap
+    'options/options-bootstrap.js': {
+        imports: ["import { OPTIONS } from '../labels/options-labels.js';"],
+        replaces: [
+            { find: 'Настройки Dumb Patrick Inputs', replace: 'OPTIONS.TITLE' },
+            { find: 'Управление правилами заполнения форм', replace: 'OPTIONS.SUBTITLE' },
+        ]
+    },
+};
+
+// Добавляем все файлы из options/controllers/
+const controllersDir = path.join(__dirname, '..', 'options', 'controllers');
+if (fs.existsSync(controllersDir)) {
+    const controllerFiles = fs.readdirSync(controllersDir);
+    for (const file of controllerFiles) {
+        if (file.endsWith('.js')) {
+            const filePath = `options/controllers/${file}`;
+            const fileName = path.basename(file, '.js');
+
+            let replaces = [];
+            let imports = ["import { OPTIONS } from '../labels/options-labels.js';"];
+
+            const controllerMappings = {
+                'rules-controller': {
+                    replaces: [
+                        { find: 'Правила заполнения', replace: 'OPTIONS.RULES_TITLE' },
+                        { find: '+ Добавить правило', replace: 'OPTIONS.RULES_ADD_BUTTON' },
+                        { find: 'Нет правил. Создайте первое правило!', replace: 'OPTIONS.RULES_NO_RULES' },
+                        { find: 'Название правила', replace: 'OPTIONS.RULES_NAME' },
+                        { find: 'Шаблон', replace: 'OPTIONS.RULES_TEMPLATE' },
+                        { find: 'Условия', replace: 'OPTIONS.RULES_CONDITIONS' },
+                        { find: 'URL условия', replace: 'OPTIONS.RULES_URL_CONDITIONS' },
+                        { find: 'Удалить правило?', replace: 'OPTIONS.RULES_DELETE_CONFIRM' },
+                    ]
+                },
+                'folders-controller': {
+                    replaces: [
+                        { find: 'Папки', replace: 'OPTIONS.FOLDERS_TITLE' },
+                        { find: '+ Добавить папку', replace: 'OPTIONS.FOLDERS_ADD_BUTTON' },
+                        { find: 'Нет папок', replace: 'OPTIONS.FOLDERS_NO_FOLDERS' },
+                        { find: 'Название папки', replace: 'OPTIONS.FOLDERS_NAME' },
+                        { find: 'Правила в папке', replace: 'OPTIONS.FOLDERS_RULES' },
+                    ]
+                },
+                'special-insertions-controller': {
+                    replaces: [
+                        { find: 'Спецвставки', replace: 'OPTIONS.INSERTIONS_TITLE' },
+                        { find: '+ Добавить спецвставку', replace: 'OPTIONS.INSERTIONS_ADD_BUTTON' },
+                        { find: 'Нет спецвставок', replace: 'OPTIONS.INSERTIONS_NO_INSERTIONS' },
+                        { find: 'Название вставки', replace: 'OPTIONS.INSERTIONS_NAME' },
+                        { find: 'Шаги вставки', replace: 'OPTIONS.INSERTIONS_STEPS' },
+                        { find: 'Селектор', replace: 'OPTIONS.INSERTIONS_SELECTOR' },
+                        { find: 'Значение', replace: 'OPTIONS.INSERTIONS_VALUE' },
+                        { find: 'Задержка (мс)', replace: 'OPTIONS.INSERTIONS_DELAY' },
+                    ]
+                },
+                'smart-counters-controller': {
+                    replaces: [
+                        { find: 'Смарт-счётчики', replace: 'OPTIONS.COUNTERS_TITLE' },
+                        { find: '+ Добавить счётчик', replace: 'OPTIONS.COUNTERS_ADD_BUTTON' },
+                        { find: 'Нет счётчиков', replace: 'OPTIONS.COUNTERS_NO_COUNTERS' },
+                        { find: 'Название счётчика', replace: 'OPTIONS.COUNTERS_NAME' },
+                        { find: 'Текущее значение', replace: 'OPTIONS.COUNTERS_CURRENT' },
+                        { find: 'История', replace: 'OPTIONS.COUNTERS_HISTORY' },
+                    ]
+                },
+                'snapshots-controller': {
+                    replaces: [
+                        { find: 'Снапшоты состояния', replace: 'OPTIONS.SNAPSHOTS_TITLE' },
+                        { find: '+ Создать снапшот', replace: 'OPTIONS.SNAPSHOTS_ADD_BUTTON' },
+                        { find: 'Нет снапшотов', replace: 'OPTIONS.SNAPSHOTS_NO_SNAPSHOTS' },
+                        { find: 'Название снапшота', replace: 'OPTIONS.SNAPSHOTS_NAME' },
+                        { find: 'Дата создания', replace: 'OPTIONS.SNAPSHOTS_DATE' },
+                        { find: 'Восстановить', replace: 'OPTIONS.SNAPSHOTS_RESTORE' },
+                        { find: 'Восстановить это состояние?', replace: 'OPTIONS.SNAPSHOTS_RESTORE_CONFIRM' },
+                    ]
+                },
+                'word-lists-controller': {
+                    replaces: [
+                        { find: 'Списки слов', replace: 'OPTIONS.WORDLISTS_TITLE' },
+                        { find: '+ Добавить список', replace: 'OPTIONS.WORDLISTS_ADD_BUTTON' },
+                        { find: 'Нет списков', replace: 'OPTIONS.WORDLISTS_NO_LISTS' },
+                        { find: 'Название списка', replace: 'OPTIONS.WORDLISTS_NAME' },
+                        { find: 'Слова (через запятую или с новой строки)', replace: 'OPTIONS.WORDLISTS_WORDS' },
+                    ]
+                },
+                'scraper-config-controller': {
+                    replaces: [
+                        { find: 'Настройки скрапера', replace: 'OPTIONS.SCRAPER_TITLE' },
+                        { find: 'Включить скрапер', replace: 'OPTIONS.SCRAPER_ENABLED' },
+                        { find: 'URL паттерны (по одному на строку)', replace: 'OPTIONS.SCRAPER_URL_PATTERNS' },
+                    ]
+                },
+                'copyfx-config-controller': {
+                    replaces: [
+                        { find: 'Настройки CopyFX', replace: 'OPTIONS.COPYFX_TITLE' },
+                        { find: 'Включить CopyFX', replace: 'OPTIONS.COPYFX_ENABLED' },
+                        { find: 'Административный домен', replace: 'OPTIONS.COPYFX_ADMIN_DOMAIN' },
+                    ]
+                },
+                'ua-rules-controller': {
+                    replaces: [
+                        { find: 'Правила подмены User-Agent', replace: 'OPTIONS.UA_TITLE' },
+                        { find: '+ Добавить правило', replace: 'OPTIONS.UA_ADD_BUTTON' },
+                        { find: 'Нет правил UA', replace: 'OPTIONS.UA_NO_RULES' },
+                        { find: 'User-Agent', replace: 'OPTIONS.UA_USER_AGENT' },
+                        { find: 'URL паттерн', replace: 'OPTIONS.UA_URL_PATTERN' },
+                        { find: 'Включено', replace: 'OPTIONS.UA_ENABLED' },
+                    ]
+                },
+                'import-export-controller': {
+                    replaces: [
+                        { find: 'Импорт и экспорт настроек', replace: 'OPTIONS.IMPORT_EXPORT_TITLE' },
+                        { find: 'Экспортировать настройки', replace: 'OPTIONS.IMPORT_EXPORT_EXPORT_BUTTON' },
+                        { find: 'Импортировать настройки', replace: 'OPTIONS.IMPORT_EXPORT_IMPORT_BUTTON' },
+                        { find: 'Выберите JSON-файл', replace: 'OPTIONS.IMPORT_EXPORT_SELECT_FILE' },
+                        { find: 'Настройки успешно импортированы', replace: 'OPTIONS.IMPORT_EXPORT_SUCCESS' },
+                        { find: 'Ошибка импорта', replace: 'OPTIONS.IMPORT_EXPORT_ERROR' },
+                    ]
+                }
+            };
+
+            if (controllerMappings[fileName]) {
+                replaces = controllerMappings[fileName].replaces;
+            }
+
+            if (replaces.length > 0) {
+                replacementsMap[filePath] = { imports, replaces };
+            }
+        }
+    }
+}
+
+// Основной цикл
+const rootDir = path.resolve(__dirname, '..');
+let totalUpdated = 0;
+
+for (const [filePath, config] of Object.entries(replacementsMap)) {
     const fullPath = path.join(rootDir, filePath);
 
     if (!fs.existsSync(fullPath)) {
@@ -229,15 +277,29 @@ for (const [filePath, config] of Object.entries(replacements)) {
     }
 
     let content = fs.readFileSync(fullPath, 'utf8');
-    const hasImports = config.imports.some(imp => content.includes(imp));
+    let changed = false;
 
+    // Проверяем импорты
+    const hasImports = config.imports.some(imp => content.includes(imp));
     if (!hasImports) {
         content = addImports(content, config.imports);
+        changed = true;
     }
 
-    content = applyReplacements(content, config.replaces);
-    fs.writeFileSync(fullPath, content, 'utf8');
-    console.log(`✅ Updated: ${filePath}`);
+    // Проверяем замены
+    const newContent = applyReplacements(content, config.replaces);
+    if (newContent !== content) {
+        content = newContent;
+        changed = true;
+    }
+
+    if (changed) {
+        fs.writeFileSync(fullPath, content, 'utf8');
+        console.log(`✅ Updated: ${filePath}`);
+        totalUpdated++;
+    } else {
+        console.log(`⏭️ No changes: ${filePath}`);
+    }
 }
 
-console.log('🎉 All replacements completed!');
+console.log(`\n🎉 All replacements completed! Updated ${totalUpdated} files.`);

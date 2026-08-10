@@ -36,11 +36,11 @@ export class RulesController {
       </div>
       <div class="rule-body">
         <div class="rule-template">
-          <label>Шаблон:</label>
+          <label>OPTIONS.RULES_TEMPLATE:</label>
           <input type="text" class="rule-template-input" value="\" data-index="\">
         </div>
         <div class="rule-conditions">
-          <label>Условия:</label>
+          <label>OPTIONS.RULES_CONDITIONS:</label>
           <textarea class="rule-conditions-input" data-index="\">\</textarea>
         </div>
       </div>

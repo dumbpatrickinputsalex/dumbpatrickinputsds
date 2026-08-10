@@ -35,17 +35,17 @@ export class UaRulesController {
       </div>
       <div class="ua-rule-body">
         <div class="ua-rule-field">
-          <label>User-Agent:</label>
+          <label>OPTIONS.UA_USER_AGENT:</label>
           <input type="text" class="ua-rule-agent" value="\" data-index="\">
         </div>
         <div class="ua-rule-field">
-          <label>URL паттерн:</label>
+          <label>OPTIONS.UA_URL_PATTERN:</label>
           <input type="text" class="ua-rule-url" value="\" data-index="\">
         </div>
         <div class="ua-rule-field">
           <label>
             <input type="checkbox" class="ua-rule-enabled-checkbox" \ data-index="\">
-            Включено
+            OPTIONS.UA_ENABLED
           </label>
         </div>
       </div>

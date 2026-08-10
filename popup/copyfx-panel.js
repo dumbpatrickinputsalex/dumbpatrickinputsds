@@ -36,7 +36,7 @@ export class CopyfxPanel {
 
   _renderTraders(traders) {
     if (!this.elements.copyfxTraders) return;
-    this.elements.copyfxTraders.textContent = Трейдеров: ;
+    this.elements.copyfxTraders.textContent = POPUP.COPYFX_TRADERS ;
   }
 
   _sendMessage(type, payload) {

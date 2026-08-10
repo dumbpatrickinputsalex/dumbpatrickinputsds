@@ -34,7 +34,7 @@ export class SmartCountersController {
         <button class="counter-delete" data-index="\">×</button>
       </div>
       <div class="counter-body">
-        <div class="counter-history">История: \ записей</div>
+        <div class="counter-history">OPTIONS.COUNTERS_HISTORY: \ записей</div>
       </div>
     \;
     return card;

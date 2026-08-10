@@ -59,7 +59,7 @@ export class FillPanel {
     }) || [];
     
     if (this.elements.statusLabel) {
-      this.elements.statusLabel.textContent = Активных правил: ;
+      this.elements.statusLabel.textContent = POPUP.STATUS_ACTIVE_RULES ;
     }
   }
 
@@ -75,10 +75,10 @@ export class FillPanel {
     this.elements.resultDetails.style.display = 'block';
     const table = this.elements.resultTable;
     if (table) {
-      const errorsHtml = result.errors ? <tr><td>Ошибки:</td><td></td></tr> : '';
+      const errorsHtml = result.errors ? <tr><td>POPUP.RESULT_ERRORS</td><td></td></tr> : '';
       table.innerHTML = 
-        <tr><td>Заполнено:</td><td></td></tr>
-        <tr><td>Найдено:</td><td></td></tr>
+        <tr><td>POPUP.RESULT_FILLED</td><td></td></tr>
+        <tr><td>POPUP.RESULT_MATCHED</td><td></td></tr>
         
       ;
     }
