@@ -1,46 +1,107 @@
-(function () {
-  var cache = {};
-  window.__dpi_copyfx_cache = cache;
-
-  var origFetch = window.fetch;
-  window.fetch = function () {
-    var url = typeof arguments[0] === 'string' ? arguments[0] : (arguments[0] && arguments[0].url) || '';
-    var init = arguments[1];
-    var p = origFetch.apply(this, arguments);
-    if (url.indexOf('/copyfx2-api/') !== -1) {
-      var key = url.split('?')[0];
-      if (init && init.body) {
-        try { cache[key + '::body'] = JSON.parse(init.body); } catch (e) {}
-      }
-      p.then(function (resp) {
-        var clone = resp.clone();
-        clone.json().then(function (data) {
-          cache[key] = data;
-        }).catch(function () {});
-      }).catch(function () {});
+﻿// content/copyfx-interceptor.js
+(function() {
+    // Guard: предотвращаем повторную установку
+    if (window.__dpi_copyfx_interceptor_installed) {
+        console.log('ℹ️ CopyFX interceptor already installed');
+        return;
     }
-    return p;
-  };
+    window.__dpi_copyfx_interceptor_installed = true;
 
-  var origOpen = XMLHttpRequest.prototype.open;
-  var origSend = XMLHttpRequest.prototype.send;
-  XMLHttpRequest.prototype.open = function (method, url) {
-    this.__dpi_url = url;
-    return origOpen.apply(this, arguments);
-  };
-  XMLHttpRequest.prototype.send = function () {
-    var xhr = this;
-    var url = xhr.__dpi_url || '';
-    var body = arguments[0];
-    if (url.indexOf('/copyfx2-api/') !== -1) {
-      var key = url.split('?')[0];
-      if (body) {
-        try { cache[key + '::body'] = JSON.parse(body); } catch (e) {}
-      }
-      xhr.addEventListener('load', function () {
-        try { cache[key] = JSON.parse(xhr.responseText); } catch (e) {}
-      });
+    // Кэш для хранения данных
+    window.__dpi_copyfx_cache = window.__dpi_copyfx_cache || {
+        traders: null,
+        investors: null,
+        history: []
+    };
+
+    // Проверка URL на принадлежность к CopyFX API
+    function isCopyfxUrl(url) {
+        if (!url) return false;
+        const patterns = [
+            '/api/traders',
+            '/api/investors',
+            '/api/copyfx',
+            '/api/fx'
+        ];
+        return patterns.some(pattern => url.includes(pattern));
     }
-    return origSend.apply(this, arguments);
-  };
+
+    // Безопасный парсинг JSON
+    function safeJsonParse(text) {
+        if (!text) return null;
+        try {
+            return JSON.parse(text);
+        } catch (_) {
+            return null;
+        }
+    }
+
+    // Сохранение данных в кэш
+    function storeData(url, data) {
+        if (!data) return;
+
+        const historyEntry = {
+            url: url,
+            timestamp: Date.now(),
+            data: data
+        };
+
+        window.__dpi_copyfx_cache.history.push(historyEntry);
+        if (window.__dpi_copyfx_cache.history.length > 50) {
+            window.__dpi_copyfx_cache.history.shift();
+        }
+
+        if (url.includes('traders')) {
+            window.__dpi_copyfx_cache.traders = data;
+        } else if (url.includes('investors')) {
+            window.__dpi_copyfx_cache.investors = data;
+        }
+    }
+
+    // Перехват fetch
+    const originalFetch = window.fetch;
+    window.fetch = function(input, init) {
+        const url = typeof input === 'string' ? input : input?.url || '';
+
+        return originalFetch.call(this, input, init).then(async (response) => {
+            if (isCopyfxUrl(url)) {
+                try {
+                    const clonedResponse = response.clone();
+                    const text = await clonedResponse.text();
+                    const data = safeJsonParse(text);
+                    if (data) {
+                        storeData(url, data);
+                    }
+                } catch (error) {
+                    // Тихо игнорируем ошибки парсинга
+                }
+            }
+            return response;
+        });
+    };
+
+    // Перехват XMLHttpRequest
+    const originalOpen = XMLHttpRequest.prototype.open;
+    const originalSend = XMLHttpRequest.prototype.send;
+
+    XMLHttpRequest.prototype.open = function(method, url, async, user, password) {
+        this._dpi_url = url;
+        return originalOpen.call(this, method, url, async !== false, user, password);
+    };
+
+    XMLHttpRequest.prototype.send = function(body) {
+        this.addEventListener('load', function() {
+            if (!this._dpi_url) return;
+            if (!isCopyfxUrl(this._dpi_url)) return;
+
+            const data = safeJsonParse(this.responseText);
+            if (data) {
+                storeData(this._dpi_url, data);
+            }
+        });
+
+        return originalSend.call(this, body);
+    };
+
+    console.log('✅ CopyFX interceptor installed successfully');
 })();
