@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Dumb Patrick Inputs — настройки</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <nav class="topbar">
+    <img src="../icons/icon48.png" alt="" class="brand-icon"><div class="brand">Dumb Patrick Inputs</div>
+    <div class="tabs">
+      <button data-tab="rules"      class="tab active">Правила</button>
+      <button data-tab="extras"     class="tab">Спец. возможности</button>
+      <button data-tab="versions"   class="tab">Версии</button>
+      <button data-tab="backup"     class="tab">Экспорт / Импорт</button>
+      <button data-tab="settings"   class="tab">Настройки</button>
+      <button data-tab="about"      class="tab">О приложении</button>
+    </div>
+  </nav>
+
+  <main>
+    <!-- ================= Правила ================= -->
+    <section id="tab-rules" class="tab-panel active">
+      <div class="section-head">
+        <h2>Правила заполнения</h2>
+        <div class="row" style="gap:8px;margin:0">
+          <button id="manageRules" title="Управление правилами (массовое удаление)">Управление</button>
+          <button id="addFolder" class="accent" title="Создать новую папку">+ Папка</button>
+          <button id="addRule" class="primary" title="Создать новое правило (спросит куда положить)">+ Правило</button>
+        </div>
+      </div>
+      <p class="hint">
+        Правила применяются сверху вниз. Первое совпавшее захватывает поле. Порядок меняется
+        кнопками ▲ ▼. Правило можно положить в папку через дропдаун в его настройках.
+      </p>
+      <div id="foldersRoot"></div>
+    </section>
+
+    <!-- ================= Спец. возможности ================= -->
+    <section id="tab-extras" class="tab-panel">
+
+      <div class="section-head">
+        <h2>Получение данных о клиенте из debug</h2>
+      </div>
+      <p class="hint">
+        Считывает key-value данные из debug-таблицы на странице и показывает их в попапе расширения.
+        Укажите URL-подстроку и родительский селектор. Чтобы получить список полей, откройте нужную страницу
+        и нажмите «🔍 Сканировать» в попапе расширения (возле закладок).
+      </p>
+      <div id="scraperConfigBox"></div>
+
+      <hr style="border:none;border-top:1px solid var(--border);margin:28px 0">
+
+      <div class="section-head">
+        <h2>Copy Trading — Работа с API</h2>
+      </div>
+      <p class="hint">
+        Считывает ответ API со списком стратегий CopyFX и показывает таблицу трейдеров в попапе.
+        Кнопка «Получить трейдеров» доступна на страницах, совпадающих по URL-паттерну.
+      </p>
+      <div id="copyfxConfigBox"></div>
+
+      <hr style="border:none;border-top:1px solid var(--border);margin:28px 0">
+
+      <div class="section-head">
+        <h2>User-Agent по URL</h2>
+        <div class="row" style="gap:8px;margin:0">
+          <button id="addUaRule" class="primary">Добавить</button>
+        </div>
+      </div>
+      <p class="hint">Автоматическая подмена User-Agent на сайтах, совпадающих по URL. Работает без хоткеев — расширение само применяет нужный агент при переходе на страницу.</p>
+      <div id="uaRulesList"></div>
+
+      <hr style="border:none;border-top:1px solid var(--border);margin:28px 0">
+
+      <div class="section-head">
+        <h2>Специальные вставки</h2>
+      </div>
+      <div class="notice-wip">
+        ⚠ Раздел временно недоступен — находится в разработке.
+      </div>
+      <!--
+      <div class="row" style="gap:8px;margin:0">
+        <button id="manageSpecial" title="Управление вставками (массовое удаление)">Управление</button>
+        <button id="addSpecialFromHtml" class="accent">Из HTML-кода</button>
+        <button id="addSpecial" class="primary">Добавить</button>
+      </div>
+      <p class="hint">
+        Одна вставка на URL-паттерн. По шорткею Ctrl+Shift+1
+        селектор на текущей странице очищается и заполняется значением из шаблона.
+      </p>
+      -->
+      <div id="specialList" style="display:none"></div>
+
+      <hr style="border:none;border-top:1px solid var(--border);margin:28px 0">
+
+      <div class="section-head">
+        <h2>Умные инкременторы</h2>
+        <div class="row" style="gap:8px;margin:0">
+          <button id="manageCounters" title="Управление инкременторами (массовое удаление)">Управление</button>
+          <button id="addCounter" class="primary">Добавить</button>
+        </div>
+      </div>
+      <p class="hint">
+        Именованный счётчик с префиксом и ветвлением по URL-домену.
+        Используйте в шаблонах как <code>{{seq:имя}}</code>. При каждом заполнении
+        значение увеличивается на 1. Если URL страницы совпадает с regex одного из доменов,
+        к значению добавляется суффикс (например <code>B</code>). Regex проверяется без учёта регистра.
+      </p>
+      <div id="counterList"></div>
+
+      <hr style="border:none;border-top:1px solid var(--border);margin:28px 0">
+
+      <div class="section-head">
+        <h2>Пользовательские списки слов</h2>
+        <div class="row" style="gap:8px;margin:0">
+          <button id="manageWordLists" title="Управление списками (массовое удаление)">Управление</button>
+          <button id="addWordList" class="primary">Добавить</button>
+        </div>
+      </div>
+      <p class="hint">
+        Создайте свои списки слов для использования в шаблонах через <code>{{list:имя}}</code>.
+        При каждом заполнении подставляется случайное слово из списка.
+      </p>
+      <div id="wordListsBox"></div>
+    </section>
+
+    <!-- ================= Версии ================= -->
+    <section id="tab-versions" class="tab-panel">
+      <div class="section-head">
+        <h2>Версии настроек</h2>
+        <button id="saveSnapshot" class="primary">💾 Сохранить текущую версию</button>
+      </div>
+      <p class="hint">
+        Ручные версии (макс. <b>20</b>) — при переполнении удаляется самая старая <b>без звёздочки</b>.
+        Автоматические версии (макс. <b>10</b>) создаются при сохранении правил и хранятся отдельно.
+      </p>
+      <div id="snapList" class="snap-list"></div>
+      <h3 class="snap-auto-heading" id="snapAutoHeading" style="display:none">Автоматические версии</h3>
+      <div id="snapAutoList" class="snap-list"></div>
+    </section>
+
+    <!-- ================= Экспорт / Импорт ================= -->
+    <section id="tab-backup" class="tab-panel">
+      <h2>Экспорт и импорт</h2>
+      <p class="backup-desc">Все настройки хранятся локально в браузере. Для переноса между устройствами и коллегами используйте JSON-файл или отдельные версии.</p>
+      <div class="backup-buttons">
+        <button id="exportBtn" class="backup-btn">⬇ Скачать JSON</button>
+        <label class="backup-btn backup-btn-primary">⬆ Загрузить JSON<input type="file" id="importFile" accept="application/json" hidden></label>
+      </div>
+      <div class="hint" id="backupStatus"></div>
+      <h3 class="backup-strategy-title">Стратегия импорта</h3>
+      <div class="backup-strategy">
+        <label class="inline-lbl"><input type="radio" name="importMode" value="replace" checked> Заменить всё</label>
+        <label class="inline-lbl"><input type="radio" name="importMode" value="merge"> Дополнить (правила, вставки, инкременторы и списки слов добавятся)</label>
+      </div>
+    </section>
+
+    <!-- ================= Настройки ================= -->
+    <section id="tab-settings" class="tab-panel">
+      <h2>Настройки и служебное</h2>
+
+      <h3>Имя автора</h3>
+      <p class="hint">Ваше имя будет автоматически присваиваться создаваемым и изменяемым правилам, вставкам и инкременторам.</p>
+      <div class="profile-name-row">
+        <span id="profileNameDisplay" class="profile-name-value"></span>
+        <input type="text" id="profileNameInput" placeholder="Введите ваше имя" style="display:none">
+        <button id="profileNameSet" class="primary small" style="display:none">Сохранить</button>
+        <button id="profileNameEdit" class="small">Изменить</button>
+      </div>
+
+      <h3>Журнал действий</h3>
+      <div id="activityLogBox"></div>
+
+      <h3>Глобальные горячие клавиши (Chrome)</h3>
+      <ul>
+        <li><code>Ctrl+Shift+F</code> — заполнить все поля по правилам</li>
+        <li><code>Ctrl+Shift+1</code> — выполнить специальную вставку для текущего URL</li>
+      </ul>
+      <p>Chrome ограничивает 4 глобальных шорткея. Изменить их: <a href="chrome://extensions/shortcuts" id="openShortcutsPage">chrome://extensions/shortcuts</a></p>
+
+      <h3>Свои горячие клавиши (внутри страницы)</h3>
+      <p class="hint">
+        Работают, когда фокус на веб-странице (не в браузерных элементах). Можно задать любое сочетание клавиш
+        и привязать его к действию: заполнить все поля / выполнить вставку по URL / выполнить конкретную вставку.
+        Количество не ограничено.
+      </p>
+      <div id="pageShortcutsList"></div>
+      <button id="addPageShortcut" class="accent" style="margin-top:8px">+ Добавить шорткей</button>
+
+      <h3>Режим отладки</h3>
+      <p class="hint">
+        Включает подробное логирование в консоль браузера (DevTools → Console).
+        Полезно для диагностики, почему правило не матчит поле или какой шаблон сгенерировался.
+      </p>
+      <label class="inline-lbl" style="margin-bottom:16px">
+        <input type="checkbox" id="debugModeToggle"> Включить debug-режим
+      </label>
+
+      <h3>Глобальные счётчики <code>{{counter}}</code> / <code>{{increment}}</code></h3>
+      <p class="hint">Это <b>обычные</b> счётчики без ветвления. Умные инкременторы — на отдельной вкладке.</p>
+      <div id="globalCountersBox"></div>
+
+      <details class="spoiler" id="resetSpoiler">
+        <summary>⚠ Опасная зона: сбросить все настройки</summary>
+        <div class="body">
+          <p class="warn">
+            Это действие <b>необратимо удалит все правила, папки, вставки, инкременторы, списки слов и счётчики</b>.
+            Версии (снапшоты) сохранятся. Сначала сделайте экспорт JSON.
+          </p>
+          <label>Введите <code>УДАЛИТЬ</code> для подтверждения:</label>
+          <div class="row">
+            <input type="text" id="resetConfirmInput" class="grow" placeholder="УДАЛИТЬ">
+            <button id="resetBtn" class="danger shrink" disabled>Сбросить всё</button>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <!-- ================= О приложении ================= -->
+    <section id="tab-about" class="tab-panel">
+      <h2>О приложении</h2>
+      <p><b>Dumb Patrick Inputs</b> — расширение для быстрого заполнения форм на любых сайтах. URL-таргетинг, шаблоны с динамикой, папки-коллекции, специальные вставки и умные инкременторы.</p>
+      <p>Версия: <code id="aboutVersion">—</code> · Хранилище: <code>chrome.storage.local</code></p>
+
+      <h3>Основные возможности</h3>
+      <ul>
+        <li><b>Правила заполнения</b> — плоский список с папками (как коллекции в Postman). Каждое правило со своими URL-паттернами и условиями. AND между условиями по умолчанию; смешанная AND/OR-логика по флажку.</li>
+        <li><b>Папки</b> — цветные группы для организации правил. Правило можно перекинуть в любую папку.</li>
+        <li><b>История правил</b> — последние 5 редакций каждого правила с возможностью отката.</li>
+        <li><b>Специальные вставки</b> — одна вставка на URL. Шорткей очищает целевой input и вставляет значение. Опциональная кнопка-триггер для двухшаговых полей.</li>
+        <li><b>Умные инкременторы</b> — счётчик с префиксом и ветвлением по URL (main / branch). История последних значений.</li>
+        <li><b>Версии</b> — снапшоты состояния, экспорт каждой версии в JSON.</li>
+        <li><b>Импорт/Экспорт</b> — полный state в JSON, стратегии Replace / Merge.</li>
+        <li><b>Анализатор HTML</b> — вставь outerHTML → автоматически подберётся селектор и предложатся шаблоны.</li>
+      </ul>
+
+      <h3>Синтаксис шаблонов</h3>
+      <p>Обычный текст со вставками в двойных фигурных скобках. Разделитель параметров — двоеточие.</p>
+      <table class="tokens">
+        <thead><tr><th>Токен</th><th>Пример</th><th>Что делает</th></tr></thead>
+        <tbody>
+          <tr><td><code>{{name.first}}</code></td><td>James</td><td>Случайное имя (en)</td></tr>
+          <tr><td><code>{{name.last}}</code></td><td>Smith</td><td>Случайная фамилия (en)</td></tr>
+          <tr><td><code>{{name.full}}</code></td><td>James Smith</td><td>Полное имя (en)</td></tr>
+          <tr><td><code>{{email}}</code> / <code>{{email:gmail.com}}</code></td><td>james.smith42@gmail.com</td><td>Email; можно указать домен</td></tr>
+          <tr><td><code>{{phone}}</code> / <code>{{phone:+1##########}}</code></td><td>312-456-7890</td><td>#&nbsp;— случайная цифра</td></tr>
+          <tr><td><code>{{company}}</code></td><td>Apex Industries</td><td>Название организации (en)</td></tr>
+          <tr><td><code>{{city}}</code> / <code>{{street}}</code> / <code>{{address}}</code></td><td>London · 14 Baker St</td><td>Локация (en)</td></tr>
+          <tr><td><code>{{number:1:100}}</code></td><td>42</td><td>Число из диапазона</td></tr>
+          <tr><td><code>{{date:2020-01-01:2024-12-31:yyyy-MM-dd}}</code></td><td>2022-07-14</td><td>Дата в диапазоне и формате</td></tr>
+          <tr><td><code>{{now:yyyyMMdd_HHmmss}}</code></td><td>20260806_141530</td><td>Текущая дата/время</td></tr>
+          <tr><td><code>{{uuid}}</code></td><td>7b3e...</td><td>UUID v4</td></tr>
+          <tr><td><code>{{lorem.words:5}}</code></td><td>lorem ipsum dolor sit amet</td><td>N случайных слов</td></tr>
+          <tr><td><code>{{lorem.sentence:8}}</code> / <code>{{lorem.paragraph:3}}</code></td><td>Lorem ... .</td><td>Предложение / абзац</td></tr>
+          <tr><td><code>{{pick:cat|dog|fish}}</code></td><td>dog</td><td>Случайное из списка</td></tr>
+          <tr><td><code>{{counter}}</code> / <code>{{counter:orderId}}</code></td><td>1, 2, 3…</td><td>Простой инкремент</td></tr>
+          <tr><td><code>{{increment:reg:1000:5}}</code></td><td>1000, 1005, 1010…</td><td>Счётчик со стартом и шагом</td></tr>
+          <tr><td><code>{{seq:customerId}}</code></td><td>Szv00356B</td><td>Умный инкрементор с ветвлением по URL</td></tr>
+          <tr><td><code>{{regex:[A-Z]{3}-\d{4}}}</code></td><td>ABC-1234</td><td>Строка по регулярке</td></tr>
+          <tr><td><code>{{decimal:0:100:2}}</code></td><td>42.37</td><td>Дробное число с precision</td></tr>
+          <tr><td><code>{{tools}}</code></td><td>wrench</td><td>Рабочий инструмент</td></tr>
+          <tr><td><code>{{word}}</code></td><td>nairobi</td><td>Случайное слово из ~690 (фрукты, столицы, реки, острова, животные саванны)</td></tr>
+          <tr><td><code>{{list:имя}}</code></td><td>(из списка)</td><td>Случайное слово из пользовательского списка (Настройки)</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Приоритет правил</h3>
+      <p>Правила применяются сверху вниз внутри общего списка. Первое совпавшее захватывает поле. Порядок меняется кнопками ▲ ▼. Папки — только визуальная группировка, они не влияют на приоритет.</p>
+
+      <h3>AND/OR между условиями</h3>
+      <p>По умолчанию все условия правила соединяются AND. Включи флажок «Использовать смешанную AND/OR-логику» на правиле — между каждыми двумя соседними условиями появится выбор AND/OR. Вычисляется слева направо, без precedence — управляй порядком условий сам.</p>
+
+      <h3>Установка</h3>
+      <p><code>chrome://extensions/</code> → «Режим разработчика» → «Загрузить распакованное расширение» → выбрать папку.</p>
+    </section>
+  </main>
+
+  <!-- Modal: Folder picker при создании правила -->
+  <div class="modal-backdrop" id="folderPickerModal">
+    <div class="modal" style="min-width:400px;max-width:520px">
+      <div class="modal-head">
+        <h3>В какую папку положить правило?</h3>
+        <button class="ghost" id="fpClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="hint">Правило будет создано и открыто на редактирование. Можно пропустить — попадёт в «Без папки».</p>
+        <div id="fpFolders" class="fp-list"></div>
+      </div>
+      <div class="modal-foot">
+        <button id="fpSkip">Пропустить</button>
+        <button id="fpApply" class="primary">Готово</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Управление правилами -->
+  <div class="modal-backdrop" id="manageModal">
+    <div class="modal" style="min-width:640px;max-width:800px">
+      <div class="modal-head">
+        <h3>Управление правилами</h3>
+        <button class="ghost" id="mmClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="hint">Отметьте правила галочкой для массового удаления. Правила сгруппированы по папкам.</p>
+        <div class="row" style="margin:8px 0">
+          <button id="mmSelectAll" class="small">Выбрать все</button>
+          <button id="mmDeselectAll" class="small">Снять все</button>
+          <span></span>
+          <button id="mmDeleteSelected" class="danger" title="Удалить выбранные правила">Удалить выбранные</button>
+        </div>
+        <div id="mmList" class="mm-list"></div>
+      </div>
+      <div class="modal-foot">
+        <button id="mmDone" class="primary">Готово</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Управление вставками -->
+  <div class="modal-backdrop" id="manageSpecialModal">
+    <div class="modal" style="min-width:640px;max-width:800px">
+      <div class="modal-head">
+        <h3>Управление вставками</h3>
+        <button class="ghost" id="msClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="hint">Отметьте вставки галочкой и удалите массово.</p>
+        <div class="row" style="margin:8px 0">
+          <button id="msSelectAll" class="small">Выбрать все</button>
+          <button id="msDeselectAll" class="small">Снять все</button>
+          <span></span>
+          <button id="msDeleteSelected" class="danger" title="Удалить выбранные вставки">Удалить выбранные</button>
+        </div>
+        <div id="msList" class="mm-list"></div>
+      </div>
+      <div class="modal-foot">
+        <button id="msDone" class="primary">Готово</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Управление инкременторами -->
+  <div class="modal-backdrop" id="manageCountersModal">
+    <div class="modal" style="min-width:640px;max-width:800px">
+      <div class="modal-head">
+        <h3>Управление инкременторами</h3>
+        <button class="ghost" id="mcClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="hint">Отметьте инкременторы галочкой и удалите массово.</p>
+        <div class="row" style="margin:8px 0">
+          <button id="mcSelectAll" class="small">Выбрать все</button>
+          <button id="mcDeselectAll" class="small">Снять все</button>
+          <span></span>
+          <button id="mcDeleteSelected" class="danger" title="Удалить выбранные инкременторы">Удалить выбранные</button>
+        </div>
+        <div id="mcList" class="mm-list"></div>
+      </div>
+      <div class="modal-foot">
+        <button id="mcDone" class="primary">Готово</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Управление списками слов -->
+  <div class="modal-backdrop" id="manageWordListsModal">
+    <div class="modal" style="min-width:640px;max-width:800px">
+      <div class="modal-head">
+        <h3>Управление списками слов</h3>
+        <button class="ghost" id="mwClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="hint">Отметьте списки галочкой и удалите массово.</p>
+        <div class="row" style="margin:8px 0">
+          <button id="mwSelectAll" class="small">Выбрать все</button>
+          <button id="mwDeselectAll" class="small">Снять все</button>
+          <span></span>
+          <button id="mwDeleteSelected" class="danger" title="Удалить выбранные списки">Удалить выбранные</button>
+        </div>
+        <div id="mwList" class="mm-list"></div>
+      </div>
+      <div class="modal-foot">
+        <button id="mwDone" class="primary">Готово</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Datalist: HTML-атрибуты для условий матчинга -->
+  <datalist id="dlAttrs">
+    <option value="id"></option>
+    <option value="name"></option>
+    <option value="class"></option>
+    <option value="placeholder"></option>
+    <option value="label"></option>
+    <option value="type"></option>
+    <option value="value"></option>
+    <option value="title"></option>
+    <option value="role"></option>
+    <option value="alt"></option>
+    <option value="href"></option>
+    <option value="src"></option>
+    <option value="for"></option>
+    <option value="form"></option>
+    <option value="list"></option>
+    <option value="pattern"></option>
+    <option value="min"></option>
+    <option value="max"></option>
+    <option value="step"></option>
+    <option value="maxlength"></option>
+    <option value="minlength"></option>
+    <option value="autocomplete"></option>
+    <option value="required"></option>
+    <option value="readonly"></option>
+    <option value="disabled"></option>
+    <option value="aria-label"></option>
+    <option value="aria-labelledby"></option>
+    <option value="aria-describedby"></option>
+    <option value="aria-required"></option>
+    <option value="aria-invalid"></option>
+    <option value="data-testid"></option>
+    <option value="data-test-id"></option>
+    <option value="data-test"></option>
+    <option value="data-qa"></option>
+    <option value="data-cy"></option>
+    <option value="data-e2e"></option>
+    <option value="data-hook"></option>
+    <option value="data-automation"></option>
+    <option value="data-role"></option>
+    <option value="data-name"></option>
+    <option value="data-field"></option>
+  </datalist>
+
+  <!-- Modal: Add Insertion -->
+  <div class="modal-backdrop" id="addModal">
+    <div class="modal">
+      <div class="modal-head">
+        <h3>Новая вставка из HTML</h3>
+        <button class="ghost" id="modalClose">✕</button>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <label>URL страницы</label>
+        <input type="text" id="mUrl" placeholder="https://example.com/some/path">
+        <p class="hint">Из URL автоматически вытянется host+path. Можно поправить перед анализом.</p>
+
+        <label>Кнопка-триггер <span class="badge">опционально</span></label>
+        <p class="hint">
+          Если целевой input появляется только после клика по кнопке — вставьте её outerHTML сюда.
+          При заполнении расширение сначала кликнет по кнопке, дождётся и уже потом искать целевой input.
+          Если input уже виден без клика — оставьте пустым.
+        </p>
+        <textarea id="mTriggerHtml" rows="3" placeholder='<button type="button" class="add-value-btn">Добавить</button>'></textarea>
+
+        <label>Целевой элемент</label>
+        <p class="hint">В DevTools: правой кнопкой по элементу → Copy → Copy outerHTML.</p>
+        <textarea id="mHtml" rows="4" placeholder='<input type="email" name="userEmail" placeholder="Email">'></textarea>
+
+        <div class="row" style="margin-top:10px">
+          <button id="mAnalyze" class="primary shrink">🔍 Анализировать</button>
+          <span id="mSpin" class="shrink" style="display:none"><span class="loader"></span> обработка…</span>
+          <span></span>
+        </div>
+
+        <div id="mResult" style="display:none">
+          <hr style="border:none;border-top:1px solid var(--border);margin:16px 0">
+          <label>Название вставки</label>
+          <input type="text" id="mName" placeholder="Заполнение email на странице регистрации">
+
+          <label>URL-паттерн (regex или подстрока) <span class="badge" id="mUrlAuto">авто</span></label>
+          <input type="text" id="mUrlPattern">
+
+          <div id="mTriggerBlock" style="display:none">
+            <label>Селектор кнопки-триггера <span class="badge" id="mTrigAuto">авто</span></label>
+            <input type="text" id="mTriggerSel">
+            <label>Задержка после клика (мс)</label>
+            <input type="number" id="mTrigWait" value="300" min="0" max="5000" step="50">
+          </div>
+
+          <label>Селектор целевого элемента <span class="badge" id="mSelAuto">авто</span></label>
+          <input type="text" id="mSelector">
+          <p class="hint" id="mElementInfo"></p>
+
+          <label>Шаблон значения — выберите или напишите свой</label>
+          <div id="mSuggestions" class="suggestion-list"></div>
+          <label>Итоговый шаблон</label>
+          <textarea id="mTemplate" rows="2"></textarea>
+          <div class="preview" id="mPreview">—</div>
+          <div class="row" style="margin-top:6px">
+            <button id="mTestBtn" class="small shrink">🔄 Тест</button>
+            <span></span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button id="mCancel">Отмена</button>
+        <button id="mSave" class="primary" disabled>Сохранить вставку</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../lib/generators.js"></script>
+  <script src="../lib/template.js"></script>
+  <script src="analyzer.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

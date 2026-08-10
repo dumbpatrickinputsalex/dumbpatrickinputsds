@@ -1,0 +1,1 @@
+Act as Agent B (Reviewer). Review the current git diff and changes made for this stage against docs/refactoring-guide.md and docs/ai-refactoring-harness.md. Provide a Reviewer Report with APPROVED or CHANGES_REQUESTED status.

@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>Dumb Patrick Inputs</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <div class="title"><img src="../icons/icon32.png" alt="" class="title-icon">Dumb Patrick Inputs</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="profile" id="profile">—</div>
+      <button id="openOptions" class="header-settings">⚙ Настройки</button>
+    </div>
+  </header>
+  <div class="actions">
+    <button id="fillAll" class="primary">▶ Заполнить все поля</button>
+  </div>
+  <div id="scraperBox" class="feature-box" style="display:none">
+    <div class="scraper-header">
+      <div class="scraper-title">Данные текущего клиента</div>
+      <button id="scraperScanBtn" class="scraper-scan-btn" title="Сканировать страницу и обновить список полей">🔍 Сканировать</button>
+    </div>
+    <div id="scraperScanStatus" class="scraper-scan-status"></div>
+    <table class="scraper-table" id="scraperTable"></table>
+  </div>
+  <div id="copyfxBox" class="feature-box" style="display:none">
+    <div class="scraper-header">
+      <div class="scraper-title">Copy Trading</div>
+      <div style="display:flex;gap:4px">
+        <button id="copyfxGetBtn" class="scraper-scan-btn">Получить трейдеров</button>
+        <button id="copyfxClearBtn" class="scraper-scan-btn" style="display:none">Очистить</button>
+      </div>
+    </div>
+    <div id="copyfxStatus" class="scraper-scan-status"></div>
+    <div id="copyfxEntries"></div>
+    <button id="copyfxLoadMore" class="scraper-scan-btn copyfx-load-more" style="display:none">Загрузить следующие 10 счетов</button>
+    <div id="investorSection" style="display:none">
+      <div class="scraper-header">
+        <div class="scraper-title" id="investorTitle">Инвесторы</div>
+        <div style="display:flex;gap:4px">
+          <button id="investorGetBtn" class="scraper-scan-btn">Получить инвесторов</button>
+          <button id="investorClearBtn" class="scraper-scan-btn" style="display:none">Очистить</button>
+        </div>
+      </div>
+      <div id="investorStatus" class="scraper-scan-status"></div>
+      <div id="investorEntries"></div>
+      <button id="investorLoadMore" class="scraper-scan-btn copyfx-load-more" style="display:none">Загрузить следующие 10</button>
+    </div>
+  </div>
+  <div id="uaBox" class="feature-box" style="display:none">
+    <div class="scraper-header">
+      <div class="scraper-title">User-Agent</div>
+      <label class="ua-toggle" id="uaToggle"><input type="checkbox" id="uaEnabled"><span class="ua-toggle-slider"></span></label>
+    </div>
+    <div id="uaValue" class="ua-value"></div>
+  </div>
+  <div class="status" id="status"></div>
+  <div class="result-details" id="resultDetails" style="display:none">
+    <div class="result-title">Что заполнено:</div>
+    <table class="result-table" id="resultTable"></table>
+  </div>
+  <footer></footer>
+  <script src="popup.js"></script>
+</body>
+</html>
