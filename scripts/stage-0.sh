@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 echo "📁 Creating baseline documentation..."
 
@@ -54,31 +55,7 @@ cat > docs/baseline.md << 'EOF'
 **Version:** (from manifest.json)
 
 ## Project Structure
-
-[code]
-formfiller-extension/
-├── content/
-│   ├── content.js (460 строк)
-│   ├── picker.js (100 строк)
-│   └── copyfx-interceptor.js (35 строк)
-├── lib/
-│   ├── generators.js (500+ строк)
-│   ├── template.js (70 строк)
-│   └── matcher.js (150 строк)
-├── options/
-│   ├── options.js (2500+ строк)
-│   ├── analyzer.js (250 строк)
-│   ├── options.html
-│   └── options.css
-├── popup/
-│   ├── popup.js (800-1000 строк)
-│   ├── popup.html
-│   └── popup.css
-├── icons/
-├── background.js (360 строк)
-├── manifest.json
-└── README.md
-[/code]
+<!-- Структура проекта будет добавлена позже -->
 
 ## Key Invariants
 
@@ -106,3 +83,5 @@ Stage reports go here.
 EOF
 
 git add docs/
+
+echo "✅ Stage 0 applied successfully!"
