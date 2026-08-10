@@ -3,7 +3,6 @@ export class RulesController {
   constructor() {
     this.rules = [];
     this.container = document.getElementById('rulesContainer');
-    this.template = document.getElementById('ruleTemplate');
   }
 
   init(state) {
@@ -15,7 +14,6 @@ export class RulesController {
   render() {
     if (!this.container) return;
     this.container.innerHTML = '';
-
     this.rules.forEach((rule, index) => {
       const card = this._createCard(rule, index);
       this.container.appendChild(card);
@@ -26,12 +24,10 @@ export class RulesController {
     const card = document.createElement('div');
     card.className = 'rule-card';
     card.dataset.index = index;
-
-    const conditionsStr = JSON.stringify(rule.conditions || {}, null, 2);
     const escapedName = this._escapeHtml(rule.name || 'Без имени');
     const escapedTemplate = this._escapeHtml(rule.template || '');
+    const conditionsStr = JSON.stringify(rule.conditions || {}, null, 2);
     const escapedConditions = this._escapeHtml(conditionsStr);
-
     card.innerHTML = \
       <div class="rule-header">
         <span class="rule-name">\</span>
@@ -48,7 +44,6 @@ export class RulesController {
         </div>
       </div>
     \;
-
     return card;
   }
 
@@ -61,15 +56,10 @@ export class RulesController {
         this._save();
       }
     });
-
     const addBtn = document.getElementById('addRuleBtn');
     if (addBtn) {
       addBtn.addEventListener('click', () => {
-        this.rules.push({
-          name: 'Новое правило',
-          template: '{{text}}',
-          conditions: { items: [] }
-        });
+        this.rules.push({ name: 'Новое правило', template: '{{text}}', conditions: { items: [] } });
         this.render();
         this._save();
       });
@@ -79,11 +69,8 @@ export class RulesController {
   save(state) {
     const inputs = this.container?.querySelectorAll('.rule-template-input');
     inputs?.forEach((input, index) => {
-      if (this.rules[index]) {
-        this.rules[index].template = input.value;
-      }
+      if (this.rules[index]) this.rules[index].template = input.value;
     });
-
     state.rules = this.rules;
     return state;
   }

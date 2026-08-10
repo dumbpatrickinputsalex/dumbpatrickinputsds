@@ -22,30 +22,19 @@ export class OptionsApp {
     this.controllers.forEach(controller => {
       if (controller.init) controller.init(state);
     });
-
-    document.addEventListener('options-save', () => {
-      this._saveAll();
-    });
-
-    window.addEventListener('beforeunload', () => {
-      this._saveAll();
-    });
+    document.addEventListener('options-save', () => this._saveAll());
+    window.addEventListener('beforeunload', () => this._saveAll());
   }
 
   _createControllers(state) {
-    return [
-      new RulesController()
-    ];
+    return [ new RulesController() ];
   }
 
   async _saveAll() {
     let state = await this.storage.getState();
     this.controllers.forEach(controller => {
-      if (controller.save) {
-        state = controller.save(state);
-      }
+      if (controller.save) state = controller.save(state);
     });
     await this.storage.saveState(state);
-    console.log('✅ Options saved');
   }
 }
