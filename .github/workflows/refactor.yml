@@ -28,16 +28,19 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
       - name: Apply stage
         run: |
           STAGE=${{ github.event.inputs.stage }}
           echo "🚀 Applying stage $STAGE..."
           
-          # Даём права на выполнение всем скриптам в папке scripts/
+          # Даём права на выполнение всем скриптам
           chmod +x scripts/*.sh
           
-          # Запускаем нужный скрипт
+          # Запускаем скрипт
           ./scripts/stage-$STAGE.sh
           
           echo "✅ Stage $STAGE applied!"
@@ -65,3 +68,7 @@ jobs:
             ## Следующий шаг
             После мержа этого PR запусти следующий этап.
           base: master
+          delete-branch: true
+          labels: |
+            automated
+            refactoring
