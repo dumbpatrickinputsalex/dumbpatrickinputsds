@@ -332,7 +332,7 @@ _showResult(result) {
 
 // === popup/scraper-panel.js ===
 
-﻿// popup/scraper-panel.js
+// popup/scraper-panel.js
 class ScraperPanel {
   /**
  * Создаёт экземпляр класса.
@@ -399,7 +399,7 @@ _showResults(data) {
 
 // === popup/copyfx-panel.js ===
 
-﻿// popup/copyfx-panel.js
+// popup/copyfx-panel.js
 class CopyfxPanel {
   /**
  * Создаёт экземпляр класса.
@@ -477,7 +477,7 @@ _sendMessage(type, payload) {
 
 // === popup/investor-panel.js ===
 
-﻿// popup/investor-panel.js
+// popup/investor-panel.js
 class InvestorPanel {
   /**
  * Создаёт экземпляр класса.
@@ -544,7 +544,7 @@ _sendMessage(type, payload) {
 
 // === popup/ua-panel.js ===
 
-﻿// popup/ua-panel.js
+// popup/ua-panel.js
 class UaPanel {
   /**
  * Создаёт экземпляр класса.
