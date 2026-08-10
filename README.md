@@ -31,26 +31,30 @@
 
 \\\
 formfiller-extension/
-├── background/         # Service worker
-├── content/           # Content scripts
-├── domain/           # Бизнес-логика
-├── infrastructure/   # Работа с Chrome API
-├── options/          # Страница настроек
-├── popup/            # Popup-окно
-├── shared/           # Общие утилиты
-└── tests/            # Unit-тесты
+├── background/ # Service worker
+├── content/ # Content scripts
+├── domain/ # Бизнес-логика
+├── infrastructure/ # Работа с Chrome API
+├── options/ # Страница настроек
+├── popup/ # Popup-окно
+├── shared/ # Общие утилиты
+└── tests/ # Unit-тесты
 \\\
 
 ## Разработка
 
 \\\ash
+
 # Установка зависимостей
+
 npm install
 
 # Запуск тестов
+
 npm run test
 
 # Проверка кода
+
 npm run lint
 npm run format:check
 \\\

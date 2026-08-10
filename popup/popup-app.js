@@ -16,9 +16,9 @@ export class PopupApp {
       new ScraperPanel(),
       new CopyfxPanel(),
       new InvestorPanel(),
-      new UaPanel()
+      new UaPanel(),
     ];
-    
+
     this.panels.forEach(panel => {
       if (panel.init) panel.init();
     });

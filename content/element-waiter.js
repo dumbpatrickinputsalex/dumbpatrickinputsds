@@ -1,7 +1,7 @@
 ﻿// content/element-waiter.js
 export class ElementWaiter {
   waitForSelector(selector, timeoutMs = 5000) {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       const element = document.querySelector(selector);
       if (element) {
         resolve(element);
@@ -20,7 +20,7 @@ export class ElementWaiter {
 
       observer.observe(document.body, {
         childList: true,
-        subtree: true
+        subtree: true,
       });
 
       timeoutId = setTimeout(() => {

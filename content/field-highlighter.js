@@ -16,7 +16,7 @@ export class FieldHighlighter {
 
     this.highlightedElements.set(element, {
       outline: originalOutline,
-      background: originalBackground
+      background: originalBackground,
     });
 
     setTimeout(() => {

@@ -5,15 +5,15 @@ export class ChromeStorageRepository {
   }
 
   async getState() {
-    return new Promise((resolve) => {
-      this.storage.get('state', (result) => {
+    return new Promise(resolve => {
+      this.storage.get('state', result => {
         resolve(result.state || null);
       });
     });
   }
 
   async saveState(state) {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       this.storage.set({ state }, () => {
         resolve();
       });

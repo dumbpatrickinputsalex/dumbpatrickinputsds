@@ -8,7 +8,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],
-      exclude: ['**/node_modules/**', '**/dist/**', '**/*.test.js', '**/vitest.config.js']
-    }
-  }
+      exclude: ['**/node_modules/**', '**/dist/**', '**/*.test.js', '**/vitest.config.js'],
+    },
+  },
 });

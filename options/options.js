@@ -1,46 +1,66 @@
 // Options UI. Модель: state.folders[] + state.rules[] (плоский). Профили удалены.
 
-const $  = (id) => document.getElementById(id);
+const $ = id => document.getElementById(id);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 const uid = () => 'id_' + Math.random().toString(36).slice(2, 10);
 
-const SNAP_LIMIT      = 20;
+const SNAP_LIMIT = 20;
 const AUTO_SNAP_LIMIT = 10;
-const HISTORY_LIMIT   = 5;
+const HISTORY_LIMIT = 5;
 
 // Палитра для папок — 20 цветов Atlassian-подобных (legacy, used as fallback border)
 const COLORS = [
-  '#0052CC', '#0747A6', '#4C9AFF',
-  '#00875A', '#006644', '#36B37E',
-  '#DE350B', '#BF2600', '#EB5A46',
-  '#FF8B00', '#FFAB00', '#FFC400',
-  '#6554C0', '#5243AA', '#403294',
-  '#00B8D9', '#008DA6', '#79E2F2',
-  '#6B778C', '#42526E'
+  '#0052CC',
+  '#0747A6',
+  '#4C9AFF',
+  '#00875A',
+  '#006644',
+  '#36B37E',
+  '#DE350B',
+  '#BF2600',
+  '#EB5A46',
+  '#FF8B00',
+  '#FFAB00',
+  '#FFC400',
+  '#6554C0',
+  '#5243AA',
+  '#403294',
+  '#00B8D9',
+  '#008DA6',
+  '#79E2F2',
+  '#6B778C',
+  '#42526E',
 ];
 
-let state       = null;
-let previewUrl  = '';
+let state = null;
+let previewUrl = '';
 
 /* ================ Storage ================ */
 function load() {
   return new Promise(resolve => {
-    chrome.storage.local.get(['state'], (r) => {
+    chrome.storage.local.get(['state'], r => {
       state = migrateShape(r.state || null);
       resolve();
     });
   });
 }
 let _needNormalize = false;
-function markStructureDirty() { _needNormalize = true; }
+function markStructureDirty() {
+  _needNormalize = true;
+}
 let _selfSaving = false;
 function save() {
-  if (_needNormalize) { normalizeRuleOrder(); _needNormalize = false; }
+  if (_needNormalize) {
+    normalizeRuleOrder();
+    _needNormalize = false;
+  }
   _selfSaving = true;
-  return new Promise(resolve => chrome.storage.local.set({ state }, () => {
-    _selfSaving = false;
-    resolve();
-  }));
+  return new Promise(resolve =>
+    chrome.storage.local.set({ state }, () => {
+      _selfSaving = false;
+      resolve();
+    })
+  );
 }
 
 chrome.storage.onChanged.addListener((changes, area) => {
@@ -53,8 +73,14 @@ function cleanupUnsaved() {
   if (!state) return;
   function revertList(arr) {
     for (let i = arr.length - 1; i >= 0; i--) {
-      if (arr[i]._isNew) { arr.splice(i, 1); continue; }
-      if (arr[i]._snapshot) { Object.assign(arr[i], arr[i]._snapshot); delete arr[i]._snapshot; }
+      if (arr[i]._isNew) {
+        arr.splice(i, 1);
+        continue;
+      }
+      if (arr[i]._snapshot) {
+        Object.assign(arr[i], arr[i]._snapshot);
+        delete arr[i]._snapshot;
+      }
       arr[i].collapsed = true;
     }
   }
@@ -62,7 +88,7 @@ function cleanupUnsaved() {
   revertList(state.specialInsertions || []);
   revertList(state.smartCounters || []);
   revertList(state.customWordLists || []);
-  for (const f of (state.folders || [])) f.collapsed = true;
+  for (const f of state.folders || []) f.collapsed = true;
   if (state.scraperConfig) state.scraperConfig.collapsed = true;
   if (state.copyfxConfig) state.copyfxConfig.collapsed = true;
 }
@@ -72,26 +98,39 @@ function normalizeRuleOrder() {
   if (!state || !Array.isArray(state.rules)) return;
   const groups = new Map();
   groups.set(null, []);
-  for (const f of (state.folders || [])) groups.set(f.id, []);
+  for (const f of state.folders || []) groups.set(f.id, []);
   const orphan = [];
   for (const r of state.rules) {
     const key = r.folderId || null;
     if (groups.has(key)) groups.get(key).push(r);
-    else { r.folderId = null; orphan.push(r); }
+    else {
+      r.folderId = null;
+      orphan.push(r);
+    }
   }
   const flat = [];
   flat.push(...groups.get(null), ...orphan);
-  for (const f of (state.folders || [])) flat.push(...(groups.get(f.id) || []));
+  for (const f of state.folders || []) flat.push(...(groups.get(f.id) || []));
   state.rules = flat;
 }
 let saveTimer = null;
-function saveDebounced() { clearTimeout(saveTimer); saveTimer = setTimeout(() => save(), 300); }
+function saveDebounced() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => save(), 300);
+}
 
 function migrateShape(s) {
-  if (!s) return {
-    version: 2, folders: [], rules: [], specialInsertions: [],
-    smartCounters: [], customWordLists: [], snapshots: [], counters: {}
-  };
+  if (!s)
+    return {
+      version: 2,
+      folders: [],
+      rules: [],
+      specialInsertions: [],
+      smartCounters: [],
+      customWordLists: [],
+      snapshots: [],
+      counters: {},
+    };
   // Старая схема с profiles → мигрируем
   if (s.profiles && !s.rules) {
     const now = new Date().toISOString();
@@ -104,43 +143,74 @@ function migrateShape(s) {
         folders.push({ id: fid, name: profile.name, icon: '', collapsed: false });
         folderId = fid;
       }
-      for (const oldRule of (profile.rules || [])) {
-        const conds = ((oldRule.match && oldRule.match.conditions) || []).map(c => ({ ...c, connector: 'AND' }));
+      for (const oldRule of profile.rules || []) {
+        const conds = ((oldRule.match && oldRule.match.conditions) || []).map(c => ({
+          ...c,
+          connector: 'AND',
+        }));
         const wasOR = oldRule.match && oldRule.match.mode === 'OR';
-        if (wasOR && conds.length > 1) for (let i = 1; i < conds.length; i++) conds[i].connector = 'OR';
+        if (wasOR && conds.length > 1)
+          for (let i = 1; i < conds.length; i++) conds[i].connector = 'OR';
         rules.push({
-          id: oldRule.id || uid(), folderId, name: oldRule.label || oldRule.name || 'Правило',
-          enabled: oldRule.enabled !== false, collapsed: true,
+          id: oldRule.id || uid(),
+          folderId,
+          name: oldRule.label || oldRule.name || 'Правило',
+          enabled: oldRule.enabled !== false,
+          collapsed: true,
           targets: oldRule.targets || ['input', 'textarea'],
           urlPatterns: (profile.urlPatterns || []).slice(),
           template: oldRule.template || '',
           match: { customLogic: !!wasOR, conditions: conds },
-          createdAt: now, updatedAt: now, history: []
+          createdAt: now,
+          updatedAt: now,
+          history: [],
         });
       }
     }
-    s = { version: 2, folders, rules, specialInsertions: s.specialInsertions || [],
-          smartCounters: s.smartCounters || [], snapshots: s.snapshots || [], counters: s.counters || {} };
+    s = {
+      version: 2,
+      folders,
+      rules,
+      specialInsertions: s.specialInsertions || [],
+      smartCounters: s.smartCounters || [],
+      snapshots: s.snapshots || [],
+      counters: s.counters || {},
+    };
   }
   // Гарантируем поля
   s.version = 2;
-  if (!Array.isArray(s.folders))          s.folders = [];
-  if (!Array.isArray(s.rules))            s.rules = [];
-  if (!Array.isArray(s.specialInsertions))s.specialInsertions = [];
-  if (!Array.isArray(s.smartCounters))    s.smartCounters = [];
+  if (!Array.isArray(s.folders)) s.folders = [];
+  if (!Array.isArray(s.rules)) s.rules = [];
+  if (!Array.isArray(s.specialInsertions)) s.specialInsertions = [];
+  if (!Array.isArray(s.smartCounters)) s.smartCounters = [];
   if (!Array.isArray(s.customWordLists)) s.customWordLists = [];
-  if (!Array.isArray(s.snapshots))        s.snapshots = [];
-  if (!Array.isArray(s.pageShortcuts))    s.pageShortcuts = [];
-  if (typeof s.debugMode !== 'boolean')   s.debugMode = false;
-  if (typeof s.authorName !== 'string')  s.authorName = '';
-  if (!Array.isArray(s.activityLog))     s.activityLog = [];
-  if (!Array.isArray(s.uaRules))         s.uaRules = [];
-  if (!s.scraperConfig) s.scraperConfig = { enabled: false, urls: [''], parentSelector: 'div.debug_plugin_client', fields: [], collapsed: true };
-  if (!Array.isArray(s.scraperConfig.urls)) s.scraperConfig.urls = s.scraperConfig.url ? [s.scraperConfig.url] : [''];
+  if (!Array.isArray(s.snapshots)) s.snapshots = [];
+  if (!Array.isArray(s.pageShortcuts)) s.pageShortcuts = [];
+  if (typeof s.debugMode !== 'boolean') s.debugMode = false;
+  if (typeof s.authorName !== 'string') s.authorName = '';
+  if (!Array.isArray(s.activityLog)) s.activityLog = [];
+  if (!Array.isArray(s.uaRules)) s.uaRules = [];
+  if (!s.scraperConfig)
+    s.scraperConfig = {
+      enabled: false,
+      urls: [''],
+      parentSelector: 'div.debug_plugin_client',
+      fields: [],
+      collapsed: true,
+    };
+  if (!Array.isArray(s.scraperConfig.urls))
+    s.scraperConfig.urls = s.scraperConfig.url ? [s.scraperConfig.url] : [''];
   delete s.scraperConfig.url;
   if (!Array.isArray(s.scraperConfig.fields)) s.scraperConfig.fields = [];
   if (typeof s.scraperConfig.collapsed !== 'boolean') s.scraperConfig.collapsed = true;
-  if (!s.copyfxConfig) s.copyfxConfig = { enabled: false, collapsed: true, pageUrl: '/copyfx/my/strategies/', apiUrl: '/copyfx2-api/copyfx/strategies', extraFields: [] };
+  if (!s.copyfxConfig)
+    s.copyfxConfig = {
+      enabled: false,
+      collapsed: true,
+      pageUrl: '/copyfx/my/strategies/',
+      apiUrl: '/copyfx2-api/copyfx/strategies',
+      extraFields: [],
+    };
   if (!Array.isArray(s.copyfxConfig.extraFields)) s.copyfxConfig.extraFields = [];
   if (typeof s.copyfxConfig.collapsed !== 'boolean') s.copyfxConfig.collapsed = true;
   if (!s.counters) s.counters = {};
@@ -163,7 +233,9 @@ function migrateShape(s) {
     if (!ins.updatedAt) ins.updatedAt = ins.createdAt;
   }
   if (!s._historyV2) {
-    for (const r of s.rules) { r.history = []; }
+    for (const r of s.rules) {
+      r.history = [];
+    }
     s._historyV2 = true;
   }
   for (const r of s.rules) {
@@ -176,14 +248,15 @@ function migrateShape(s) {
     // Миграция urlPatterns → urlConditions (contains + connector)
     if (!Array.isArray(r.urlConditions)) {
       r.urlConditions = (r.urlPatterns || []).map((p, i) => ({
-        value: p, connector: i === 0 ? 'AND' : 'OR'
+        value: p,
+        connector: i === 0 ? 'AND' : 'OR',
       }));
     }
     for (const c of r.urlConditions) if (!c.connector) c.connector = 'AND';
     delete r.urlPatterns;
     if (!Array.isArray(r.targets)) r.targets = ['input'];
     if (r.targets.length > 1) r.targets = [r.targets[0]];
-    if (!Array.isArray(r.history))     r.history = [];
+    if (!Array.isArray(r.history)) r.history = [];
     if (typeof r.collapsed !== 'boolean') r.collapsed = true;
     if (!r.actionType) r.actionType = 'fill';
     if (!r.createdAt) r.createdAt = new Date().toISOString();
@@ -203,11 +276,29 @@ function switchTab(name) {
 }
 
 /* ================ Utils ================ */
-function escapeAttr(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
-function escapeText(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
-function deepClone(o) { return JSON.parse(JSON.stringify(o)); }
-function tsForFilename() { return new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19); }
-function safeName(s) { return String(s).replace(/[^\w\-]+/g, '_').slice(0, 50); }
+function escapeAttr(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;');
+}
+function escapeText(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+function deepClone(o) {
+  return JSON.parse(JSON.stringify(o));
+}
+function tsForFilename() {
+  return new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+}
+function safeName(s) {
+  return String(s)
+    .replace(/[^\w\-]+/g, '_')
+    .slice(0, 50);
+}
 function fmtDate(iso) {
   if (!iso) return '';
   const d = new Date(iso);
@@ -226,59 +317,77 @@ function toast(text, kind = 'ok') {
   t.className = 'toast toast-' + kind;
   t.textContent = text;
   host.appendChild(t);
-  setTimeout(() => { t.classList.add('leaving'); }, 3500);
-  setTimeout(() => { t.remove(); }, 4000);
+  setTimeout(() => {
+    t.classList.add('leaving');
+  }, 3500);
+  setTimeout(() => {
+    t.remove();
+  }, 4000);
 }
 
 function downloadJSON(data, filename) {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url; a.download = filename; a.click();
+  a.href = url;
+  a.download = filename;
+  a.click();
   URL.revokeObjectURL(url);
 }
 
 /* ================ Preview context ================ */
 function previewCtx() {
-  return { counters: {}, smartCounters: state.smartCounters, customWordLists: state.customWordLists || [], url: previewUrl || '', dryRun: true };
+  return {
+    counters: {},
+    smartCounters: state.smartCounters,
+    customWordLists: state.customWordLists || [],
+    url: previewUrl || '',
+    dryRun: true,
+  };
 }
 function updatePreview(card, template) {
   const box = card.querySelector('.preview');
   if (!box) return;
-  if (!template) { box.textContent = '—'; return; }
-  try { box.textContent = window.FF.render(template, previewCtx()) || '—'; }
-  catch (e) { box.textContent = 'Ошибка: ' + e.message; }
+  if (!template) {
+    box.textContent = '—';
+    return;
+  }
+  try {
+    box.textContent = window.FF.render(template, previewCtx()) || '—';
+  } catch (e) {
+    box.textContent = 'Ошибка: ' + e.message;
+  }
 }
 
 /* ================ Attribute placeholders ================ */
 function attrPlaceholder(attr) {
   const a = String(attr || '').toLowerCase();
-  if (a === 'id')                      return 'login-form';
-  if (a === 'name')                    return 'userEmail';
-  if (a === 'class')                   return 'form-input';
-  if (a === 'placeholder')             return 'Введите email';
-  if (a === 'label')                   return 'Ваш email';
-  if (a === 'type')                    return 'email';
-  if (a === 'value')                   return 'submit';
-  if (a === 'title')                   return 'Тултип поля';
-  if (a === 'role')                    return 'textbox';
-  if (a === 'alt')                     return 'user avatar';
-  if (a === 'href')                    return '/login';
-  if (a === 'src')                     return 'https://…';
-  if (a === 'for')                     return 'email-input';
-  if (a === 'autocomplete')            return 'email';
-  if (a === 'pattern')                 return '[a-z]+';
-  if (a === 'min' || a === 'max')      return '0';
-  if (a === 'step')                    return '1';
+  if (a === 'id') return 'login-form';
+  if (a === 'name') return 'userEmail';
+  if (a === 'class') return 'form-input';
+  if (a === 'placeholder') return 'Введите email';
+  if (a === 'label') return 'Ваш email';
+  if (a === 'type') return 'email';
+  if (a === 'value') return 'submit';
+  if (a === 'title') return 'Тултип поля';
+  if (a === 'role') return 'textbox';
+  if (a === 'alt') return 'user avatar';
+  if (a === 'href') return '/login';
+  if (a === 'src') return 'https://…';
+  if (a === 'for') return 'email-input';
+  if (a === 'autocomplete') return 'email';
+  if (a === 'pattern') return '[a-z]+';
+  if (a === 'min' || a === 'max') return '0';
+  if (a === 'step') return '1';
   if (a === 'maxlength' || a === 'minlength') return '10';
-  if (a === 'required')                return 'true';
+  if (a === 'required') return 'true';
   if (a === 'readonly' || a === 'disabled') return 'true';
-  if (a === 'aria-label')              return 'Email address';
-  if (a === 'aria-labelledby')         return 'email-label';
-  if (a === 'aria-describedby')        return 'email-help';
-  if (a === 'aria-required')           return 'true';
-  if (a === 'aria-invalid')            return 'false';
-  if (a.startsWith('data-'))           return 'значение атрибута';
+  if (a === 'aria-label') return 'Email address';
+  if (a === 'aria-labelledby') return 'email-label';
+  if (a === 'aria-describedby') return 'email-help';
+  if (a === 'aria-required') return 'true';
+  if (a === 'aria-invalid') return 'false';
+  if (a.startsWith('data-')) return 'значение атрибута';
   return 'подстрока для поиска';
 }
 
@@ -288,20 +397,26 @@ function renderUrlCondRow(rule, cond, ci) {
   row.className = 'cond-row';
   const showConn = ci > 0;
   row.innerHTML = `
-    ${showConn ? `
+    ${
+      showConn
+        ? `
       <div class="cond-connector">
         <select class="urlConn" title="Как соединить с предыдущим условием">
           <option value="AND" ${cond.connector === 'AND' ? 'selected' : ''}>AND</option>
-          <option value="OR"  ${cond.connector === 'OR'  ? 'selected' : ''}>OR</option>
+          <option value="OR"  ${cond.connector === 'OR' ? 'selected' : ''}>OR</option>
         </select>
-      </div>` : ''}
+      </div>`
+        : ''
+    }
     <div class="row" style="margin:0">
       <input type="text" class="urlVal grow" value="${escapeAttr(cond.value || '')}" placeholder="*example.com*login" title="URL должен содержать эту строку. * — wildcard.">
       <button class="btn-x small delUrlCond" title="Удалить URL-условие">×</button>
     </div>
   `;
   row.querySelector('.urlVal').addEventListener('input', e => {
-    cond.value = e.target.value; touchRule(rule); saveDebounced();
+    cond.value = e.target.value;
+    touchRule(rule);
+    saveDebounced();
     const card = row.closest('.rule-card');
     if (card && card._updateSectionSummary) card._updateSectionSummary();
   });
@@ -313,7 +428,11 @@ function renderUrlCondRow(rule, cond, ci) {
     if (card && card._rerenderUrlConditions) card._rerenderUrlConditions();
   });
   if (showConn) {
-    row.querySelector('.urlConn').addEventListener('change', e => { cond.connector = e.target.value; touchRule(rule); saveDebounced(); });
+    row.querySelector('.urlConn').addEventListener('change', e => {
+      cond.connector = e.target.value;
+      touchRule(rule);
+      saveDebounced();
+    });
   }
   return row;
 }
@@ -328,26 +447,42 @@ function detectFieldTargets(html) {
     const targets = [];
     let summary = '<' + tag;
     const type = (el.getAttribute('type') || '').toLowerCase();
-    if (tag === 'textarea') { targets.push('textarea'); summary += '>'; }
-    else if (tag === 'select') { targets.push('select'); summary += '>'; }
-    else if (tag === 'input') {
-      if (type === 'checkbox') { targets.push('checkbox'); summary += ' type="checkbox">'; }
-      else if (type === 'radio') { targets.push('radio'); summary += ' type="radio">'; }
-      else { targets.push('input'); summary += type ? ' type="' + type + '">' : '>'; }
-    } else if (el.isContentEditable) { targets.push('input'); summary += ' contenteditable>'; }
+    if (tag === 'textarea') {
+      targets.push('textarea');
+      summary += '>';
+    } else if (tag === 'select') {
+      targets.push('select');
+      summary += '>';
+    } else if (tag === 'input') {
+      if (type === 'checkbox') {
+        targets.push('checkbox');
+        summary += ' type="checkbox">';
+      } else if (type === 'radio') {
+        targets.push('radio');
+        summary += ' type="radio">';
+      } else {
+        targets.push('input');
+        summary += type ? ' type="' + type + '">' : '>';
+      }
+    } else if (el.isContentEditable) {
+      targets.push('input');
+      summary += ' contenteditable>';
+    }
 
     // Suggested condition based on stable attribute
     let suggestion = null;
     const name = el.getAttribute('name');
-    const id   = el.getAttribute('id');
-    const ph   = el.getAttribute('placeholder');
+    const id = el.getAttribute('id');
+    const ph = el.getAttribute('placeholder');
     if (name) suggestion = { attr: 'name', pattern: name };
     else if (id && !/^:|^__|-\d+-/.test(id)) suggestion = { attr: 'id', pattern: id };
     else if (ph) suggestion = { attr: 'placeholder', pattern: ph };
 
     if (suggestion) summary += ' + условие: ' + suggestion.attr + '~' + suggestion.pattern;
     return { targets, suggestion, summary };
-  } catch (e) { return null; }
+  } catch (e) {
+    return null;
+  }
 }
 
 /* ================ Template help ================ */
@@ -359,7 +494,7 @@ function templateHelpHtml() {
       <tr><td><code>{{phone}}</code></td><td>312-456-7890</td></tr>
       <tr><td><code>{{number:1:100}}</code></td><td>42</td></tr>
       <tr><td><code>{{decimal:0:100:2}}</code></td><td>42.37</td></tr>
-      <tr><td><code>{{now:yyyy-MM-dd}}</code></td><td>${fmtDate(new Date().toISOString()).slice(0,10)}</td></tr>
+      <tr><td><code>{{now:yyyy-MM-dd}}</code></td><td>${fmtDate(new Date().toISOString()).slice(0, 10)}</td></tr>
       <tr><td><code>{{uuid}}</code></td><td>7b3e-…</td></tr>
       <tr><td><code>{{lorem.words:5}}</code></td><td>lorem ipsum dolor…</td></tr>
       <tr><td><code>{{pick:cat|dog|fish}}</code></td><td>dog</td></tr>
@@ -396,82 +531,117 @@ function regexCheatsheetHtml() {
 
 /* ================ Token inserter ================ */
 const TOKEN_MENU = [
-  { group: 'Персональные данные (en)', items: [
-    { token: 'name.first',       label: 'Имя (James)' },
-    { token: 'name.last',        label: 'Фамилия (Smith)' },
-    { token: 'name.full',        label: 'Полное имя' },
-    { token: 'email',            label: 'Email' },
-    { token: 'phone',            label: 'Телефон (###-###-####)' },
-    { token: 'company',          label: 'Компания' },
-    { token: 'city',             label: 'Город (UK)' },
-    { token: 'street',           label: 'Улица + номер' },
-    { token: 'address',          label: 'Полный адрес (UK)' }
-  ]},
-  { group: 'Числа и даты', items: [
-    { token: 'number:1:100',     label: 'Целое число (1–100)' },
-    { token: 'decimal:0:100:2',  label: 'Дробное число (0–100, 2 знака)' },
-    { token: 'uuid',             label: 'UUID' },
-    { token: 'now:yyyy-MM-dd',   label: 'Текущая дата' },
-    { token: 'now:HH:mm:ss',     label: 'Текущее время' },
-    { token: 'date:2020-01-01:2025-12-31:yyyy-MM-dd', label: 'Дата в диапазоне' }
-  ]},
-  { group: 'Текст (Lorem)', items: [
-    { token: 'lorem.words:5',     label: '5 слов' },
-    { token: 'lorem.sentence:8',  label: 'Предложение' },
-    { token: 'lorem.paragraph:3', label: 'Абзац' }
-  ]},
-  { group: 'Тематические списки (en)', items: [
-    { token: 'word',              label: '⭐ Случайное слово (~690: фрукты, столицы, реки, острова, животные…)' },
-    { token: 'tools',             label: 'Рабочие инструменты (⚠ есть с пробелами)' }
-  ]},
-  { group: 'Счётчики', items: [
-    { token: 'counter',            label: 'Инкремент (глобальный)' },
-    { token: 'counter:orderId',    label: 'Инкремент по имени' },
-    { token: 'increment:reg:1000:5', label: 'Инкремент со стартом и шагом' }
-  ]},
-  { group: 'Regex', items: [
-    { token: 'regex:[A-Z]{3}-\\d{4}', label: 'Строка по regex' }
-  ]}
+  {
+    group: 'Персональные данные (en)',
+    items: [
+      { token: 'name.first', label: 'Имя (James)' },
+      { token: 'name.last', label: 'Фамилия (Smith)' },
+      { token: 'name.full', label: 'Полное имя' },
+      { token: 'email', label: 'Email' },
+      { token: 'phone', label: 'Телефон (###-###-####)' },
+      { token: 'company', label: 'Компания' },
+      { token: 'city', label: 'Город (UK)' },
+      { token: 'street', label: 'Улица + номер' },
+      { token: 'address', label: 'Полный адрес (UK)' },
+    ],
+  },
+  {
+    group: 'Числа и даты',
+    items: [
+      { token: 'number:1:100', label: 'Целое число (1–100)' },
+      { token: 'decimal:0:100:2', label: 'Дробное число (0–100, 2 знака)' },
+      { token: 'uuid', label: 'UUID' },
+      { token: 'now:yyyy-MM-dd', label: 'Текущая дата' },
+      { token: 'now:HH:mm:ss', label: 'Текущее время' },
+      { token: 'date:2020-01-01:2025-12-31:yyyy-MM-dd', label: 'Дата в диапазоне' },
+    ],
+  },
+  {
+    group: 'Текст (Lorem)',
+    items: [
+      { token: 'lorem.words:5', label: '5 слов' },
+      { token: 'lorem.sentence:8', label: 'Предложение' },
+      { token: 'lorem.paragraph:3', label: 'Абзац' },
+    ],
+  },
+  {
+    group: 'Тематические списки (en)',
+    items: [
+      {
+        token: 'word',
+        label: '⭐ Случайное слово (~690: фрукты, столицы, реки, острова, животные…)',
+      },
+      { token: 'tools', label: 'Рабочие инструменты (⚠ есть с пробелами)' },
+    ],
+  },
+  {
+    group: 'Счётчики',
+    items: [
+      { token: 'counter', label: 'Инкремент (глобальный)' },
+      { token: 'counter:orderId', label: 'Инкремент по имени' },
+      { token: 'increment:reg:1000:5', label: 'Инкремент со стартом и шагом' },
+    ],
+  },
+  { group: 'Regex', items: [{ token: 'regex:[A-Z]{3}-\\d{4}', label: 'Строка по regex' }] },
 ];
 
 let tokenMenuOpen = null;
 function openTokenMenu(anchor, textarea) {
-  if (tokenMenuOpen) { tokenMenuOpen.remove(); tokenMenuOpen = null; }
+  if (tokenMenuOpen) {
+    tokenMenuOpen.remove();
+    tokenMenuOpen = null;
+  }
   const menu = document.createElement('div');
   menu.className = 'token-menu';
   // умные инкременторы динамически
   const groups = TOKEN_MENU.slice();
-  const smart = (state.smartCounters || []).map(sc => ({ token: 'seq:' + sc.name, label: 'seq: ' + sc.name }));
+  const smart = (state.smartCounters || []).map(sc => ({
+    token: 'seq:' + sc.name,
+    label: 'seq: ' + sc.name,
+  }));
   if (smart.length) groups.push({ group: 'Умные инкременторы {{seq}}', items: smart });
-  const wlItems = (state.customWordLists || []).filter(wl => wl.name).map(wl => ({ token: 'list:' + wl.name, label: 'список: ' + wl.name }));
+  const wlItems = (state.customWordLists || [])
+    .filter(wl => wl.name)
+    .map(wl => ({ token: 'list:' + wl.name, label: 'список: ' + wl.name }));
   if (wlItems.length) groups.push({ group: 'Пользовательские списки {{list}}', items: wlItems });
 
-  menu.innerHTML = groups.map(g => `
+  menu.innerHTML = groups
+    .map(
+      g => `
     <div class="token-group">
       <div class="token-group-title">${escapeText(g.group)}</div>
-      ${g.items.map(it => `
+      ${g.items
+        .map(
+          it => `
         <button class="token-item" data-token="${escapeAttr(it.token)}">
           <span class="token-name">{{${escapeText(it.token)}}}</span>
           <span class="token-desc">${escapeText(it.label)}</span>
-        </button>`).join('')}
-    </div>`).join('');
+        </button>`
+        )
+        .join('')}
+    </div>`
+    )
+    .join('');
   document.body.appendChild(menu);
   const r = anchor.getBoundingClientRect();
-  menu.style.top  = (r.bottom + window.scrollY + 4) + 'px';
-  menu.style.left = (r.left + window.scrollX) + 'px';
+  menu.style.top = r.bottom + window.scrollY + 4 + 'px';
+  menu.style.left = r.left + window.scrollX + 'px';
   tokenMenuOpen = menu;
 
-  menu.addEventListener('click', (e) => {
+  menu.addEventListener('click', e => {
     const btn = e.target.closest('.token-item');
     if (!btn) return;
     const tok = '{{' + btn.dataset.token + '}}';
     insertAtCursor(textarea, tok);
-    menu.remove(); tokenMenuOpen = null;
+    menu.remove();
+    tokenMenuOpen = null;
   });
   setTimeout(() => {
-    const off = (ev) => {
+    const off = ev => {
       if (!menu.contains(ev.target) && ev.target !== anchor) {
-        menu.remove(); tokenMenuOpen = null; document.removeEventListener('click', off);
+        menu.remove();
+        tokenMenuOpen = null;
+        document.removeEventListener('click', off);
       }
     };
     document.addEventListener('click', off);
@@ -480,9 +650,9 @@ function openTokenMenu(anchor, textarea) {
 function insertAtCursor(el, text) {
   el.focus();
   const start = el.selectionStart || 0;
-  const end   = el.selectionEnd   || 0;
+  const end = el.selectionEnd || 0;
   const before = el.value.slice(0, start);
-  const after  = el.value.slice(end);
+  const after = el.value.slice(end);
   el.value = before + text + after;
   const pos = start + text.length;
   el.setSelectionRange(pos, pos);
@@ -490,14 +660,18 @@ function insertAtCursor(el, text) {
 }
 
 async function pickFromActiveTab() {
-  const res = await new Promise((resolve) => {
-    chrome.runtime.sendMessage({ type: 'PROXY_TO_TAB', payload: { type: 'PICK_ELEMENT' } }, (r) => {
-      if (chrome.runtime.lastError || !r) resolve({ ok: false, error: chrome.runtime.lastError?.message || 'no-tab' });
+  const res = await new Promise(resolve => {
+    chrome.runtime.sendMessage({ type: 'PROXY_TO_TAB', payload: { type: 'PICK_ELEMENT' } }, r => {
+      if (chrome.runtime.lastError || !r)
+        resolve({ ok: false, error: chrome.runtime.lastError?.message || 'no-tab' });
       else resolve(r);
     });
   });
   if (!res.ok) {
-    toast('Не удалось связаться с активной вкладкой. Откройте нужную страницу и попробуйте снова.', 'error');
+    toast(
+      'Не удалось связаться с активной вкладкой. Откройте нужную страницу и попробуйте снова.',
+      'error'
+    );
   }
   return res;
 }
@@ -507,17 +681,29 @@ async function pickFromActiveTab() {
    ================================================================ */
 
 $('addRule').addEventListener('click', () => {
-  for (const r of state.rules) { if (!r.collapsed) r.collapsed = true; }
+  for (const r of state.rules) {
+    if (!r.collapsed) r.collapsed = true;
+  }
   const now = new Date().toISOString();
   const newRule = {
-    id: 'r_' + uid(), folderId: null, name: 'Новое правило',
-    enabled: true, collapsed: false, _isNew: true,
+    id: 'r_' + uid(),
+    folderId: null,
+    name: 'Новое правило',
+    enabled: true,
+    collapsed: false,
+    _isNew: true,
     targets: ['input'],
     urlConditions: [],
     template: '',
-    match: { customLogic: false, conditions: [{ type: 'attribute', attr: 'name', pattern: '', regex: false, connector: 'AND' }] },
-    createdAt: now, updatedAt: now,
-    history: [{ at: now, author: state.authorName || '', summary: 'правило создано' }]
+    match: {
+      customLogic: false,
+      conditions: [
+        { type: 'attribute', attr: 'name', pattern: '', regex: false, connector: 'AND' },
+      ],
+    },
+    createdAt: now,
+    updatedAt: now,
+    history: [{ at: now, author: state.authorName || '', summary: 'правило создано' }],
   };
   state.rules.unshift(newRule);
   addLog('создано', 'правило', newRule.name);
@@ -529,7 +715,12 @@ $('addRule').addEventListener('click', () => {
 $('addFolder').addEventListener('click', () => {
   const name = prompt('Название папки:', 'Новая папка');
   if (name === null) return;
-  state.folders.push({ id: 'f_' + uid(), name: name.trim() || 'Новая папка', icon: '', collapsed: false });
+  state.folders.push({
+    id: 'f_' + uid(),
+    name: name.trim() || 'Новая папка',
+    icon: '',
+    collapsed: false,
+  });
   markStructureDirty();
   save().then(renderFolders);
 });
@@ -546,14 +737,19 @@ function renderFolders() {
     root.appendChild(renderFolderSection(folder));
   }
   if (state.folders.length === 0 && rulesInVirtual.length === 0) {
-    root.innerHTML = '<div class="empty">Правил пока нет. Нажмите «+ Правило» чтобы создать первое.</div>';
+    root.innerHTML =
+      '<div class="empty">Правил пока нет. Нажмите «+ Правило» чтобы создать первое.</div>';
   }
 }
 
 function folderIconSmall(opt) {
   if (opt.icon) return '<img class="folder-icon-sm" src="' + escapeText(opt.icon) + '">';
   if (opt.emoji) return '<span class="folder-icon-sm-emoji">' + escapeText(opt.emoji) + '</span>';
-  return '<span class="folder-icon-sm-placeholder">' + escapeText((opt.name || 'П')[0].toUpperCase()) + '</span>';
+  return (
+    '<span class="folder-icon-sm-placeholder">' +
+    escapeText((opt.name || 'П')[0].toUpperCase()) +
+    '</span>'
+  );
 }
 
 function renderFolderSection(folder) {
@@ -562,7 +758,9 @@ function renderFolderSection(folder) {
   section.className = 'folder-section';
   section.dataset.folderId = isVirtual ? '' : folder.id;
 
-  const rulesInFolder = state.rules.filter(r => (r.folderId || null) === (isVirtual ? null : folder.id));
+  const rulesInFolder = state.rules.filter(
+    r => (r.folderId || null) === (isVirtual ? null : folder.id)
+  );
   const isCollapsed = isVirtual ? false : !!folder.collapsed;
   const folderIcon = !isVirtual && folder.icon;
   const folderEmoji = !isVirtual && folder.emoji;
@@ -570,11 +768,18 @@ function renderFolderSection(folder) {
   if (isVirtual) {
     iconHtml = '<span class="folder-icon-placeholder" data-static="1">📁</span>';
   } else if (folderIcon) {
-    iconHtml = '<img class="folder-icon" src="' + escapeText(folder.icon) + '" title="Изменить иконку">';
+    iconHtml =
+      '<img class="folder-icon" src="' + escapeText(folder.icon) + '" title="Изменить иконку">';
   } else if (folderEmoji) {
-    iconHtml = '<span class="folder-icon-emoji" title="Изменить иконку">' + escapeText(folder.emoji) + '</span>';
+    iconHtml =
+      '<span class="folder-icon-emoji" title="Изменить иконку">' +
+      escapeText(folder.emoji) +
+      '</span>';
   } else {
-    iconHtml = '<span class="folder-icon-placeholder" title="Добавить иконку">' + escapeText((folder.name || 'П')[0].toUpperCase()) + '</span>';
+    iconHtml =
+      '<span class="folder-icon-placeholder" title="Добавить иконку">' +
+      escapeText((folder.name || 'П')[0].toUpperCase()) +
+      '</span>';
   }
 
   const canDelete = !isVirtual && rulesInFolder.length === 0;
@@ -582,8 +787,11 @@ function renderFolderSection(folder) {
     <div class="folder-head">
       ${isVirtual ? '' : '<div class="folder-move-btns"><button class="icon small fMoveUp" title="Вверх">▲</button><button class="icon small fMoveDown" title="Вниз">▼</button></div>'}
       ${iconHtml}
-      ${isVirtual ? '<span class="folder-name-static" title="Правила без назначенной папки">Без папки</span>' :
-                    '<span class="folder-name">' + escapeText(folder.name) + '</span>'}
+      ${
+        isVirtual
+          ? '<span class="folder-name-static" title="Правила без назначенной папки">Без папки</span>'
+          : '<span class="folder-name">' + escapeText(folder.name) + '</span>'
+      }
       <span class="folder-count" title="Правил в папке">${rulesInFolder.length} всего · ${rulesInFolder.filter(r => r.enabled !== false).length} активных</span>
       ${canDelete ? '<button class="btn-x small folder-del" title="Удалить пустую папку">×</button>' : ''}
       ${isVirtual ? '' : '<span class="folder-chevron">' + (isCollapsed ? '▾' : '▴') + '</span>'}
@@ -595,8 +803,9 @@ function renderFolderSection(folder) {
   const head = section.querySelector('.folder-head');
   const chevron = section.querySelector('.folder-chevron');
   if (!isVirtual) {
-    head.addEventListener('click', (e) => {
-      if (e.target.closest('button, .folder-icon, .folder-icon-placeholder, .folder-icon-emoji')) return;
+    head.addEventListener('click', e => {
+      if (e.target.closest('button, .folder-icon, .folder-icon-placeholder, .folder-icon-emoji'))
+        return;
       const opening = folder.collapsed;
       if (opening) {
         for (const f of state.folders) {
@@ -619,8 +828,12 @@ function renderFolderSection(folder) {
   }
 
   if (!isVirtual) {
-    const iconEl = section.querySelector('.folder-icon') || section.querySelector('.folder-icon-emoji') || section.querySelector('.folder-icon-placeholder');
-    if (iconEl && !iconEl.dataset.static) iconEl.addEventListener('click', (e) => openIconMenu(e.target, folder));
+    const iconEl =
+      section.querySelector('.folder-icon') ||
+      section.querySelector('.folder-icon-emoji') ||
+      section.querySelector('.folder-icon-placeholder');
+    if (iconEl && !iconEl.dataset.static)
+      iconEl.addEventListener('click', e => openIconMenu(e.target, folder));
     const delBtn = section.querySelector('.folder-del');
     if (delBtn) {
       delBtn.addEventListener('click', () => {
@@ -635,14 +848,16 @@ function renderFolderSection(folder) {
       if (fi <= 0) return;
       state.folders.splice(fi, 1);
       state.folders.splice(fi - 1, 0, folder);
-      markStructureDirty(); save().then(renderFolders);
+      markStructureDirty();
+      save().then(renderFolders);
     });
     section.querySelector('.fMoveDown').addEventListener('click', () => {
       const fi = state.folders.indexOf(folder);
       if (fi >= state.folders.length - 1) return;
       state.folders.splice(fi, 1);
       state.folders.splice(fi + 1, 0, folder);
-      markStructureDirty(); save().then(renderFolders);
+      markStructureDirty();
+      save().then(renderFolders);
     });
   }
 
@@ -653,7 +868,9 @@ function renderFolderSection(folder) {
   if (!rulesInFolder.length) {
     const empty = document.createElement('div');
     empty.className = 'folder-empty';
-    empty.textContent = isVirtual ? 'Пусто — правила без папки появятся здесь' : 'Папка пуста — назначьте правило через его настройки';
+    empty.textContent = isVirtual
+      ? 'Пусто — правила без папки появятся здесь'
+      : 'Папка пуста — назначьте правило через его настройки';
     body.appendChild(empty);
   }
   return section;
@@ -670,12 +887,16 @@ function ruleSummary(rule) {
   if (tgt) parts.push('<span class="badge">' + escapeText(tgt) + '</span>');
   const conds = (rule.match && rule.match.conditions) || [];
   if (conds.length) {
-    const brief = conds.slice(0, 2).map(c => {
-      if (c.type === 'selector') return 'sel: <code>' + escapeText(c.value || '—') + '</code>';
-      if (c.type === 'attribute') return c.attr + '~<code>' + escapeText(c.pattern || '(any)') + '</code>';
-      if (c.type === 'order')    return '#' + c.index;
-      return '?';
-    }).join(' <span class="conn">AND</span> ');
+    const brief = conds
+      .slice(0, 2)
+      .map(c => {
+        if (c.type === 'selector') return 'sel: <code>' + escapeText(c.value || '—') + '</code>';
+        if (c.type === 'attribute')
+          return c.attr + '~<code>' + escapeText(c.pattern || '(any)') + '</code>';
+        if (c.type === 'order') return '#' + c.index;
+        return '?';
+      })
+      .join(' <span class="conn">AND</span> ');
     parts.push(brief);
   }
   if (rule.urlConditions && rule.urlConditions.length) {
@@ -688,13 +909,22 @@ function ruleSummary(rule) {
 function ruleMatchLine(rule) {
   const conds = (rule.match && rule.match.conditions) || [];
   if (!conds.length) return '';
-  const brief = conds.slice(0, 3).map(c => {
-    if (c.type === 'selector') return 'sel: <code>' + escapeText(c.value || '—') + '</code>';
-    if (c.type === 'attribute') return c.attr + '~<code>' + escapeText(c.pattern || '(any)') + '</code>';
-    if (c.type === 'order')    return '#' + c.index;
-    return '?';
-  }).join(rule.match?.customLogic ? ' <span class="conn">•</span> ' : ' <span class="conn">AND</span> ');
-  return brief + (conds.length > 3 ? ' <span class="extra-count">+' + (conds.length - 3) + '</span>' : '');
+  const brief = conds
+    .slice(0, 3)
+    .map(c => {
+      if (c.type === 'selector') return 'sel: <code>' + escapeText(c.value || '—') + '</code>';
+      if (c.type === 'attribute')
+        return c.attr + '~<code>' + escapeText(c.pattern || '(any)') + '</code>';
+      if (c.type === 'order') return '#' + c.index;
+      return '?';
+    })
+    .join(
+      rule.match?.customLogic ? ' <span class="conn">•</span> ' : ' <span class="conn">AND</span> '
+    );
+  return (
+    brief +
+    (conds.length > 3 ? ' <span class="extra-count">+' + (conds.length - 3) + '</span>' : '')
+  );
 }
 
 function renderRuleCollapsed(rule) {
@@ -750,7 +980,12 @@ function renderRuleCollapsed(rule) {
       const fid = section.dataset.folderId || null;
       const inFolder = state.rules.filter(r => (r.folderId || null) === fid);
       const countEl = section.querySelector('.folder-count');
-      if (countEl) countEl.textContent = inFolder.length + ' всего · ' + inFolder.filter(r => r.enabled !== false).length + ' активных';
+      if (countEl)
+        countEl.textContent =
+          inFolder.length +
+          ' всего · ' +
+          inFolder.filter(r => r.enabled !== false).length +
+          ' активных';
     }
     saveDebounced();
   });
@@ -762,7 +997,8 @@ function renderRuleCollapsed(rule) {
     const prevGi = state.rules.indexOf(siblings[si - 1]);
     state.rules.splice(gi, 1);
     state.rules.splice(prevGi, 0, rule);
-    markStructureDirty(); save().then(renderFolders);
+    markStructureDirty();
+    save().then(renderFolders);
   });
   card.querySelector('.rMoveDown').addEventListener('click', () => {
     const siblings = state.rules.filter(r => (r.folderId || null) === (rule.folderId || null));
@@ -772,15 +1008,20 @@ function renderRuleCollapsed(rule) {
     const nextGi = state.rules.indexOf(siblings[si + 1]);
     state.rules.splice(gi, 1);
     state.rules.splice(nextGi, 0, rule);
-    markStructureDirty(); save().then(renderFolders);
+    markStructureDirty();
+    save().then(renderFolders);
   });
   card.querySelector('.rEdit').addEventListener('click', () => {
-    for (const r of state.rules) { if (r !== rule && !r.collapsed) r.collapsed = true; }
+    for (const r of state.rules) {
+      if (r !== rule && !r.collapsed) r.collapsed = true;
+    }
     rule.collapsed = false;
     save().then(renderFolders);
   });
   card.querySelector('.rCopy').addEventListener('click', () => {
-    for (const r of state.rules) { if (!r.collapsed) r.collapsed = true; }
+    for (const r of state.rules) {
+      if (!r.collapsed) r.collapsed = true;
+    }
     const now = new Date().toISOString();
     const clone = deepClone(rule);
     clone.id = 'r_' + uid();
@@ -789,7 +1030,13 @@ function renderRuleCollapsed(rule) {
     clone._isNew = true;
     clone.createdAt = now;
     clone.updatedAt = now;
-    clone.history = [{ at: now, author: state.authorName || '', summary: 'копия правила «' + (rule.name || '') + '»' }];
+    clone.history = [
+      {
+        at: now,
+        author: state.authorName || '',
+        summary: 'копия правила «' + (rule.name || '') + '»',
+      },
+    ];
     const idx = state.rules.indexOf(rule);
     state.rules.splice(idx + 1, 0, clone);
     addLog('копия', 'правило', clone.name);
@@ -801,8 +1048,11 @@ function renderRuleCollapsed(rule) {
 
 function safePreview(template) {
   if (!template) return '—';
-  try { return window.FF.render(template, previewCtx()) || '—'; }
-  catch (e) { return template; }
+  try {
+    return window.FF.render(template, previewCtx()) || '—';
+  } catch (e) {
+    return template;
+  }
 }
 
 function renderRuleExpanded(rule) {
@@ -812,7 +1062,12 @@ function renderRuleExpanded(rule) {
   card.dataset.ruleId = rule.id;
 
   const folderOptions = ['<option value="">— Без папки —</option>']
-    .concat(state.folders.map(f => `<option value="${f.id}" ${rule.folderId === f.id ? 'selected' : ''}>${escapeText(f.name)}</option>`))
+    .concat(
+      state.folders.map(
+        f =>
+          `<option value="${f.id}" ${rule.folderId === f.id ? 'selected' : ''}>${escapeText(f.name)}</option>`
+      )
+    )
     .join('');
 
   card.innerHTML = `
@@ -880,14 +1135,30 @@ function renderRuleExpanded(rule) {
         </div>
         <div class="row rTargetsRow">
           ${[
-            { v: 'input', tip: 'Текстовые поля: text, email, password, number, tel, url, search и другие <input> без специального типа' },
+            {
+              v: 'input',
+              tip: 'Текстовые поля: text, email, password, number, tel, url, search и другие <input> без специального типа',
+            },
             { v: 'textarea', tip: 'Многострочные текстовые поля <textarea>' },
-            { v: 'select', tip: 'Выпадающие списки <select>. Шаблон ищет <option> по value или тексту' },
-            { v: 'checkbox', tip: 'Чекбоксы <input type="checkbox">. Шаблон true/false — отметить или снять' },
-            { v: 'radio', tip: 'Радио-кнопки <input type="radio">. Шаблон true/false — выбрать или сбросить' }
-          ].map(t => `
-            <label class="shrink inline-lbl" title="${escapeAttr(t.tip)}"><input type="radio" name="target_${rule.id}" class="rTarget" value="${t.v}" ${(rule.targets||[])[0]===t.v?'checked':''}> ${t.v}</label>
-          `).join('')}
+            {
+              v: 'select',
+              tip: 'Выпадающие списки <select>. Шаблон ищет <option> по value или тексту',
+            },
+            {
+              v: 'checkbox',
+              tip: 'Чекбоксы <input type="checkbox">. Шаблон true/false — отметить или снять',
+            },
+            {
+              v: 'radio',
+              tip: 'Радио-кнопки <input type="radio">. Шаблон true/false — выбрать или сбросить',
+            },
+          ]
+            .map(
+              t => `
+            <label class="shrink inline-lbl" title="${escapeAttr(t.tip)}"><input type="radio" name="target_${rule.id}" class="rTarget" value="${t.v}" ${(rule.targets || [])[0] === t.v ? 'checked' : ''}> ${t.v}</label>
+          `
+            )
+            .join('')}
         </div>
         <div class="detect-html-box" style="display:none;margin-top:8px">
           <label>Вставьте outerHTML целевого элемента</label>
@@ -973,8 +1244,8 @@ function renderRuleExpanded(rule) {
       <div class="rTemplateToggle" style="display:none">
         <label style="margin:0">Состояние</label>
         <div class="row" style="align-items:center;gap:6px;margin-top:6px">
-          <label class="inline-lbl shrink"><input type="radio" name="toggleVal_${rule.id}" class="rToggleVal" value="true" ${['true','1','yes','on','checked'].includes((rule.template||'').toLowerCase().trim()) ? 'checked' : ''}> Включить</label>
-          <label class="inline-lbl shrink"><input type="radio" name="toggleVal_${rule.id}" class="rToggleVal" value="false" ${!['true','1','yes','on','checked'].includes((rule.template||'').toLowerCase().trim()) ? 'checked' : ''}> Выключить</label>
+          <label class="inline-lbl shrink"><input type="radio" name="toggleVal_${rule.id}" class="rToggleVal" value="true" ${['true', '1', 'yes', 'on', 'checked'].includes((rule.template || '').toLowerCase().trim()) ? 'checked' : ''}> Включить</label>
+          <label class="inline-lbl shrink"><input type="radio" name="toggleVal_${rule.id}" class="rToggleVal" value="false" ${!['true', '1', 'yes', 'on', 'checked'].includes((rule.template || '').toLowerCase().trim()) ? 'checked' : ''}> Выключить</label>
         </div>
       </div>
     </div>
@@ -994,18 +1265,24 @@ function renderRuleExpanded(rule) {
   const rerenderConditions = () => {
     const box = card.querySelector('.condList');
     box.innerHTML = '';
-    (rule.match.conditions || []).forEach((cond, ci) => box.appendChild(renderCondRow(rule, cond, ci)));
+    (rule.match.conditions || []).forEach((cond, ci) =>
+      box.appendChild(renderCondRow(rule, cond, ci))
+    );
     updateSectionSummary();
   };
   const rerenderUrlConditions = () => {
     const box = card.querySelector('.urlCondList');
     box.innerHTML = '';
-    (rule.urlConditions || []).forEach((cond, ci) => box.appendChild(renderUrlCondRow(rule, cond, ci)));
+    (rule.urlConditions || []).forEach((cond, ci) =>
+      box.appendChild(renderUrlCondRow(rule, cond, ci))
+    );
     updateSectionSummary();
   };
   card._rerenderConditions = rerenderConditions;
   card._rerenderUrlConditions = rerenderUrlConditions;
-  card._updateSectionSummary = () => { if (typeof updateSectionSummary === 'function') updateSectionSummary(); };
+  card._updateSectionSummary = () => {
+    if (typeof updateSectionSummary === 'function') updateSectionSummary();
+  };
 
   // Preview
   updatePreview(card, rule.template);
@@ -1013,15 +1290,24 @@ function renderRuleExpanded(rule) {
   // Populate inline token grid (two-column clickable list)
   const tokenGrid = card.querySelector('.token-grid');
   const allGroups = TOKEN_MENU.slice();
-  const smartItems = (state.smartCounters || []).map(sc => ({ token: 'seq:' + sc.name, label: 'seq: ' + sc.name }));
+  const smartItems = (state.smartCounters || []).map(sc => ({
+    token: 'seq:' + sc.name,
+    label: 'seq: ' + sc.name,
+  }));
   if (smartItems.length) allGroups.push({ group: 'Умные инкременторы', items: smartItems });
-  const wlItems = (state.customWordLists || []).filter(wl => wl.name).map(wl => ({ token: 'list:' + wl.name, label: wl.name }));
+  const wlItems = (state.customWordLists || [])
+    .filter(wl => wl.name)
+    .map(wl => ({ token: 'list:' + wl.name, label: wl.name }));
   if (wlItems.length) allGroups.push({ group: 'Пользовательские списки', items: wlItems });
-  tokenGrid.innerHTML = allGroups.map(g => `
+  tokenGrid.innerHTML = allGroups
+    .map(
+      g => `
     <div class="tg-group">
       <div class="tg-title">${escapeText(g.group)}</div>
       <div class="tg-items">${g.items.map(it => `<button type="button" class="tg-item" data-token="${escapeAttr(it.token)}" title="${escapeAttr(it.label)}"><code>{{${escapeText(it.token)}}}</code><span>${escapeText(it.label)}</span></button>`).join('')}</div>
-    </div>`).join('');
+    </div>`
+    )
+    .join('');
 
   // Handlers
   const templateEl = card.querySelector('.rTemplate');
@@ -1036,7 +1322,8 @@ function renderRuleExpanded(rule) {
     insertAtCursor(templateEl, tok);
     rule.template = templateEl.value;
     updatePreview(card, rule.template);
-    touchRule(rule); saveDebounced();
+    touchRule(rule);
+    saveDebounced();
   });
   // Action type toggle (radio buttons)
   card.querySelectorAll('.rActionType').forEach(radio => {
@@ -1045,16 +1332,28 @@ function renderRuleExpanded(rule) {
       const isClick = rule.actionType === 'click';
       card.querySelector('.rClickSection').style.display = isClick ? '' : 'none';
       card.querySelector('.rFillSection').style.display = isClick ? 'none' : '';
-      updateSectionSummary(); touchRule(rule); saveDebounced();
+      updateSectionSummary();
+      touchRule(rule);
+      saveDebounced();
     });
   });
 
-  card.querySelector('.rFillDelay').addEventListener('input', e => { rule.fillDelay = parseInt(e.target.value, 10) || 0; updateSectionSummary(); touchRule(rule); saveDebounced(); });
+  card.querySelector('.rFillDelay').addEventListener('input', e => {
+    rule.fillDelay = parseInt(e.target.value, 10) || 0;
+    updateSectionSummary();
+    touchRule(rule);
+    saveDebounced();
+  });
 
   function buildSectionSummaryHtml() {
     const parts = [];
-    parts.push('<span class="badge">' + ((rule.actionType || 'fill') === 'click' ? 'Кликнуть' : 'Заполнить значение') + '</span>');
-    if (rule.fillDelay) parts.push('<span class="summary-item">' + escapeText(rule.fillDelay + ' мс') + '</span>');
+    parts.push(
+      '<span class="badge">' +
+        ((rule.actionType || 'fill') === 'click' ? 'Кликнуть' : 'Заполнить значение') +
+        '</span>'
+    );
+    if (rule.fillDelay)
+      parts.push('<span class="summary-item">' + escapeText(rule.fillDelay + ' мс') + '</span>');
     const tgt = (rule.targets || [])[0];
     if (tgt) parts.push('<span class="badge">' + escapeText(tgt) + '</span>');
     const urls = (rule.urlConditions || []).filter(c => c.value);
@@ -1063,15 +1362,26 @@ function renderRuleExpanded(rule) {
       if (urls.length > 1) s += ' <span class="extra-count">+' + (urls.length - 1) + '</span>';
       parts.push(s + '</span>');
     }
-    const conds = (rule.match?.conditions || []);
+    const conds = rule.match?.conditions || [];
     if (conds.length) {
-      const brief = conds.slice(0, 2).map(c => {
-        if (c.type === 'selector') return 'sel: <code>' + escapeText(c.value || '—') + '</code>';
-        if (c.type === 'attribute') return escapeText(c.attr) + '~<code>' + escapeText(c.pattern || '(any)') + '</code>';
-        if (c.type === 'order') return '#' + c.index;
-        return '?';
-      }).join(' <span class="conn">AND</span> ');
-      parts.push('<span class="summary-item">' + brief + (conds.length > 2 ? ' <span class="extra-count">+' + (conds.length - 2) + '</span>' : '') + '</span>');
+      const brief = conds
+        .slice(0, 2)
+        .map(c => {
+          if (c.type === 'selector') return 'sel: <code>' + escapeText(c.value || '—') + '</code>';
+          if (c.type === 'attribute')
+            return escapeText(c.attr) + '~<code>' + escapeText(c.pattern || '(any)') + '</code>';
+          if (c.type === 'order') return '#' + c.index;
+          return '?';
+        })
+        .join(' <span class="conn">AND</span> ');
+      parts.push(
+        '<span class="summary-item">' +
+          brief +
+          (conds.length > 2
+            ? ' <span class="extra-count">+' + (conds.length - 2) + '</span>'
+            : '') +
+          '</span>'
+      );
     }
     return parts.join('<span class="conn">·</span>');
   }
@@ -1079,7 +1389,9 @@ function renderRuleExpanded(rule) {
   const sectionSummary = card.querySelector('.rSectionSummary');
   const sectionBody = card.querySelector('.rSectionBody');
   const sectionArrow = card.querySelector('.section-collapse-arrow');
-  function updateSectionSummary() { sectionSummary.innerHTML = buildSectionSummaryHtml(); }
+  function updateSectionSummary() {
+    sectionSummary.innerHTML = buildSectionSummaryHtml();
+  }
   updateSectionSummary();
   function toggleSection() {
     const collapsed = sectionBlock.classList.toggle('collapsed');
@@ -1095,36 +1407,83 @@ function renderRuleExpanded(rule) {
   sectionArrow.textContent = '▾';
 
   // Click-mode handlers
-  card.querySelector('.rClickSelector').addEventListener('input', e => { rule.clickSelector = e.target.value; touchRule(rule); saveDebounced(); });
-  card.querySelector('.rClickGuard').addEventListener('change', e => { rule.clickGuard = e.target.value; touchRule(rule); saveDebounced(); });
+  card.querySelector('.rClickSelector').addEventListener('input', e => {
+    rule.clickSelector = e.target.value;
+    touchRule(rule);
+    saveDebounced();
+  });
+  card.querySelector('.rClickGuard').addEventListener('change', e => {
+    rule.clickGuard = e.target.value;
+    touchRule(rule);
+    saveDebounced();
+  });
   card.querySelector('.rClickPick').addEventListener('click', async () => {
     const res = await pickFromActiveTab();
-    if (res && res.ok) { rule.clickSelector = res.selector; card.querySelector('.rClickSelector').value = res.selector; touchRule(rule); saveDebounced(); }
+    if (res && res.ok) {
+      rule.clickSelector = res.selector;
+      card.querySelector('.rClickSelector').value = res.selector;
+      touchRule(rule);
+      saveDebounced();
+    }
   });
-  card.querySelector('.rClickTrigger').addEventListener('input', e => { rule.clickTriggerSelector = e.target.value; touchRule(rule); saveDebounced(); });
-  card.querySelector('.rClickTrigWait').addEventListener('input', e => { rule.clickTriggerWait = parseInt(e.target.value, 10) || 0; touchRule(rule); saveDebounced(); });
+  card.querySelector('.rClickTrigger').addEventListener('input', e => {
+    rule.clickTriggerSelector = e.target.value;
+    touchRule(rule);
+    saveDebounced();
+  });
+  card.querySelector('.rClickTrigWait').addEventListener('input', e => {
+    rule.clickTriggerWait = parseInt(e.target.value, 10) || 0;
+    touchRule(rule);
+    saveDebounced();
+  });
   card.querySelector('.rClickTrigPick').addEventListener('click', async () => {
     const res = await pickFromActiveTab();
-    if (res && res.ok) { rule.clickTriggerSelector = res.selector; card.querySelector('.rClickTrigger').value = res.selector; touchRule(rule); saveDebounced(); }
+    if (res && res.ok) {
+      rule.clickTriggerSelector = res.selector;
+      card.querySelector('.rClickTrigger').value = res.selector;
+      touchRule(rule);
+      saveDebounced();
+    }
   });
 
-  card.querySelector('.rLabel').addEventListener('input', e => { rule.name = e.target.value; touchRule(rule); saveDebounced(); });
+  card.querySelector('.rLabel').addEventListener('input', e => {
+    rule.name = e.target.value;
+    touchRule(rule);
+    saveDebounced();
+  });
   card.querySelector('.rEnabled').addEventListener('change', e => {
-    rule.enabled = e.target.checked; touchRule(rule);
+    rule.enabled = e.target.checked;
+    touchRule(rule);
     card.querySelector('.toggle-label').textContent = rule.enabled ? 'ВКЛ' : 'ВЫКЛ';
     const section = card.closest('.folder-section');
     if (section) {
       const fid = section.dataset.folderId || null;
       const inFolder = state.rules.filter(r => (r.folderId || null) === fid);
       const countEl = section.querySelector('.folder-count');
-      if (countEl) countEl.textContent = inFolder.length + ' всего · ' + inFolder.filter(r => r.enabled !== false).length + ' активных';
+      if (countEl)
+        countEl.textContent =
+          inFolder.length +
+          ' всего · ' +
+          inFolder.filter(r => r.enabled !== false).length +
+          ' активных';
     }
     saveDebounced();
   });
-  templateEl.addEventListener('input', e => { rule.template = e.target.value; updatePreview(card, rule.template); touchRule(rule); saveDebounced(); });
+  templateEl.addEventListener('input', e => {
+    rule.template = e.target.value;
+    updatePreview(card, rule.template);
+    touchRule(rule);
+    saveDebounced();
+  });
   card.querySelector('.rTest').addEventListener('click', () => updatePreview(card, rule.template));
-  card.querySelector('.rInsertToken').addEventListener('click', (e) => openTokenMenu(e.currentTarget, templateEl));
-  card.querySelector('.rFolder').addEventListener('change', e => { rule.folderId = e.target.value || null; markStructureDirty(); save().then(renderFolders); });
+  card
+    .querySelector('.rInsertToken')
+    .addEventListener('click', e => openTokenMenu(e.currentTarget, templateEl));
+  card.querySelector('.rFolder').addEventListener('change', e => {
+    rule.folderId = e.target.value || null;
+    markStructureDirty();
+    save().then(renderFolders);
+  });
   function isToggleOnly() {
     const t = rule.targets || [];
     return t.length > 0 && t.every(x => x === 'checkbox' || x === 'radio');
@@ -1134,7 +1493,9 @@ function renderRuleExpanded(rule) {
     const t = rule.targets || [];
     const hints = [];
     if (t.includes('select'))
-      hints.push('Для &lt;select&gt;: шаблон должен давать value или видимый текст нужного option (регистр не важен). Если совпадений нет — будет выбран случайный вариант.');
+      hints.push(
+        'Для &lt;select&gt;: шаблон должен давать value или видимый текст нужного option (регистр не важен). Если совпадений нет — будет выбран случайный вариант.'
+      );
     hintEl.innerHTML = hints.join('<br>');
     hintEl.style.display = hints.length ? '' : 'none';
 
@@ -1150,7 +1511,8 @@ function renderRuleExpanded(rule) {
       rule.template = e.target.value;
       templateEl.value = rule.template;
       updatePreview(card, rule.template);
-      touchRule(rule); saveDebounced();
+      touchRule(rule);
+      saveDebounced();
     });
   });
   let _savedTemplate = null;
@@ -1161,7 +1523,7 @@ function renderRuleExpanded(rule) {
       updateFieldHint();
       updateSectionSummary();
       if (isToggleOnly()) {
-        if (!['true','false'].includes(rule.template)) {
+        if (!['true', 'false'].includes(rule.template)) {
           _savedTemplate = rule.template;
           rule.template = 'true';
           templateEl.value = 'true';
@@ -1174,7 +1536,8 @@ function renderRuleExpanded(rule) {
         _savedTemplate = null;
         updatePreview(card, rule.template);
       }
-      touchRule(rule); saveDebounced();
+      touchRule(rule);
+      saveDebounced();
     });
   });
   card.querySelector('.rCustomLogic').addEventListener('change', e => {
@@ -1184,7 +1547,13 @@ function renderRuleExpanded(rule) {
     rerenderConditions(); // только пересобираем список условий, чтобы показать/скрыть connectors
   });
   card.querySelector('.addCond').addEventListener('click', () => {
-    rule.match.conditions.push({ type: 'attribute', attr: 'name', pattern: '', regex: false, connector: 'AND' });
+    rule.match.conditions.push({
+      type: 'attribute',
+      attr: 'name',
+      pattern: '',
+      regex: false,
+      connector: 'AND',
+    });
     touchRule(rule);
     saveDebounced();
     rerenderConditions();
@@ -1216,7 +1585,10 @@ function renderRuleExpanded(rule) {
   if (!rule._isNew) {
     card.querySelector('.rDiscard').addEventListener('click', () => {
       const snap = rule._snapshot;
-      if (snap) { Object.assign(rule, snap); delete rule._snapshot; }
+      if (snap) {
+        Object.assign(rule, snap);
+        delete rule._snapshot;
+      }
       rule.collapsed = true;
       save().then(renderFolders);
     });
@@ -1238,13 +1610,21 @@ function renderRuleExpanded(rule) {
   }
 
   card.querySelector('.rDelete').addEventListener('click', () => {
-    const word = prompt('Для удаления правила «' + (rule.name || 'без имени') + '» введите слово "удалить":');
+    const word = prompt(
+      'Для удаления правила «' + (rule.name || 'без имени') + '» введите слово "удалить":'
+    );
     if (word == null) return;
-    if (word.trim().toLowerCase() !== 'удалить') { toast('Неверное слово — удаление отменено', 'error'); return; }
+    if (word.trim().toLowerCase() !== 'удалить') {
+      toast('Неверное слово — удаление отменено', 'error');
+      return;
+    }
     addLog('удалено', 'правило', rule.name);
     state.rules = state.rules.filter(r => r.id !== rule.id);
     markStructureDirty();
-    save().then(() => { renderFolders(); toast('Правило удалено', 'ok'); });
+    save().then(() => {
+      renderFolders();
+      toast('Правило удалено', 'ok');
+    });
   });
 
   // Smart type detection
@@ -1258,33 +1638,55 @@ function renderRuleExpanded(rule) {
   });
   card.querySelector('.rDetectRun').addEventListener('click', () => {
     const html = card.querySelector('.rDetectHtml').value.trim();
-    if (!html) { toast('Вставьте HTML', 'error'); return; }
+    if (!html) {
+      toast('Вставьте HTML', 'error');
+      return;
+    }
     const detected = detectFieldTargets(html);
-    if (!detected) { toast('Не удалось определить элемент', 'error'); return; }
+    if (!detected) {
+      toast('Не удалось определить элемент', 'error');
+      return;
+    }
     rule.targets = detected.targets.slice(0, 1);
-    card.querySelectorAll('.rTarget').forEach(cb => { cb.checked = rule.targets.includes(cb.value); });
+    card.querySelectorAll('.rTarget').forEach(cb => {
+      cb.checked = rule.targets.includes(cb.value);
+    });
     // Автопредложение первого условия (name > id > placeholder)
     if (detected.suggestion) {
-      const found = rule.match.conditions.find(c =>
-        c.type === 'attribute' && c.attr === detected.suggestion.attr && c.pattern === detected.suggestion.pattern);
+      const found = rule.match.conditions.find(
+        c =>
+          c.type === 'attribute' &&
+          c.attr === detected.suggestion.attr &&
+          c.pattern === detected.suggestion.pattern
+      );
       if (!found) {
         rule.match.conditions.push({
-          type: 'attribute', attr: detected.suggestion.attr, pattern: detected.suggestion.pattern,
-          regex: false, connector: 'AND'
+          type: 'attribute',
+          attr: detected.suggestion.attr,
+          pattern: detected.suggestion.pattern,
+          regex: false,
+          connector: 'AND',
         });
       }
     }
     touchRule(rule);
-    save().then(() => { renderFolders(); toast('Обнаружено: ' + detected.summary, 'ok'); });
+    save().then(() => {
+      renderFolders();
+      toast('Обнаружено: ' + detected.summary, 'ok');
+    });
   });
 
   // URL conditions render
   const urlCondList = card.querySelector('.urlCondList');
-  (rule.urlConditions || []).forEach((cond, ci) => urlCondList.appendChild(renderUrlCondRow(rule, cond, ci)));
+  (rule.urlConditions || []).forEach((cond, ci) =>
+    urlCondList.appendChild(renderUrlCondRow(rule, cond, ci))
+  );
 
   // conditions
   const condList = card.querySelector('.condList');
-  (rule.match.conditions || []).forEach((cond, ci) => condList.appendChild(renderCondRow(rule, cond, ci)));
+  (rule.match.conditions || []).forEach((cond, ci) =>
+    condList.appendChild(renderCondRow(rule, cond, ci))
+  );
 
   // history list
   const histBox = card.querySelector('.history-list');
@@ -1294,15 +1696,27 @@ function renderRuleExpanded(rule) {
       row.className = 'history-row';
       let diffHtml = '';
       if (h.changes && h.changes.length) {
-        diffHtml = h.changes.map(c =>
-          '<div class="history-field">' +
-            '<span class="history-field-name">' + escapeText(c.field) + '</span>' +
-            '<span class="history-was">было: ' + escapeText(c.was) + '</span>' +
-            '<span class="history-now">стало: ' + escapeText(c.now) + '</span>' +
-          '</div>'
-        ).join('');
+        diffHtml = h.changes
+          .map(
+            c =>
+              '<div class="history-field">' +
+              '<span class="history-field-name">' +
+              escapeText(c.field) +
+              '</span>' +
+              '<span class="history-was">было: ' +
+              escapeText(c.was) +
+              '</span>' +
+              '<span class="history-now">стало: ' +
+              escapeText(c.now) +
+              '</span>' +
+              '</div>'
+          )
+          .join('');
       } else if (h.summary) {
-        diffHtml = '<div class="history-field"><span class="history-now">' + escapeText(h.summary) + '</span></div>';
+        diffHtml =
+          '<div class="history-field"><span class="history-now">' +
+          escapeText(h.summary) +
+          '</span></div>';
       }
       row.innerHTML = `
         <div class="history-head">
@@ -1323,11 +1737,14 @@ function renderRuleExpanded(rule) {
           rule.name = restored.name != null ? restored.name : rule.name;
           rule.enabled = restored.enabled != null ? restored.enabled : rule.enabled;
           rule.targets = Array.isArray(restored.targets) ? restored.targets : rule.targets;
-          rule.urlConditions = Array.isArray(restored.urlConditions) ? restored.urlConditions : rule.urlConditions;
+          rule.urlConditions = Array.isArray(restored.urlConditions)
+            ? restored.urlConditions
+            : rule.urlConditions;
           rule.template = restored.template != null ? restored.template : rule.template;
           rule.actionType = restored.actionType || rule.actionType;
           rule.fillDelay = restored.fillDelay != null ? restored.fillDelay : rule.fillDelay;
-          rule.clickSelector = restored.clickSelector != null ? restored.clickSelector : rule.clickSelector;
+          rule.clickSelector =
+            restored.clickSelector != null ? restored.clickSelector : rule.clickSelector;
           rule.match = restored.match || rule.match;
           rule.folderId = restored.folderId !== undefined ? restored.folderId : rule.folderId;
           rule.collapsed = false;
@@ -1365,7 +1782,7 @@ function makeSnap(src) {
     fillDelay: src.fillDelay || 0,
     clickSelector: src.clickSelector || '',
     match: deepClone(src.match),
-    folderId: src.folderId
+    folderId: src.folderId,
   };
 }
 
@@ -1373,46 +1790,86 @@ function saveHistoryEntry(rule, forcedSummary) {
   const author = state.authorName || '';
   if (forcedSummary) {
     rule.history = rule.history || [];
-    rule.history.unshift({ at: new Date().toISOString(), author, summary: forcedSummary, snapshot: makeSnap(rule) });
+    rule.history.unshift({
+      at: new Date().toISOString(),
+      author,
+      summary: forcedSummary,
+      snapshot: makeSnap(rule),
+    });
   } else {
     const ch = diffChanges(rule._snapshot, rule);
     if (!ch) return;
     rule.history = rule.history || [];
-    rule.history.unshift({ at: new Date().toISOString(), author, changes: ch, snapshot: makeSnap(rule._snapshot) });
+    rule.history.unshift({
+      at: new Date().toISOString(),
+      author,
+      changes: ch,
+      snapshot: makeSnap(rule._snapshot),
+    });
   }
   if (rule.history.length > HISTORY_LIMIT) rule.history.length = HISTORY_LIMIT;
 }
 
 function fmtUrlConds(arr) {
-  return (arr || []).map(c => c.value || '').filter(Boolean).join(', ') || '—';
+  return (
+    (arr || [])
+      .map(c => c.value || '')
+      .filter(Boolean)
+      .join(', ') || '—'
+  );
 }
 function fmtMatch(m) {
-  return (m?.conditions || []).map(c => {
-    if (c.type === 'selector') return 'sel: ' + (c.value || '');
-    if (c.type === 'attribute') return c.attr + '~' + (c.pattern || '');
-    if (c.type === 'order') return '#' + c.index;
-    return '?';
-  }).join('; ') || '—';
+  return (
+    (m?.conditions || [])
+      .map(c => {
+        if (c.type === 'selector') return 'sel: ' + (c.value || '');
+        if (c.type === 'attribute') return c.attr + '~' + (c.pattern || '');
+        if (c.type === 'order') return '#' + c.index;
+        return '?';
+      })
+      .join('; ') || '—'
+  );
 }
-function truncVal(s, n) { return s.length > n ? s.slice(0, n) + '…' : s; }
+function truncVal(s, n) {
+  return s.length > n ? s.slice(0, n) + '…' : s;
+}
 
 function diffChanges(prev, cur) {
   if (!prev) return null;
   const ch = [];
-  if (prev.name !== cur.name)
-    ch.push({ field: 'название', was: prev.name, now: cur.name });
+  if (prev.name !== cur.name) ch.push({ field: 'название', was: prev.name, now: cur.name });
   if (prev.enabled !== cur.enabled)
-    ch.push({ field: 'статус', was: prev.enabled ? 'вкл' : 'выкл', now: cur.enabled ? 'вкл' : 'выкл' });
+    ch.push({
+      field: 'статус',
+      was: prev.enabled ? 'вкл' : 'выкл',
+      now: cur.enabled ? 'вкл' : 'выкл',
+    });
   if (prev.template !== cur.template)
-    ch.push({ field: 'шаблон', was: truncVal(prev.template || '', 40), now: truncVal(cur.template || '', 40) });
+    ch.push({
+      field: 'шаблон',
+      was: truncVal(prev.template || '', 40),
+      now: truncVal(cur.template || '', 40),
+    });
   if ((prev.actionType || 'fill') !== (cur.actionType || 'fill'))
     ch.push({ field: 'действие', was: prev.actionType || 'fill', now: cur.actionType || 'fill' });
   if ((prev.fillDelay || 0) !== (cur.fillDelay || 0))
-    ch.push({ field: 'задержка', was: (prev.fillDelay || 0) + ' мс', now: (cur.fillDelay || 0) + ' мс' });
+    ch.push({
+      field: 'задержка',
+      was: (prev.fillDelay || 0) + ' мс',
+      now: (cur.fillDelay || 0) + ' мс',
+    });
   if (JSON.stringify(prev.targets || []) !== JSON.stringify(cur.targets || []))
-    ch.push({ field: 'типы полей', was: (prev.targets || []).join(', ') || '—', now: (cur.targets || []).join(', ') || '—' });
+    ch.push({
+      field: 'типы полей',
+      was: (prev.targets || []).join(', ') || '—',
+      now: (cur.targets || []).join(', ') || '—',
+    });
   if (JSON.stringify(prev.urlConditions || []) !== JSON.stringify(cur.urlConditions || []))
-    ch.push({ field: 'URL', was: fmtUrlConds(prev.urlConditions), now: fmtUrlConds(cur.urlConditions) });
+    ch.push({
+      field: 'URL',
+      was: fmtUrlConds(prev.urlConditions),
+      now: fmtUrlConds(cur.urlConditions),
+    });
   if (JSON.stringify(prev.match) !== JSON.stringify(cur.match))
     ch.push({ field: 'матчинг', was: fmtMatch(prev.match), now: fmtMatch(cur.match) });
   if (prev.folderId !== cur.folderId) {
@@ -1421,7 +1878,11 @@ function diffChanges(prev, cur) {
     ch.push({ field: 'папка', was: pf ? pf.name : 'без папки', now: cf ? cf.name : 'без папки' });
   }
   if ((prev.clickSelector || '') !== (cur.clickSelector || ''))
-    ch.push({ field: 'click-селектор', was: prev.clickSelector || '—', now: cur.clickSelector || '—' });
+    ch.push({
+      field: 'click-селектор',
+      was: prev.clickSelector || '—',
+      now: cur.clickSelector || '—',
+    });
   return ch.length ? ch : null;
 }
 
@@ -1432,24 +1893,33 @@ function renderCondRow(rule, cond, ci) {
   const showConnector = rule.match.customLogic && ci > 0;
 
   const typeTips = {
-    selector: 'CSS-селектор элемента. Кнопка «выбрать» позволяет кликнуть по полю на странице и получить селектор автоматически.',
-    attribute: 'Сравнение HTML-атрибута (id, name, placeholder, type, class, data-* и др.) с паттерном. Поддерживается regex.',
-    order: 'Порядковый номер подходящего поля на странице (1 = первое). Полезно когда у полей нет уникальных атрибутов.'
+    selector:
+      'CSS-селектор элемента. Кнопка «выбрать» позволяет кликнуть по полю на странице и получить селектор автоматически.',
+    attribute:
+      'Сравнение HTML-атрибута (id, name, placeholder, type, class, data-* и др.) с паттерном. Поддерживается regex.',
+    order:
+      'Порядковый номер подходящего поля на странице (1 = первое). Полезно когда у полей нет уникальных атрибутов.',
   };
-  const typeOpt = (v, l) => `<option value="${v}" title="${escapeAttr(typeTips[v])}" ${cond.type===v?'selected':''}>${l}</option>`;
-  const attrOpt = (v) => `<option value="${v}" ${cond.attr===v?'selected':''}>${v}</option>`;
-  const connOpt = (v) => `<option value="${v}" ${(cond.connector||'AND')===v?'selected':''}>${v}</option>`;
+  const typeOpt = (v, l) =>
+    `<option value="${v}" title="${escapeAttr(typeTips[v])}" ${cond.type === v ? 'selected' : ''}>${l}</option>`;
+  const attrOpt = v => `<option value="${v}" ${cond.attr === v ? 'selected' : ''}>${v}</option>`;
+  const connOpt = v =>
+    `<option value="${v}" ${(cond.connector || 'AND') === v ? 'selected' : ''}>${v}</option>`;
 
   row.innerHTML = `
-    ${showConnector ? `
+    ${
+      showConnector
+        ? `
       <div class="cond-connector">
-        <select class="cConnector">${['AND','OR'].map(connOpt).join('')}</select>
-      </div>` : ''}
+        <select class="cConnector">${['AND', 'OR'].map(connOpt).join('')}</select>
+      </div>`
+        : ''
+    }
     <div class="row" style="margin:0">
       <select class="cType shrink" style="flex:0 0 150px" title="${escapeAttr(typeTips[cond.type] || '')}">
-        ${typeOpt('selector','Селектор')}
-        ${typeOpt('attribute','Атрибут')}
-        ${typeOpt('order','Порядковый №')}
+        ${typeOpt('selector', 'Селектор')}
+        ${typeOpt('attribute', 'Атрибут')}
+        ${typeOpt('order', 'Порядковый №')}
       </select>
       <div class="body grow"></div>
       <button class="btn-x small delCond" title="Удалить условие">×</button>
@@ -1463,10 +1933,19 @@ function renderCondRow(rule, cond, ci) {
           <input type="text" class="cSelector grow" value="${escapeAttr(cond.value || '')}" placeholder="#email, .form input[name=login]">
           <button class="small pickBtn shrink">выбрать</button>
         </div>`;
-      body.querySelector('.cSelector').addEventListener('input', e => { cond.value = e.target.value; touchRule(rule); saveDebounced(); });
+      body.querySelector('.cSelector').addEventListener('input', e => {
+        cond.value = e.target.value;
+        touchRule(rule);
+        saveDebounced();
+      });
       body.querySelector('.pickBtn').addEventListener('click', async () => {
         const res = await pickFromActiveTab();
-        if (res && res.ok) { cond.value = res.selector; body.querySelector('.cSelector').value = res.selector; touchRule(rule); saveDebounced(); }
+        if (res && res.ok) {
+          cond.value = res.selector;
+          body.querySelector('.cSelector').value = res.selector;
+          touchRule(rule);
+          saveDebounced();
+        }
       });
     } else if (cond.type === 'attribute') {
       const attrHint = attrPlaceholder(cond.attr || 'name');
@@ -1474,7 +1953,7 @@ function renderCondRow(rule, cond, ci) {
         <div class="row" style="margin:0">
           <input list="dlAttrs" type="text" class="cAttr shrink" style="flex:0 0 160px" value="${escapeAttr(cond.attr || 'name')}" placeholder="имя атрибута" title="HTML-атрибут, значение которого сравнивается с паттерном ниже">
           <input type="text" class="cPattern grow" value="${escapeAttr(cond.pattern || '')}" placeholder="${escapeAttr(attrHint)}" title="Паттерн для сравнения. Пусто = атрибут должен существовать. С флагом regex — трактуется как регулярное выражение.">
-          <label class="shrink inline-lbl" title="Трактовать паттерн как регулярное выражение (напр. ^email.*)"><input type="checkbox" class="cRegex" ${cond.regex?'checked':''}> regex</label>
+          <label class="shrink inline-lbl" title="Трактовать паттерн как регулярное выражение (напр. ^email.*)"><input type="checkbox" class="cRegex" ${cond.regex ? 'checked' : ''}> regex</label>
         </div>
         <div class="regex-help" style="${cond.regex ? '' : 'display:none'}">
           ${regexCheatsheetHtml()}
@@ -1493,11 +1972,18 @@ function renderCondRow(rule, cond, ci) {
         delete attrInput.dataset.prev;
         cond.attr = e.target.value;
         patternInput.placeholder = attrPlaceholder(cond.attr);
-        touchRule(rule); saveDebounced();
+        touchRule(rule);
+        saveDebounced();
       });
-      patternInput.addEventListener('input', e => { cond.pattern = e.target.value; touchRule(rule); saveDebounced(); });
+      patternInput.addEventListener('input', e => {
+        cond.pattern = e.target.value;
+        touchRule(rule);
+        saveDebounced();
+      });
       body.querySelector('.cRegex').addEventListener('change', e => {
-        cond.regex = e.target.checked; touchRule(rule); saveDebounced();
+        cond.regex = e.target.checked;
+        touchRule(rule);
+        saveDebounced();
         body.querySelector('.regex-help').style.display = cond.regex ? '' : 'none';
       });
     } else if (cond.type === 'order') {
@@ -1506,7 +1992,11 @@ function renderCondRow(rule, cond, ci) {
           <input type="number" min="1" class="cIndex" value="${escapeAttr(cond.index || 1)}" style="flex:0 0 120px">
           <span class="grow" style="color:var(--text-subtle);font-size:12px">n-ное поле в форме</span>
         </div>`;
-      body.querySelector('.cIndex').addEventListener('input', e => { cond.index = parseInt(e.target.value, 10) || 1; touchRule(rule); saveDebounced(); });
+      body.querySelector('.cIndex').addEventListener('input', e => {
+        cond.index = parseInt(e.target.value, 10) || 1;
+        touchRule(rule);
+        saveDebounced();
+      });
     }
   }
   renderBody();
@@ -1528,7 +2018,9 @@ function renderCondRow(rule, cond, ci) {
   });
   if (showConnector) {
     row.querySelector('.cConnector').addEventListener('change', e => {
-      cond.connector = e.target.value; touchRule(rule); saveDebounced();
+      cond.connector = e.target.value;
+      touchRule(rule);
+      saveDebounced();
     });
   }
   return row;
@@ -1560,7 +2052,11 @@ function openFolderPickerForRule(rule) {
     markStructureDirty();
     save().then(renderFolders);
   }
-  const skipHandler = () => { modal.classList.remove('open'); cleanup(); openRuleAfterPick(); };
+  const skipHandler = () => {
+    modal.classList.remove('open');
+    cleanup();
+    openRuleAfterPick();
+  };
   const applyHandler = () => {
     const chosen = list.querySelector('input[name=fpChoice]:checked');
     if (chosen) rule.folderId = chosen.value || null;
@@ -1645,17 +2141,28 @@ function openManageRules() {
 $('manageRules').addEventListener('click', openManageRules);
 $('mmClose').addEventListener('click', () => $('manageModal').classList.remove('open'));
 $('mmDone').addEventListener('click', () => $('manageModal').classList.remove('open'));
-$('mmSelectAll').addEventListener('click', () => $$('.mm-cb', $('mmList')).forEach(cb => cb.checked = true));
-$('mmDeselectAll').addEventListener('click', () => $$('.mm-cb', $('mmList')).forEach(cb => cb.checked = false));
+$('mmSelectAll').addEventListener('click', () =>
+  $$('.mm-cb', $('mmList')).forEach(cb => (cb.checked = true))
+);
+$('mmDeselectAll').addEventListener('click', () =>
+  $$('.mm-cb', $('mmList')).forEach(cb => (cb.checked = false))
+);
 $('mmDeleteSelected').addEventListener('click', () => {
   const ids = $$('.mm-cb:checked', $('mmList')).map(cb => cb.dataset.id);
-  if (!ids.length) { toast('Ничего не выбрано', 'error'); return; }
+  if (!ids.length) {
+    toast('Ничего не выбрано', 'error');
+    return;
+  }
   if (!confirm('Удалить ' + ids.length + ' правил? Действие необратимо.')) return;
   const idSet = new Set(ids);
   addLog('удалено (' + ids.length + ')', 'правила', 'массовое');
   state.rules = state.rules.filter(r => !idSet.has(r.id));
   markStructureDirty();
-  save().then(() => { openManageRules(); renderFolders(); toast('Удалено правил: ' + ids.length, 'ok'); });
+  save().then(() => {
+    openManageRules();
+    renderFolders();
+    toast('Удалено правил: ' + ids.length, 'ok');
+  });
 });
 
 /* ---------- Special insertions management modal ---------- */
@@ -1684,16 +2191,27 @@ function openManageSpecial() {
 if ($('manageSpecial')) $('manageSpecial').addEventListener('click', openManageSpecial);
 $('msClose').addEventListener('click', () => $('manageSpecialModal').classList.remove('open'));
 $('msDone').addEventListener('click', () => $('manageSpecialModal').classList.remove('open'));
-$('msSelectAll').addEventListener('click', () => $$('.mm-cb', $('msList')).forEach(cb => cb.checked = true));
-$('msDeselectAll').addEventListener('click', () => $$('.mm-cb', $('msList')).forEach(cb => cb.checked = false));
+$('msSelectAll').addEventListener('click', () =>
+  $$('.mm-cb', $('msList')).forEach(cb => (cb.checked = true))
+);
+$('msDeselectAll').addEventListener('click', () =>
+  $$('.mm-cb', $('msList')).forEach(cb => (cb.checked = false))
+);
 $('msDeleteSelected').addEventListener('click', () => {
   const ids = $$('.mm-cb:checked', $('msList')).map(cb => cb.dataset.id);
-  if (!ids.length) { toast('Ничего не выбрано', 'error'); return; }
+  if (!ids.length) {
+    toast('Ничего не выбрано', 'error');
+    return;
+  }
   if (!confirm('Удалить ' + ids.length + ' вставок? Действие необратимо.')) return;
   const idSet = new Set(ids);
   addLog('удалено (' + ids.length + ')', 'вставки', 'массовое');
   state.specialInsertions = (state.specialInsertions || []).filter(x => !idSet.has(x.id));
-  save().then(() => { openManageSpecial(); renderSpecial(); toast('Удалено вставок: ' + ids.length, 'ok'); });
+  save().then(() => {
+    openManageSpecial();
+    renderSpecial();
+    toast('Удалено вставок: ' + ids.length, 'ok');
+  });
 });
 
 /* ---------- Counters management modal ---------- */
@@ -1723,22 +2241,36 @@ function openManageCounters() {
 $('manageCounters').addEventListener('click', openManageCounters);
 $('mcClose').addEventListener('click', () => $('manageCountersModal').classList.remove('open'));
 $('mcDone').addEventListener('click', () => $('manageCountersModal').classList.remove('open'));
-$('mcSelectAll').addEventListener('click', () => $$('.mm-cb', $('mcList')).forEach(cb => cb.checked = true));
-$('mcDeselectAll').addEventListener('click', () => $$('.mm-cb', $('mcList')).forEach(cb => cb.checked = false));
+$('mcSelectAll').addEventListener('click', () =>
+  $$('.mm-cb', $('mcList')).forEach(cb => (cb.checked = true))
+);
+$('mcDeselectAll').addEventListener('click', () =>
+  $$('.mm-cb', $('mcList')).forEach(cb => (cb.checked = false))
+);
 $('mcDeleteSelected').addEventListener('click', () => {
   const names = $$('.mm-cb:checked', $('mcList')).map(cb => cb.dataset.name);
-  if (!names.length) { toast('Ничего не выбрано', 'error'); return; }
+  if (!names.length) {
+    toast('Ничего не выбрано', 'error');
+    return;
+  }
   if (!confirm('Удалить ' + names.length + ' инкременторов? Действие необратимо.')) return;
   const nameSet = new Set(names);
   addLog('удалено (' + names.length + ')', 'инкременторы', 'массовое');
   state.smartCounters = (state.smartCounters || []).filter(x => !nameSet.has(x.name));
-  save().then(() => { openManageCounters(); renderCounters(); toast('Удалено инкременторов: ' + names.length, 'ok'); });
+  save().then(() => {
+    openManageCounters();
+    renderCounters();
+    toast('Удалено инкременторов: ' + names.length, 'ok');
+  });
 });
 
 /* ---------- Icon / emoji picker for folders ---------- */
 let iconMenuOpen = null;
 function openIconMenu(anchor, folder) {
-  if (iconMenuOpen) { iconMenuOpen.remove(); iconMenuOpen = null; }
+  if (iconMenuOpen) {
+    iconMenuOpen.remove();
+    iconMenuOpen = null;
+  }
   const pop = document.createElement('div');
   pop.className = 'icon-menu-popup';
 
@@ -1750,76 +2282,273 @@ function openIconMenu(anchor, folder) {
 
   document.body.appendChild(pop);
   const r = anchor.getBoundingClientRect();
-  pop.style.top  = (r.bottom + window.scrollY + 4) + 'px';
-  pop.style.left = (r.left   + window.scrollX)     + 'px';
+  pop.style.top = r.bottom + window.scrollY + 4 + 'px';
+  pop.style.left = r.left + window.scrollX + 'px';
   iconMenuOpen = pop;
 
-  pop.addEventListener('click', (e) => {
+  pop.addEventListener('click', e => {
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
-    pop.remove(); iconMenuOpen = null;
+    pop.remove();
+    iconMenuOpen = null;
     const action = btn.dataset.action;
     if (action === 'emoji') openEmojiPicker(anchor, folder);
     else if (action === 'image') openImagePicker(folder);
-    else if (action === 'remove') { delete folder.icon; delete folder.emoji; save().then(renderFolders); }
+    else if (action === 'remove') {
+      delete folder.icon;
+      delete folder.emoji;
+      save().then(renderFolders);
+    }
   });
 
   setTimeout(() => {
-    const off = (ev) => {
-      if (!pop.contains(ev.target) && ev.target !== anchor) { pop.remove(); iconMenuOpen = null; document.removeEventListener('click', off); }
+    const off = ev => {
+      if (!pop.contains(ev.target) && ev.target !== anchor) {
+        pop.remove();
+        iconMenuOpen = null;
+        document.removeEventListener('click', off);
+      }
     };
     document.addEventListener('click', off);
   }, 0);
 }
 
 const EMOJI_SET = [
-  '🔧','🔩','🪛','🪚','⚙','🛠','🔨','⛏','🪓','🗜',
-  '🔬','🔭','🧪','🧫','🧬','💉','🩺','🩻','⚗','🧲',
-  '💻','🖥','⌨','🖨','🖱','💾','💿','📀','🧮','📟',
-  '📱','📡','🔌','🔋','💡','🔦','📷','📹','🎙','🎚',
-  '📁','📂','📦','📋','📌','📎','🔖','🏷','🗂','💼',
-  '📄','📑','📝','📒','📓','📔','📕','📗','📘','📙',
-  '🅰','🅱','🆎','🅾','🅿','Ⓜ','🆔','🆚','🔤','🔡',
-  '🔠','🔣','🔢','#️⃣','*️⃣','0️⃣','1️⃣','2️⃣','3️⃣','4️⃣',
-  '🌐','🔒','🔓','🔑','🛡','🔐','🗝','🪪','📛','🏴',
-  '🎯','🎨','🧩','🎲','🎮','🕹','🎰','🃏','♟','🧿',
-  '⚡','🔥','❄','💧','🌊','🌪','☀','🌙','⭐','🌈',
-  '💎','🏆','🥇','🥈','🥉','🏅','🎖','🏵','👑','💰',
-  '🚀','✈','🚗','🚢','🛸','🚁','🚂','🏠','🏢','🏭',
-  '🎵','🎬','🎭','🎪','🎤','🎧','📺','📻','🔔','📣',
-  '💬','💭','🗨','🗯','✉','📧','📮','🗃','🗄','🗑',
-  '✅','❌','⚠','❓','❗','💯','♻','⛔','🚫','🔕',
-  '🔴','🟠','🟡','🟢','🔵','🟣','🟤','⚫','⚪','🩷',
-  '❤','🧡','💛','💚','💙','💜','🤎','🖤','🤍','💔',
-  '🐛','🐞','🐝','🦋','🐍','🐢','🦊','🐱','🐶','🦄',
-  '🍎','🍊','🍋','🍏','🫐','🍇','🍒','🥑','🌶','🍕'
+  '🔧',
+  '🔩',
+  '🪛',
+  '🪚',
+  '⚙',
+  '🛠',
+  '🔨',
+  '⛏',
+  '🪓',
+  '🗜',
+  '🔬',
+  '🔭',
+  '🧪',
+  '🧫',
+  '🧬',
+  '💉',
+  '🩺',
+  '🩻',
+  '⚗',
+  '🧲',
+  '💻',
+  '🖥',
+  '⌨',
+  '🖨',
+  '🖱',
+  '💾',
+  '💿',
+  '📀',
+  '🧮',
+  '📟',
+  '📱',
+  '📡',
+  '🔌',
+  '🔋',
+  '💡',
+  '🔦',
+  '📷',
+  '📹',
+  '🎙',
+  '🎚',
+  '📁',
+  '📂',
+  '📦',
+  '📋',
+  '📌',
+  '📎',
+  '🔖',
+  '🏷',
+  '🗂',
+  '💼',
+  '📄',
+  '📑',
+  '📝',
+  '📒',
+  '📓',
+  '📔',
+  '📕',
+  '📗',
+  '📘',
+  '📙',
+  '🅰',
+  '🅱',
+  '🆎',
+  '🅾',
+  '🅿',
+  'Ⓜ',
+  '🆔',
+  '🆚',
+  '🔤',
+  '🔡',
+  '🔠',
+  '🔣',
+  '🔢',
+  '#️⃣',
+  '*️⃣',
+  '0️⃣',
+  '1️⃣',
+  '2️⃣',
+  '3️⃣',
+  '4️⃣',
+  '🌐',
+  '🔒',
+  '🔓',
+  '🔑',
+  '🛡',
+  '🔐',
+  '🗝',
+  '🪪',
+  '📛',
+  '🏴',
+  '🎯',
+  '🎨',
+  '🧩',
+  '🎲',
+  '🎮',
+  '🕹',
+  '🎰',
+  '🃏',
+  '♟',
+  '🧿',
+  '⚡',
+  '🔥',
+  '❄',
+  '💧',
+  '🌊',
+  '🌪',
+  '☀',
+  '🌙',
+  '⭐',
+  '🌈',
+  '💎',
+  '🏆',
+  '🥇',
+  '🥈',
+  '🥉',
+  '🏅',
+  '🎖',
+  '🏵',
+  '👑',
+  '💰',
+  '🚀',
+  '✈',
+  '🚗',
+  '🚢',
+  '🛸',
+  '🚁',
+  '🚂',
+  '🏠',
+  '🏢',
+  '🏭',
+  '🎵',
+  '🎬',
+  '🎭',
+  '🎪',
+  '🎤',
+  '🎧',
+  '📺',
+  '📻',
+  '🔔',
+  '📣',
+  '💬',
+  '💭',
+  '🗨',
+  '🗯',
+  '✉',
+  '📧',
+  '📮',
+  '🗃',
+  '🗄',
+  '🗑',
+  '✅',
+  '❌',
+  '⚠',
+  '❓',
+  '❗',
+  '💯',
+  '♻',
+  '⛔',
+  '🚫',
+  '🔕',
+  '🔴',
+  '🟠',
+  '🟡',
+  '🟢',
+  '🔵',
+  '🟣',
+  '🟤',
+  '⚫',
+  '⚪',
+  '🩷',
+  '❤',
+  '🧡',
+  '💛',
+  '💚',
+  '💙',
+  '💜',
+  '🤎',
+  '🖤',
+  '🤍',
+  '💔',
+  '🐛',
+  '🐞',
+  '🐝',
+  '🦋',
+  '🐍',
+  '🐢',
+  '🦊',
+  '🐱',
+  '🐶',
+  '🦄',
+  '🍎',
+  '🍊',
+  '🍋',
+  '🍏',
+  '🫐',
+  '🍇',
+  '🍒',
+  '🥑',
+  '🌶',
+  '🍕',
 ];
 
 function openEmojiPicker(anchor, folder) {
-  if (iconMenuOpen) { iconMenuOpen.remove(); iconMenuOpen = null; }
+  if (iconMenuOpen) {
+    iconMenuOpen.remove();
+    iconMenuOpen = null;
+  }
   const pop = document.createElement('div');
   pop.className = 'emoji-picker-popup';
-  pop.innerHTML = EMOJI_SET.map(e =>
-    `<button class="emoji-cell${folder.emoji === e ? ' selected' : ''}">${e}</button>`
+  pop.innerHTML = EMOJI_SET.map(
+    e => `<button class="emoji-cell${folder.emoji === e ? ' selected' : ''}">${e}</button>`
   ).join('');
   document.body.appendChild(pop);
   const r = anchor.getBoundingClientRect();
-  pop.style.top  = (r.bottom + window.scrollY + 4) + 'px';
-  pop.style.left = (r.left   + window.scrollX)     + 'px';
+  pop.style.top = r.bottom + window.scrollY + 4 + 'px';
+  pop.style.left = r.left + window.scrollX + 'px';
   iconMenuOpen = pop;
 
-  pop.addEventListener('click', (e) => {
+  pop.addEventListener('click', e => {
     const btn = e.target.closest('.emoji-cell');
     if (!btn) return;
     folder.emoji = btn.textContent;
     delete folder.icon;
     save().then(renderFolders);
-    pop.remove(); iconMenuOpen = null;
+    pop.remove();
+    iconMenuOpen = null;
   });
 
   setTimeout(() => {
-    const off = (ev) => {
-      if (!pop.contains(ev.target)) { pop.remove(); iconMenuOpen = null; document.removeEventListener('click', off); }
+    const off = ev => {
+      if (!pop.contains(ev.target)) {
+        pop.remove();
+        iconMenuOpen = null;
+        document.removeEventListener('click', off);
+      }
     };
     document.addEventListener('click', off);
   }, 0);
@@ -1832,17 +2561,22 @@ function openImagePicker(folder) {
   input.addEventListener('change', () => {
     const file = input.files[0];
     if (!file) return;
-    if (file.size > 256 * 1024) { toast('Максимум 256 КБ', 'error'); return; }
+    if (file.size > 256 * 1024) {
+      toast('Максимум 256 КБ', 'error');
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => {
       const img = new Image();
       img.onload = () => {
         const size = 64;
         const canvas = document.createElement('canvas');
-        canvas.width = size; canvas.height = size;
+        canvas.width = size;
+        canvas.height = size;
         const ctx = canvas.getContext('2d');
         const scale = Math.max(size / img.width, size / img.height);
-        const w = img.width * scale, h = img.height * scale;
+        const w = img.width * scale,
+          h = img.height * scale;
         ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
         folder.icon = canvas.toDataURL('image/png');
         delete folder.emoji;
@@ -1860,47 +2594,71 @@ function openImagePicker(folder) {
    ================================================================ */
 
 const VALUE_TYPES = [
-  { key: 'text',         label: 'Простой текст (без токенов)' },
-  { key: 'integer',      label: 'Целое число' },
-  { key: 'decimal',      label: 'Дробное число' },
-  { key: 'email',        label: 'Email' },
-  { key: 'phone',        label: 'Телефон' },
-  { key: 'date_now',     label: 'Текущая дата/время' },
-  { key: 'date_range',   label: 'Случайная дата в диапазоне' },
-  { key: 'uuid',         label: 'UUID' },
-  { key: 'checkbox',     label: 'Чекбокс ON / OFF' },
+  { key: 'text', label: 'Простой текст (без токенов)' },
+  { key: 'integer', label: 'Целое число' },
+  { key: 'decimal', label: 'Дробное число' },
+  { key: 'email', label: 'Email' },
+  { key: 'phone', label: 'Телефон' },
+  { key: 'date_now', label: 'Текущая дата/время' },
+  { key: 'date_range', label: 'Случайная дата в диапазоне' },
+  { key: 'uuid', label: 'UUID' },
+  { key: 'checkbox', label: 'Чекбокс ON / OFF' },
   { key: 'select_value', label: 'Значение для <select>' },
-  { key: 'pick_custom',  label: 'Случайное из своего списка' },
-  { key: 'pick_preset',  label: 'Случайное из готового списка (en)' },
-  { key: 'regex',        label: 'Строка по regex' },
-  { key: 'advanced',     label: 'Продвинутый шаблон с токенами' }
+  { key: 'pick_custom', label: 'Случайное из своего списка' },
+  { key: 'pick_preset', label: 'Случайное из готового списка (en)' },
+  { key: 'regex', label: 'Строка по regex' },
+  { key: 'advanced', label: 'Продвинутый шаблон с токенами' },
 ];
 
 const PRESET_LISTS = [
-  { key: 'word',           label: 'Тематический словарь (~690 слов, безопасно для email)' }
+  { key: 'word', label: 'Тематический словарь (~690 слов, безопасно для email)' },
 ];
 
 function buildTemplate(meta) {
   if (!meta || !meta.type) return '';
   const p = meta.params || {};
   switch (meta.type) {
-    case 'text':        return p.value || '';
-    case 'integer':     return '{{number:' + (p.min ?? 1) + ':' + (p.max ?? 100) + '}}';
-    case 'decimal':     return '{{decimal:' + (p.min ?? 0) + ':' + (p.max ?? 100) + ':' + (p.precision ?? 2) + '}}';
-    case 'email':       return p.domain ? '{{email:' + p.domain + '}}' : '{{email}}';
-    case 'phone':       return p.format ? '{{phone:' + p.format + '}}' : '{{phone}}';
-    case 'date_now':    return '{{now:' + (p.format || 'yyyy-MM-dd') + '}}';
-    case 'date_range':  return '{{date:' + (p.from || '2020-01-01') + ':' + (p.to || '2025-12-31') + ':' + (p.format || 'yyyy-MM-dd') + '}}';
-    case 'uuid':        return '{{uuid}}';
-    case 'checkbox':    return p.checked === 'on' ? 'true' : 'false';
-    case 'select_value': return p.value || '';
+    case 'text':
+      return p.value || '';
+    case 'integer':
+      return '{{number:' + (p.min ?? 1) + ':' + (p.max ?? 100) + '}}';
+    case 'decimal':
+      return '{{decimal:' + (p.min ?? 0) + ':' + (p.max ?? 100) + ':' + (p.precision ?? 2) + '}}';
+    case 'email':
+      return p.domain ? '{{email:' + p.domain + '}}' : '{{email}}';
+    case 'phone':
+      return p.format ? '{{phone:' + p.format + '}}' : '{{phone}}';
+    case 'date_now':
+      return '{{now:' + (p.format || 'yyyy-MM-dd') + '}}';
+    case 'date_range':
+      return (
+        '{{date:' +
+        (p.from || '2020-01-01') +
+        ':' +
+        (p.to || '2025-12-31') +
+        ':' +
+        (p.format || 'yyyy-MM-dd') +
+        '}}'
+      );
+    case 'uuid':
+      return '{{uuid}}';
+    case 'checkbox':
+      return p.checked === 'on' ? 'true' : 'false';
+    case 'select_value':
+      return p.value || '';
     case 'pick_custom': {
-      const items = String(p.values || '').split(/[,\n]/).map(s => s.trim()).filter(Boolean);
+      const items = String(p.values || '')
+        .split(/[,\n]/)
+        .map(s => s.trim())
+        .filter(Boolean);
       return items.length ? '{{pick:' + items.join('|') + '}}' : '';
     }
-    case 'pick_preset': return '{{' + (p.preset || 'word') + '}}';
-    case 'regex':       return p.pattern ? '{{regex:' + p.pattern + '}}' : '';
-    case 'advanced':    return p.template || '';
+    case 'pick_preset':
+      return '{{' + (p.preset || 'word') + '}}';
+    case 'regex':
+      return p.pattern ? '{{regex:' + p.pattern + '}}' : '';
+    case 'advanced':
+      return p.template || '';
   }
   return '';
 }
@@ -1908,10 +2666,18 @@ function buildTemplate(meta) {
 function collapseAllExtras(except) {
   if (state.scraperConfig && state.scraperConfig !== except) state.scraperConfig.collapsed = true;
   if (state.copyfxConfig && state.copyfxConfig !== except) state.copyfxConfig.collapsed = true;
-  for (const ua of (state.uaRules || [])) { if (ua !== except) ua.collapsed = true; }
-  for (const ins of (state.specialInsertions || [])) { if (ins !== except) ins.collapsed = true; }
-  for (const sc of (state.smartCounters || [])) { if (sc !== except) sc.collapsed = true; }
-  for (const wl of (state.customWordLists || [])) { if (wl !== except) wl.collapsed = true; }
+  for (const ua of state.uaRules || []) {
+    if (ua !== except) ua.collapsed = true;
+  }
+  for (const ins of state.specialInsertions || []) {
+    if (ins !== except) ins.collapsed = true;
+  }
+  for (const sc of state.smartCounters || []) {
+    if (sc !== except) sc.collapsed = true;
+  }
+  for (const wl of state.customWordLists || []) {
+    if (wl !== except) wl.collapsed = true;
+  }
 }
 
 function renderAllExtras() {
@@ -1927,7 +2693,7 @@ function renderSpecial() {
   const box = $('specialList');
   if (!box) return;
   box.innerHTML = '';
-  (state.specialInsertions || []).forEach((ins) => {
+  (state.specialInsertions || []).forEach(ins => {
     box.appendChild(ins.collapsed ? renderInsertionCollapsed(ins) : renderInsertionExpanded(ins));
   });
   if (!(state.specialInsertions || []).length) {
@@ -1953,7 +2719,7 @@ function renderInsertionCollapsed(ins) {
   card.className = 'rule-card collapsed';
   const isClick = ins.actionType === 'click';
   const actionLabel = isClick ? 'Кликнуть (Выбрать)' : 'Заполнить поле';
-  const typeBadge = isClick ? 'click' : (ins.valueMeta?.type || 'template');
+  const typeBadge = isClick ? 'click' : ins.valueMeta?.type || 'template';
   const previewText = isClick
     ? '→ click: ' + escapeText(ins.targetSelector || '—')
     : escapeText(safePreview(ins.valueTemplate));
@@ -1986,7 +2752,11 @@ function renderInsertionCollapsed(ins) {
     card.querySelector('.toggle-label').textContent = ins.enabled ? 'ВКЛ' : 'ВЫКЛ';
     saveDebounced();
   });
-  card.querySelector('.sEdit').addEventListener('click', () => { collapseAllExtras(ins); ins.collapsed = false; save().then(renderAllExtras); });
+  card.querySelector('.sEdit').addEventListener('click', () => {
+    collapseAllExtras(ins);
+    ins.collapsed = false;
+    save().then(renderAllExtras);
+  });
   return card;
 }
 
@@ -2068,15 +2838,39 @@ function renderInsertionExpanded(ins) {
     card.querySelector('.sTemplateSection').style.display = isClick ? 'none' : '';
     card.querySelector('.sActionHint').style.display = isClick ? '' : 'none';
     card.querySelector('.sClickGuardSection').style.display = isClick ? '' : 'none';
-    touchIns(ins); saveDebounced();
+    touchIns(ins);
+    saveDebounced();
   });
 
-  card.querySelector('.sClickGuard').addEventListener('change', e => { ins.clickGuard = e.target.value; touchIns(ins); saveDebounced(); });
+  card.querySelector('.sClickGuard').addEventListener('change', e => {
+    ins.clickGuard = e.target.value;
+    touchIns(ins);
+    saveDebounced();
+  });
 
-  card.querySelector('.sName').addEventListener('input', e => { ins.name = e.target.value; touchIns(ins); saveDebounced(); });
-  card.querySelector('.sEnabled').addEventListener('change', e => { ins.enabled = e.target.checked; e.target.closest('.rule-status-toggle').querySelector('.toggle-label').textContent = ins.enabled ? 'ВКЛ' : 'ВЫКЛ'; touchIns(ins); saveDebounced(); });
-  card.querySelector('.sUrl').addEventListener('input', e => { ins.urlPattern = e.target.value; touchIns(ins); saveDebounced(); });
-  card.querySelector('.sSel').addEventListener('input', e => { ins.targetSelector = e.target.value; touchIns(ins); saveDebounced(); });
+  card.querySelector('.sName').addEventListener('input', e => {
+    ins.name = e.target.value;
+    touchIns(ins);
+    saveDebounced();
+  });
+  card.querySelector('.sEnabled').addEventListener('change', e => {
+    ins.enabled = e.target.checked;
+    e.target.closest('.rule-status-toggle').querySelector('.toggle-label').textContent = ins.enabled
+      ? 'ВКЛ'
+      : 'ВЫКЛ';
+    touchIns(ins);
+    saveDebounced();
+  });
+  card.querySelector('.sUrl').addEventListener('input', e => {
+    ins.urlPattern = e.target.value;
+    touchIns(ins);
+    saveDebounced();
+  });
+  card.querySelector('.sSel').addEventListener('input', e => {
+    ins.targetSelector = e.target.value;
+    touchIns(ins);
+    saveDebounced();
+  });
   card.querySelector('.sTest').addEventListener('click', () => {
     ins.valueTemplate = buildTemplate(ins.valueMeta);
     card.querySelector('.sTplPreview').textContent = ins.valueTemplate || '—';
@@ -2084,13 +2878,31 @@ function renderInsertionExpanded(ins) {
   });
   card.querySelector('.sPick').addEventListener('click', async () => {
     const res = await pickFromActiveTab();
-    if (res && res.ok) { ins.targetSelector = res.selector; card.querySelector('.sSel').value = res.selector; touchIns(ins); saveDebounced(); }
+    if (res && res.ok) {
+      ins.targetSelector = res.selector;
+      card.querySelector('.sSel').value = res.selector;
+      touchIns(ins);
+      saveDebounced();
+    }
   });
-  card.querySelector('.sTrig').addEventListener('input', e => { ins.triggerSelector = e.target.value; touchIns(ins); saveDebounced(); });
-  card.querySelector('.sTrigWait').addEventListener('input', e => { ins.triggerWait = parseInt(e.target.value, 10) || 0; touchIns(ins); saveDebounced(); });
+  card.querySelector('.sTrig').addEventListener('input', e => {
+    ins.triggerSelector = e.target.value;
+    touchIns(ins);
+    saveDebounced();
+  });
+  card.querySelector('.sTrigWait').addEventListener('input', e => {
+    ins.triggerWait = parseInt(e.target.value, 10) || 0;
+    touchIns(ins);
+    saveDebounced();
+  });
   card.querySelector('.sTrigPick').addEventListener('click', async () => {
     const res = await pickFromActiveTab();
-    if (res && res.ok) { ins.triggerSelector = res.selector; card.querySelector('.sTrig').value = res.selector; touchIns(ins); saveDebounced(); }
+    if (res && res.ok) {
+      ins.triggerSelector = res.selector;
+      card.querySelector('.sTrig').value = res.selector;
+      touchIns(ins);
+      saveDebounced();
+    }
   });
   if (!ins._isNew && !ins._snapshot) {
     ins._snapshot = deepClone(ins);
@@ -2126,18 +2938,31 @@ function renderInsertionExpanded(ins) {
 }
 
 function updatePreviewInBox(box, template) {
-  if (!template) { box.textContent = '—'; return; }
-  try { box.textContent = window.FF.render(template, previewCtx()) || '—'; }
-  catch (e) { box.textContent = 'Ошибка: ' + e.message; }
+  if (!template) {
+    box.textContent = '—';
+    return;
+  }
+  try {
+    box.textContent = window.FF.render(template, previewCtx()) || '—';
+  } catch (e) {
+    box.textContent = 'Ошибка: ' + e.message;
+  }
 }
-function touchIns(ins) { ins.updatedAt = new Date().toISOString(); }
+function touchIns(ins) {
+  ins.updatedAt = new Date().toISOString();
+}
 
 // Рендер редактора для конкретного типа значения. onChange — вызывается на любое изменение.
 function renderValueBuilder(box, ins, onChange) {
-  const meta = ins.valueMeta || (ins.valueMeta = { type: 'advanced', params: { template: ins.valueTemplate || '' } });
-  const p = meta.params = meta.params || {};
+  const meta =
+    ins.valueMeta ||
+    (ins.valueMeta = { type: 'advanced', params: { template: ins.valueTemplate || '' } });
+  const p = (meta.params = meta.params || {});
 
-  const opts = VALUE_TYPES.map(t => `<option value="${t.key}" ${meta.type === t.key ? 'selected' : ''}>${escapeText(t.label)}</option>`).join('');
+  const opts = VALUE_TYPES.map(
+    t =>
+      `<option value="${t.key}" ${meta.type === t.key ? 'selected' : ''}>${escapeText(t.label)}</option>`
+  ).join('');
 
   box.innerHTML = `
     <label>Тип значения</label>
@@ -2152,7 +2977,10 @@ function renderValueBuilder(box, ins, onChange) {
         paramsBox.innerHTML = `
           <label>Значение</label>
           <input type="text" class="vbValue" value="${escapeAttr(p.value || '')}" placeholder="Здесь будет ровно то, что ты введёшь">`;
-        paramsBox.querySelector('.vbValue').addEventListener('input', e => { p.value = e.target.value; onChange(); });
+        paramsBox.querySelector('.vbValue').addEventListener('input', e => {
+          p.value = e.target.value;
+          onChange();
+        });
         break;
       case 'integer':
         paramsBox.innerHTML = `
@@ -2160,8 +2988,14 @@ function renderValueBuilder(box, ins, onChange) {
             <div class="grow"><label>Минимум</label><input type="number" class="vbMin" value="${escapeAttr(p.min ?? 1)}"></div>
             <div class="grow"><label>Максимум</label><input type="number" class="vbMax" value="${escapeAttr(p.max ?? 100)}"></div>
           </div>`;
-        paramsBox.querySelector('.vbMin').addEventListener('input', e => { p.min = parseInt(e.target.value, 10) || 0; onChange(); });
-        paramsBox.querySelector('.vbMax').addEventListener('input', e => { p.max = parseInt(e.target.value, 10) || 0; onChange(); });
+        paramsBox.querySelector('.vbMin').addEventListener('input', e => {
+          p.min = parseInt(e.target.value, 10) || 0;
+          onChange();
+        });
+        paramsBox.querySelector('.vbMax').addEventListener('input', e => {
+          p.max = parseInt(e.target.value, 10) || 0;
+          onChange();
+        });
         break;
       case 'decimal':
         paramsBox.innerHTML = `
@@ -2170,28 +3004,46 @@ function renderValueBuilder(box, ins, onChange) {
             <div class="grow"><label>Максимум</label><input type="number" step="any" class="vbMax" value="${escapeAttr(p.max ?? 100)}"></div>
             <div class="shrink" style="flex:0 0 160px"><label>Знаков после точки</label><input type="number" min="0" max="10" class="vbPrec" value="${escapeAttr(p.precision ?? 2)}"></div>
           </div>`;
-        paramsBox.querySelector('.vbMin').addEventListener('input', e => { p.min = parseFloat(e.target.value) || 0; onChange(); });
-        paramsBox.querySelector('.vbMax').addEventListener('input', e => { p.max = parseFloat(e.target.value) || 0; onChange(); });
-        paramsBox.querySelector('.vbPrec').addEventListener('input', e => { p.precision = parseInt(e.target.value, 10) || 0; onChange(); });
+        paramsBox.querySelector('.vbMin').addEventListener('input', e => {
+          p.min = parseFloat(e.target.value) || 0;
+          onChange();
+        });
+        paramsBox.querySelector('.vbMax').addEventListener('input', e => {
+          p.max = parseFloat(e.target.value) || 0;
+          onChange();
+        });
+        paramsBox.querySelector('.vbPrec').addEventListener('input', e => {
+          p.precision = parseInt(e.target.value, 10) || 0;
+          onChange();
+        });
         break;
       case 'email':
         paramsBox.innerHTML = `
           <label>Домен (опционально)</label>
           <input type="text" class="vbDomain" value="${escapeAttr(p.domain || '')}" placeholder="example.com">`;
-        paramsBox.querySelector('.vbDomain').addEventListener('input', e => { p.domain = e.target.value; onChange(); });
+        paramsBox.querySelector('.vbDomain').addEventListener('input', e => {
+          p.domain = e.target.value;
+          onChange();
+        });
         break;
       case 'phone':
         paramsBox.innerHTML = `
           <label>Формат (# — любая цифра)</label>
           <input type="text" class="vbFormat" value="${escapeAttr(p.format || '')}" placeholder="+7 (9##) ###-##-##">`;
-        paramsBox.querySelector('.vbFormat').addEventListener('input', e => { p.format = e.target.value; onChange(); });
+        paramsBox.querySelector('.vbFormat').addEventListener('input', e => {
+          p.format = e.target.value;
+          onChange();
+        });
         break;
       case 'date_now':
         paramsBox.innerHTML = `
           <label>Формат</label>
           <input type="text" class="vbFormat" value="${escapeAttr(p.format || 'yyyy-MM-dd')}" placeholder="yyyy-MM-dd HH:mm:ss">
           <p class="hint">Плейсхолдеры: yyyy, MM, dd, HH, mm, ss</p>`;
-        paramsBox.querySelector('.vbFormat').addEventListener('input', e => { p.format = e.target.value; onChange(); });
+        paramsBox.querySelector('.vbFormat').addEventListener('input', e => {
+          p.format = e.target.value;
+          onChange();
+        });
         break;
       case 'date_range':
         paramsBox.innerHTML = `
@@ -2200,9 +3052,18 @@ function renderValueBuilder(box, ins, onChange) {
             <div class="grow"><label>По</label><input type="date" class="vbTo" value="${escapeAttr(p.to || '2025-12-31')}"></div>
             <div class="grow"><label>Формат</label><input type="text" class="vbFormat" value="${escapeAttr(p.format || 'yyyy-MM-dd')}"></div>
           </div>`;
-        paramsBox.querySelector('.vbFrom').addEventListener('input', e => { p.from = e.target.value; onChange(); });
-        paramsBox.querySelector('.vbTo').addEventListener('input', e => { p.to = e.target.value; onChange(); });
-        paramsBox.querySelector('.vbFormat').addEventListener('input', e => { p.format = e.target.value; onChange(); });
+        paramsBox.querySelector('.vbFrom').addEventListener('input', e => {
+          p.from = e.target.value;
+          onChange();
+        });
+        paramsBox.querySelector('.vbTo').addEventListener('input', e => {
+          p.to = e.target.value;
+          onChange();
+        });
+        paramsBox.querySelector('.vbFormat').addEventListener('input', e => {
+          p.format = e.target.value;
+          onChange();
+        });
         break;
       case 'uuid':
         paramsBox.innerHTML = `<p class="hint">UUID v4 будет сгенерирован автоматически.</p>`;
@@ -2216,38 +3077,60 @@ function renderValueBuilder(box, ins, onChange) {
             <label class="inline-lbl"><input type="radio" name="vbCbState_${ins.id}" value="off" ${p.checked === 'off' ? 'checked' : ''}> OFF (выключить)</label>
           </div>
           <p class="hint">Устанавливает чекбокс в нужное состояние. Работает с нативными &lt;input type="checkbox"&gt;.</p>`;
-        paramsBox.querySelectorAll('input[type=radio]').forEach(r => r.addEventListener('change', e => { p.checked = e.target.value; onChange(); }));
+        paramsBox.querySelectorAll('input[type=radio]').forEach(r =>
+          r.addEventListener('change', e => {
+            p.checked = e.target.value;
+            onChange();
+          })
+        );
         break;
       case 'select_value':
         paramsBox.innerHTML = `
           <label>Значение для выбора</label>
           <input type="text" class="vbValue" value="${escapeAttr(p.value || '')}" placeholder="Значение option (value или текст)">
           <p class="hint">Введите value или видимый текст нужного пункта &lt;select&gt;. Регистр не важен. Если совпадений нет — будет выбран случайный вариант.</p>`;
-        paramsBox.querySelector('.vbValue').addEventListener('input', e => { p.value = e.target.value; onChange(); });
+        paramsBox.querySelector('.vbValue').addEventListener('input', e => {
+          p.value = e.target.value;
+          onChange();
+        });
         break;
       case 'pick_custom':
         paramsBox.innerHTML = `
           <label>Значения (по одному в строке или через запятую)</label>
           <textarea class="vbValues" placeholder="кот&#10;пёс&#10;хомяк">${escapeText(p.values || '')}</textarea>`;
-        paramsBox.querySelector('.vbValues').addEventListener('input', e => { p.values = e.target.value; onChange(); });
+        paramsBox.querySelector('.vbValues').addEventListener('input', e => {
+          p.values = e.target.value;
+          onChange();
+        });
         break;
       case 'pick_preset':
         const allPresets = PRESET_LISTS.concat(
-          (state.customWordLists || []).filter(wl => wl.name).map(wl => ({ key: 'list:' + wl.name, label: wl.name + ' (пользовательский, ' + wordListWordCount(wl) + ' слов)' }))
+          (state.customWordLists || [])
+            .filter(wl => wl.name)
+            .map(wl => ({
+              key: 'list:' + wl.name,
+              label: wl.name + ' (пользовательский, ' + wordListWordCount(wl) + ' слов)',
+            }))
         );
         paramsBox.innerHTML = `
           <label>Готовый список</label>
           <select class="vbPreset">
             ${allPresets.map(l => `<option value="${l.key}" ${p.preset === l.key ? 'selected' : ''}>${escapeText(l.label)}</option>`).join('')}
           </select>`;
-        paramsBox.querySelector('.vbPreset').addEventListener('change', e => { p.preset = e.target.value; onChange(); });
+        paramsBox.querySelector('.vbPreset').addEventListener('change', e => {
+          p.preset = e.target.value;
+          onChange();
+        });
         break;
       case 'regex':
         paramsBox.innerHTML = `
           <label>Regex-паттерн</label>
           <input type="text" class="vbPattern" value="${escapeAttr(p.pattern || '')}" placeholder="[A-Z]{3}-\\d{4}">
           <div class="regex-help">${regexCheatsheetHtml()}</div>`;
-        paramsBox.querySelector('.vbPattern').addEventListener('input', e => { p.pattern = e.target.value; onChange(); });
+        paramsBox.querySelector('.vbPattern').addEventListener('input', e => {
+          p.pattern = e.target.value;
+          onChange();
+        });
         break;
       case 'advanced':
         paramsBox.innerHTML = `
@@ -2259,8 +3142,13 @@ function renderValueBuilder(box, ins, onChange) {
           <textarea class="vbTemplate" placeholder="test_{{counter:special}}_{{name.first}}">${escapeText(p.template || '')}</textarea>
           <p class="hint">Обычный текст со вставками <code>{{token}}</code>. Кнопка «+ Токен» подставляет готовые токены.</p>`;
         const ta = paramsBox.querySelector('.vbTemplate');
-        ta.addEventListener('input', e => { p.template = e.target.value; onChange(); });
-        paramsBox.querySelector('.vbInsertToken').addEventListener('click', (e) => openTokenMenu(e.currentTarget, ta));
+        ta.addEventListener('input', e => {
+          p.template = e.target.value;
+          onChange();
+        });
+        paramsBox
+          .querySelector('.vbInsertToken')
+          .addEventListener('click', e => openTokenMenu(e.currentTarget, ta));
         break;
     }
   }
@@ -2274,23 +3162,33 @@ function renderValueBuilder(box, ins, onChange) {
   });
 }
 
-if ($('addSpecial')) $('addSpecial').addEventListener('click', () => {
-  state.specialInsertions = state.specialInsertions || [];
-  const now = new Date().toISOString();
-  const ins = {
-    id: uid(), name: 'Новая вставка', enabled: true, collapsed: false, _isNew: true,
-    urlPattern: '', targetSelector: '', triggerSelector: '', triggerWait: 300,
-    actionType: 'fill',
-    valueTemplate: '',
-    valueMeta: { type: 'text', params: { value: '' } },
-    createdAt: now, updatedAt: now
-  };
-  collapseAllExtras(ins);
-  state.specialInsertions.push(ins);
-  addLog('создано', 'вставка', 'Новая вставка');
-  save().then(renderAllExtras);
-});
-if ($('addSpecialFromHtml')) $('addSpecialFromHtml').addEventListener('click', () => openAddModal(''));
+if ($('addSpecial'))
+  $('addSpecial').addEventListener('click', () => {
+    state.specialInsertions = state.specialInsertions || [];
+    const now = new Date().toISOString();
+    const ins = {
+      id: uid(),
+      name: 'Новая вставка',
+      enabled: true,
+      collapsed: false,
+      _isNew: true,
+      urlPattern: '',
+      targetSelector: '',
+      triggerSelector: '',
+      triggerWait: 300,
+      actionType: 'fill',
+      valueTemplate: '',
+      valueMeta: { type: 'text', params: { value: '' } },
+      createdAt: now,
+      updatedAt: now,
+    };
+    collapseAllExtras(ins);
+    state.specialInsertions.push(ins);
+    addLog('создано', 'вставка', 'Новая вставка');
+    save().then(renderAllExtras);
+  });
+if ($('addSpecialFromHtml'))
+  $('addSpecialFromHtml').addEventListener('click', () => openAddModal(''));
 
 /* ================ Модалка Из HTML ================ */
 function openAddModal(prefilledUrl) {
@@ -2306,7 +3204,9 @@ function openAddModal(prefilledUrl) {
   $('mTriggerHtml').classList.remove('field-locked');
   $('addModal').classList.add('open');
 }
-function closeAddModal() { $('addModal').classList.remove('open'); }
+function closeAddModal() {
+  $('addModal').classList.remove('open');
+}
 $('modalClose').addEventListener('click', closeAddModal);
 $('mCancel').addEventListener('click', closeAddModal);
 
@@ -2314,26 +3214,43 @@ $('mAnalyze').addEventListener('click', async () => {
   const html = $('mHtml').value.trim();
   const triggerHtml = $('mTriggerHtml').value.trim();
   const url = $('mUrl').value.trim();
-  if (!html) { alert('Вставьте HTML целевого элемента'); return; }
+  if (!html) {
+    alert('Вставьте HTML целевого элемента');
+    return;
+  }
   $('mSpin').style.display = 'inline-block';
   $('mAnalyze').disabled = true;
   $('mHtml').classList.add('field-locked');
   $('mTriggerHtml').classList.add('field-locked');
   await new Promise(r => setTimeout(r, 300));
-  const res  = window.FFAnalyzer.analyze(html, url);
+  const res = window.FFAnalyzer.analyze(html, url);
   const trig = triggerHtml ? window.FFAnalyzer.analyzeTrigger(triggerHtml) : null;
   $('mSpin').style.display = 'none';
-  if (!res.ok) { alert('Не удалось разобрать целевой элемент: ' + res.error); $('mAnalyze').disabled = false; $('mHtml').classList.remove('field-locked'); $('mTriggerHtml').classList.remove('field-locked'); return; }
-  if (trig && !trig.ok) { alert('Не удалось разобрать HTML триггера: ' + trig.error); $('mAnalyze').disabled = false; $('mHtml').classList.remove('field-locked'); $('mTriggerHtml').classList.remove('field-locked'); return; }
+  if (!res.ok) {
+    alert('Не удалось разобрать целевой элемент: ' + res.error);
+    $('mAnalyze').disabled = false;
+    $('mHtml').classList.remove('field-locked');
+    $('mTriggerHtml').classList.remove('field-locked');
+    return;
+  }
+  if (trig && !trig.ok) {
+    alert('Не удалось разобрать HTML триггера: ' + trig.error);
+    $('mAnalyze').disabled = false;
+    $('mHtml').classList.remove('field-locked');
+    $('mTriggerHtml').classList.remove('field-locked');
+    return;
+  }
 
-  $('mName').value = 'Заполнение ' + (res.category || 'field') + ' на ' + (url.split('/')[2] || 'странице');
+  $('mName').value =
+    'Заполнение ' + (res.category || 'field') + ' на ' + (url.split('/')[2] || 'странице');
   $('mUrlPattern').value = res.urlPattern;
   $('mSelector').value = res.selector;
   $('mElementInfo').textContent = res.element + '   • категория: ' + res.category;
 
   if (trig && trig.ok) {
     $('mTriggerBlock').style.display = 'block';
-    $('mTriggerSel').value = trig.selector; $('mTrigWait').value = 300;
+    $('mTriggerSel').value = trig.selector;
+    $('mTrigWait').value = 300;
   } else {
     $('mTriggerBlock').style.display = 'none';
     $('mTriggerSel').value = '';
@@ -2351,7 +3268,9 @@ $('mAnalyze').addEventListener('click', async () => {
     row.addEventListener('click', () => {
       $$('.suggestion', list).forEach(el => el.classList.remove('selected'));
       row.classList.add('selected');
-      $('mTemplate').value = s.template; currentTemplate = s.template; updateModalPreview();
+      $('mTemplate').value = s.template;
+      currentTemplate = s.template;
+      updateModalPreview();
     });
     list.appendChild(row);
   });
@@ -2365,9 +3284,15 @@ $('mAnalyze').addEventListener('click', async () => {
 function updateModalPreview() {
   const t = $('mTemplate').value;
   const box = $('mPreview');
-  if (!t) { box.textContent = '—'; return; }
-  try { box.textContent = window.FF.render(t, previewCtx()) || '—'; }
-  catch (e) { box.textContent = 'Ошибка: ' + e.message; }
+  if (!t) {
+    box.textContent = '—';
+    return;
+  }
+  try {
+    box.textContent = window.FF.render(t, previewCtx()) || '—';
+  } catch (e) {
+    box.textContent = 'Ошибка: ' + e.message;
+  }
 }
 $('mTestBtn').addEventListener('click', updateModalPreview);
 
@@ -2380,15 +3305,16 @@ $('mSave').addEventListener('click', async () => {
     id: uid(),
     name: $('mName').value.trim() || 'Без имени',
     enabled: true,
-    collapsed: true,   // сразу свёрнута
+    collapsed: true, // сразу свёрнута
     urlPattern: $('mUrlPattern').value.trim(),
     targetSelector: $('mSelector').value.trim(),
     triggerSelector: triggerSel || '',
-    triggerWait: triggerSel ? (parseInt($('mTrigWait').value, 10) || 300) : 0,
+    triggerWait: triggerSel ? parseInt($('mTrigWait').value, 10) || 300 : 0,
     actionType: 'fill',
     valueTemplate: template,
     valueMeta: { type: 'advanced', params: { template } },
-    createdAt: now, updatedAt: now
+    createdAt: now,
+    updatedAt: now,
   });
   await save();
   closeAddModal();
@@ -2401,14 +3327,44 @@ $('mSave').addEventListener('click', async () => {
    ================================================================ */
 
 const UA_PRESETS = [
-  { label: 'Chrome Windows', value: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36' },
-  { label: 'Chrome Mac', value: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36' },
-  { label: 'Firefox Windows', value: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0' },
-  { label: 'Safari Mac', value: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15' },
-  { label: 'Safari iPhone', value: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1' },
-  { label: 'Chrome Android', value: 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36' },
-  { label: 'Edge Windows', value: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0' },
-  { label: 'Googlebot', value: 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' },
+  {
+    label: 'Chrome Windows',
+    value:
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+  },
+  {
+    label: 'Chrome Mac',
+    value:
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+  },
+  {
+    label: 'Firefox Windows',
+    value: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0',
+  },
+  {
+    label: 'Safari Mac',
+    value:
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15',
+  },
+  {
+    label: 'Safari iPhone',
+    value:
+      'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
+  },
+  {
+    label: 'Chrome Android',
+    value:
+      'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36',
+  },
+  {
+    label: 'Edge Windows',
+    value:
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0',
+  },
+  {
+    label: 'Googlebot',
+    value: 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+  },
 ];
 
 /* ================================================================
@@ -2427,7 +3383,10 @@ function renderScraperCollapsed(cfg) {
   card.className = 'rule-card collapsed' + (cfg.enabled === false ? ' rule-disabled' : '');
   const urls = (cfg.urls || []).filter(Boolean);
   const urlHtml = urls.length
-    ? 'URL: <code>' + escapeText(urls[0]) + '</code>' + (urls.length > 1 ? ' <span class="extra-count">+' + (urls.length - 1) + '</span>' : '')
+    ? 'URL: <code>' +
+      escapeText(urls[0]) +
+      '</code>' +
+      (urls.length > 1 ? ' <span class="extra-count">+' + (urls.length - 1) + '</span>' : '')
     : '<span class="rc-off">нет URL</span>';
   const enabledCount = (cfg.fields || []).filter(f => f.enabled).length;
   const totalCount = (cfg.fields || []).length;
@@ -2458,7 +3417,11 @@ function renderScraperCollapsed(cfg) {
     card.querySelector('.toggle-label').textContent = cfg.enabled ? 'ВКЛ' : 'ВЫКЛ';
     saveDebounced();
   });
-  card.querySelector('.scEdit').addEventListener('click', () => { collapseAllExtras(cfg); cfg.collapsed = false; save().then(renderAllExtras); });
+  card.querySelector('.scEdit').addEventListener('click', () => {
+    collapseAllExtras(cfg);
+    cfg.collapsed = false;
+    save().then(renderAllExtras);
+  });
   return card;
 }
 
@@ -2492,23 +3455,38 @@ function renderScraperExpanded(cfg) {
       const row = document.createElement('div');
       row.className = 'row';
       row.style.cssText = 'gap:6px;margin-bottom:4px';
-      row.innerHTML = '<input type="text" class="scraperUrlItem grow" value="' + escapeAttr(u) + '" placeholder="example.com">' +
-        (cfg.urls.length > 1 ? '<button class="btn-x small scraperRemoveUrl" type="button" title="Убрать сайт">×</button>' : '');
-      row.querySelector('.scraperUrlItem').addEventListener('input', e => { cfg.urls[i] = e.target.value; });
+      row.innerHTML =
+        '<input type="text" class="scraperUrlItem grow" value="' +
+        escapeAttr(u) +
+        '" placeholder="example.com">' +
+        (cfg.urls.length > 1
+          ? '<button class="btn-x small scraperRemoveUrl" type="button" title="Убрать сайт">×</button>'
+          : '');
+      row.querySelector('.scraperUrlItem').addEventListener('input', e => {
+        cfg.urls[i] = e.target.value;
+      });
       const rm = row.querySelector('.scraperRemoveUrl');
-      if (rm) rm.addEventListener('click', () => { cfg.urls.splice(i, 1); drawUrls(); });
+      if (rm)
+        rm.addEventListener('click', () => {
+          cfg.urls.splice(i, 1);
+          drawUrls();
+        });
       urlsBox.appendChild(row);
     });
   }
   drawUrls();
-  card.querySelector('.scAddUrl').addEventListener('click', () => { cfg.urls.push(''); drawUrls(); });
+  card.querySelector('.scAddUrl').addEventListener('click', () => {
+    cfg.urls.push('');
+    drawUrls();
+  });
 
   // --- Fields list ---
   const fieldsBox = card.querySelector('.sc-fields-list');
   function drawFields() {
     const fields = cfg.fields || [];
     if (!fields.length) {
-      fieldsBox.innerHTML = '<div class="hint">Нет полей. Нажмите «Сканировать» в попапе расширения.</div>';
+      fieldsBox.innerHTML =
+        '<div class="hint">Нет полей. Нажмите «Сканировать» в попапе расширения.</div>';
       return;
     }
     fieldsBox.innerHTML = '';
@@ -2516,17 +3494,31 @@ function renderScraperExpanded(cfg) {
       const row = document.createElement('div');
       row.className = 'scraper-field-row';
       row.innerHTML =
-        '<label class="inline-lbl" style="margin:0;flex:1"><input type="checkbox" class="sfEnabled" ' + (f.enabled ? 'checked' : '') + '> <span class="mono" style="font-size:12px">' + escapeText(f.key) + '</span></label>' +
-        '<button class="small sfUp" title="Вверх" ' + (i === 0 ? 'disabled' : '') + '>▲</button>' +
-        '<button class="small sfDown" title="Вниз" ' + (i === fields.length - 1 ? 'disabled' : '') + '>▼</button>';
-      row.querySelector('.sfEnabled').addEventListener('change', e => { f.enabled = e.target.checked; });
+        '<label class="inline-lbl" style="margin:0;flex:1"><input type="checkbox" class="sfEnabled" ' +
+        (f.enabled ? 'checked' : '') +
+        '> <span class="mono" style="font-size:12px">' +
+        escapeText(f.key) +
+        '</span></label>' +
+        '<button class="small sfUp" title="Вверх" ' +
+        (i === 0 ? 'disabled' : '') +
+        '>▲</button>' +
+        '<button class="small sfDown" title="Вниз" ' +
+        (i === fields.length - 1 ? 'disabled' : '') +
+        '>▼</button>';
+      row.querySelector('.sfEnabled').addEventListener('change', e => {
+        f.enabled = e.target.checked;
+      });
       row.querySelector('.sfUp').addEventListener('click', () => {
         if (i === 0) return;
-        fields.splice(i, 1); fields.splice(i - 1, 0, f); drawFields();
+        fields.splice(i, 1);
+        fields.splice(i - 1, 0, f);
+        drawFields();
       });
       row.querySelector('.sfDown').addEventListener('click', () => {
         if (i === fields.length - 1) return;
-        fields.splice(i, 1); fields.splice(i + 1, 0, f); drawFields();
+        fields.splice(i, 1);
+        fields.splice(i + 1, 0, f);
+        drawFields();
       });
       fieldsBox.appendChild(row);
     });
@@ -2534,7 +3526,10 @@ function renderScraperExpanded(cfg) {
   drawFields();
 
   card.querySelector('.scEnabledExp').addEventListener('change', e => {
-    e.target.closest('.rule-status-toggle').querySelector('.toggle-label').textContent = e.target.checked ? 'ВКЛ' : 'ВЫКЛ';
+    e.target.closest('.rule-status-toggle').querySelector('.toggle-label').textContent = e.target
+      .checked
+      ? 'ВКЛ'
+      : 'ВЫКЛ';
   });
 
   if (!cfg._snapshot) cfg._snapshot = deepClone(cfg);
@@ -2551,7 +3546,8 @@ function renderScraperExpanded(cfg) {
     cfg.enabled = card.querySelector('.scEnabledExp').checked;
     cfg.urls = cfg.urls.map(u => u.trim()).filter(Boolean);
     if (!cfg.urls.length) cfg.urls = [''];
-    cfg.parentSelector = card.querySelector('.scParentSel').value.trim() || 'div.debug_plugin_client';
+    cfg.parentSelector =
+      card.querySelector('.scParentSel').value.trim() || 'div.debug_plugin_client';
     delete cfg._snapshot;
     cfg.collapsed = true;
     addLog('изменено', 'скрапер', '');
@@ -2603,7 +3599,11 @@ function renderCopyfxCollapsed(cfg) {
     card.querySelector('.toggle-label').textContent = cfg.enabled ? 'ВКЛ' : 'ВЫКЛ';
     saveDebounced();
   });
-  card.querySelector('.cfxEdit').addEventListener('click', () => { collapseAllExtras(cfg); cfg.collapsed = false; save().then(renderAllExtras); });
+  card.querySelector('.cfxEdit').addEventListener('click', () => {
+    collapseAllExtras(cfg);
+    cfg.collapsed = false;
+    save().then(renderAllExtras);
+  });
   return card;
 }
 
@@ -2639,10 +3639,19 @@ function renderCopyfxExpanded(cfg) {
       const row = document.createElement('div');
       row.className = 'scraper-field-row';
       row.innerHTML =
-        '<label class="inline-lbl" style="margin:0;flex:1"><input type="checkbox" class="cfxFEnabled" ' + (f.enabled ? 'checked' : '') + '> <span class="mono" style="font-size:12px">' + escapeText(f.key) + '</span></label>' +
+        '<label class="inline-lbl" style="margin:0;flex:1"><input type="checkbox" class="cfxFEnabled" ' +
+        (f.enabled ? 'checked' : '') +
+        '> <span class="mono" style="font-size:12px">' +
+        escapeText(f.key) +
+        '</span></label>' +
         '<button class="btn-x small cfxFRemove" type="button" title="Убрать поле">×</button>';
-      row.querySelector('.cfxFEnabled').addEventListener('change', e => { f.enabled = e.target.checked; });
-      row.querySelector('.cfxFRemove').addEventListener('click', () => { cfg.extraFields.splice(i, 1); drawFields(); });
+      row.querySelector('.cfxFEnabled').addEventListener('change', e => {
+        f.enabled = e.target.checked;
+      });
+      row.querySelector('.cfxFRemove').addEventListener('click', () => {
+        cfg.extraFields.splice(i, 1);
+        drawFields();
+      });
       fieldsBox.appendChild(row);
     });
   }
@@ -2652,14 +3661,20 @@ function renderCopyfxExpanded(cfg) {
     const inp = card.querySelector('.cfxNewField');
     const key = inp.value.trim();
     if (!key) return;
-    if (cfg.extraFields.some(f => f.key === key)) { inp.value = ''; return; }
+    if (cfg.extraFields.some(f => f.key === key)) {
+      inp.value = '';
+      return;
+    }
     cfg.extraFields.push({ key, enabled: true });
     inp.value = '';
     drawFields();
   });
 
   card.querySelector('.cfxEnabledExp').addEventListener('change', e => {
-    e.target.closest('.rule-status-toggle').querySelector('.toggle-label').textContent = e.target.checked ? 'ВКЛ' : 'ВЫКЛ';
+    e.target.closest('.rule-status-toggle').querySelector('.toggle-label').textContent = e.target
+      .checked
+      ? 'ВКЛ'
+      : 'ВЫКЛ';
   });
 
   if (!cfg._snapshot) cfg._snapshot = deepClone(cfg);
@@ -2688,7 +3703,7 @@ function renderUaRules() {
   const box = $('uaRulesList');
   if (!box) return;
   box.innerHTML = '';
-  for (const ua of (state.uaRules || [])) {
+  for (const ua of state.uaRules || []) {
     box.appendChild(ua.collapsed ? renderUaCollapsed(ua) : renderUaExpanded(ua));
   }
 }
@@ -2698,7 +3713,10 @@ function renderUaCollapsed(ua) {
   card.className = 'rule-card collapsed' + (ua.enabled === false ? ' rule-disabled' : '');
   const urls = ua.urls || [];
   const urlHtml = urls.length
-    ? 'URL: <code>' + escapeText(urls[0]) + '</code>' + (urls.length > 1 ? ' <span class="extra-count">+' + (urls.length - 1) + '</span>' : '')
+    ? 'URL: <code>' +
+      escapeText(urls[0]) +
+      '</code>' +
+      (urls.length > 1 ? ' <span class="extra-count">+' + (urls.length - 1) + '</span>' : '')
     : '';
   const datesParts = [];
   if (ua.createdAt) datesParts.push('создано ' + fmtDate(ua.createdAt));
@@ -2746,7 +3764,11 @@ function renderUaCollapsed(ua) {
     addLog('копия', 'UA правило', clone.name);
     save().then(renderAllExtras);
   });
-  card.querySelector('.uaEdit').addEventListener('click', () => { collapseAllExtras(ua); ua.collapsed = false; save().then(renderAllExtras); });
+  card.querySelector('.uaEdit').addEventListener('click', () => {
+    collapseAllExtras(ua);
+    ua.collapsed = false;
+    save().then(renderAllExtras);
+  });
   return card;
 }
 
@@ -2755,7 +3777,9 @@ function renderUaExpanded(ua) {
   card.className = 'rule-card expanded';
   if (!Array.isArray(ua.urls)) ua.urls = ua.url ? [ua.url] : [''];
   if (!ua.urls.length) ua.urls = [''];
-  const presetOptions = UA_PRESETS.map(p => '<option value="' + escapeAttr(p.value) + '">' + escapeText(p.label) + '</option>').join('');
+  const presetOptions = UA_PRESETS.map(
+    p => '<option value="' + escapeAttr(p.value) + '">' + escapeText(p.label) + '</option>'
+  ).join('');
   card.innerHTML = `
     <div class="rule-head">
       <input type="text" class="uaName grow" value="${escapeAttr(ua.name || '')}" placeholder="Название правила">
@@ -2782,16 +3806,30 @@ function renderUaExpanded(ua) {
       const row = document.createElement('div');
       row.className = 'row';
       row.style.cssText = 'gap:6px;margin-bottom:4px';
-      row.innerHTML = '<input type="text" class="uaUrlItem grow" value="' + escapeAttr(u) + '" placeholder="example.com">' +
-        (ua.urls.length > 1 ? '<button class="btn-x small uaRemoveUrl" type="button" title="Убрать сайт">×</button>' : '');
-      row.querySelector('.uaUrlItem').addEventListener('input', e => { ua.urls[i] = e.target.value; });
+      row.innerHTML =
+        '<input type="text" class="uaUrlItem grow" value="' +
+        escapeAttr(u) +
+        '" placeholder="example.com">' +
+        (ua.urls.length > 1
+          ? '<button class="btn-x small uaRemoveUrl" type="button" title="Убрать сайт">×</button>'
+          : '');
+      row.querySelector('.uaUrlItem').addEventListener('input', e => {
+        ua.urls[i] = e.target.value;
+      });
       const rm = row.querySelector('.uaRemoveUrl');
-      if (rm) rm.addEventListener('click', () => { ua.urls.splice(i, 1); drawUrls(); });
+      if (rm)
+        rm.addEventListener('click', () => {
+          ua.urls.splice(i, 1);
+          drawUrls();
+        });
       urlsBox.appendChild(row);
     });
   }
   drawUrls();
-  card.querySelector('.uaAddUrl').addEventListener('click', () => { ua.urls.push(''); drawUrls(); });
+  card.querySelector('.uaAddUrl').addEventListener('click', () => {
+    ua.urls.push('');
+    drawUrls();
+  });
 
   const nameInput = card.querySelector('.uaName');
   const valueInput = card.querySelector('.uaValue');
@@ -2799,10 +3837,14 @@ function renderUaExpanded(ua) {
   const presetSel = card.querySelector('.uaPreset');
 
   presetSel.addEventListener('change', () => {
-    if (presetSel.value) { valueInput.value = presetSel.value; presetSel.value = ''; }
+    if (presetSel.value) {
+      valueInput.value = presetSel.value;
+      presetSel.value = '';
+    }
   });
   enabledCb.addEventListener('change', () => {
-    enabledCb.closest('.rule-status-toggle').querySelector('.toggle-label').textContent = enabledCb.checked ? 'ВКЛ' : 'ВЫКЛ';
+    enabledCb.closest('.rule-status-toggle').querySelector('.toggle-label').textContent =
+      enabledCb.checked ? 'ВКЛ' : 'ВЫКЛ';
   });
 
   if (!ua._isNew && !ua._snapshot) ua._snapshot = deepClone(ua);
@@ -2836,9 +3878,14 @@ function renderUaExpanded(ua) {
       save().then(renderUaRules);
     });
     card.querySelector('.uaDelete').addEventListener('click', () => {
-      const word = prompt('Для удаления правила «' + (ua.name || 'без имени') + '» введите слово "удалить":');
+      const word = prompt(
+        'Для удаления правила «' + (ua.name || 'без имени') + '» введите слово "удалить":'
+      );
       if (word == null) return;
-      if (word.trim().toLowerCase() !== 'удалить') { toast('Неверное слово — удаление отменено', 'error'); return; }
+      if (word.trim().toLowerCase() !== 'удалить') {
+        toast('Неверное слово — удаление отменено', 'error');
+        return;
+      }
       addLog('удалено', 'UA правило', ua.name);
       state.uaRules = state.uaRules.filter(r => r !== ua);
       save().then(renderUaRules);
@@ -2853,9 +3900,14 @@ $('addUaRule').addEventListener('click', () => {
   state.uaRules = state.uaRules || [];
   const ua = {
     id: 'ua_' + Math.random().toString(36).slice(2, 10),
-    name: '', urls: [''], userAgent: '',
-    enabled: true, collapsed: false, _isNew: true,
-    createdAt: now, updatedAt: now
+    name: '',
+    urls: [''],
+    userAgent: '',
+    enabled: true,
+    collapsed: false,
+    _isNew: true,
+    createdAt: now,
+    updatedAt: now,
   };
   collapseAllExtras(ua);
   state.uaRules.push(ua);
@@ -2870,10 +3922,15 @@ $('addCounter').addEventListener('click', () => {
   const suggested = uniqueCounterName('customerId');
   state.smartCounters = state.smartCounters || [];
   const sc = {
-    name: suggested, prefix: '', width: 5, current: 0,
+    name: suggested,
+    prefix: '',
+    width: 5,
+    current: 0,
     branches: [{ label: 'B', regex: 'www-\\d+', suffix: 'B' }],
-    testUrl: '', history: [],
-    collapsed: false, _isNew: true
+    testUrl: '',
+    history: [],
+    collapsed: false,
+    _isNew: true,
   };
   collapseAllExtras(sc);
   state.smartCounters.push(sc);
@@ -2891,31 +3948,45 @@ function nextValueOf(sc, url) {
   const nextNum = (Number(sc.current) || 0) + 1;
   const width = Number(sc.width) || 0;
   const numStr = width > 0 ? String(nextNum).padStart(width, '0') : String(nextNum);
-  const branches = Array.isArray(sc.branches) && sc.branches.length
-    ? sc.branches
-    : (sc.branchRegex ? [{ label: 'B', regex: sc.branchRegex, suffix: sc.branchSuffix || '' }] : []);
+  const branches =
+    Array.isArray(sc.branches) && sc.branches.length
+      ? sc.branches
+      : sc.branchRegex
+        ? [{ label: 'B', regex: sc.branchRegex, suffix: sc.branchSuffix || '' }]
+        : [];
   let firedLabel = '';
   let suffix = '';
   if (url) {
     for (const b of branches) {
       if (!b.regex) continue;
       try {
-        if (new RegExp(b.regex, 'i').test(url)) { suffix = b.suffix || ''; firedLabel = b.label || ''; break; }
+        if (new RegExp(b.regex, 'i').test(url)) {
+          suffix = b.suffix || '';
+          firedLabel = b.label || '';
+          break;
+        }
       } catch (e) {}
     }
   }
   return {
-    base:   (sc.prefix || '') + numStr,
+    base: (sc.prefix || '') + numStr,
     forUrl: (sc.prefix || '') + numStr + suffix,
     firedLabel,
-    branches: branches.map(b => ({ label: b.label, suffix: b.suffix || '', preview: (sc.prefix || '') + numStr + (b.suffix || '') }))
+    branches: branches.map(b => ({
+      label: b.label,
+      suffix: b.suffix || '',
+      preview: (sc.prefix || '') + numStr + (b.suffix || ''),
+    })),
   };
 }
 function renderCounters() {
   const box = $('counterList');
   box.innerHTML = '';
   const list = state.smartCounters || [];
-  if (!list.length) { box.innerHTML = '<div class="empty">Пока нет инкременторов. Создайте первый.</div>'; return; }
+  if (!list.length) {
+    box.innerHTML = '<div class="empty">Пока нет инкременторов. Создайте первый.</div>';
+    return;
+  }
   list.forEach((sc, idx) => box.appendChild(renderCounterCard(sc, idx)));
 }
 function renderCounterCard(sc, idx) {
@@ -2935,7 +4006,8 @@ function counterSummary(sc) {
   parts.push('<span class="badge mono">{{seq:' + escapeText(sc.name || '') + '}}</span>');
   parts.push('следующий: <code>' + escapeText(next.base) + '</code>');
   if ((sc.branches || []).length) parts.push(sc.branches.length + ' домен(ов)');
-  if ((sc.history || []).length) parts.push('<span class="mono">' + sc.history.length + ' в истории</span>');
+  if ((sc.history || []).length)
+    parts.push('<span class="mono">' + sc.history.length + ' в истории</span>');
   return parts.join(' <span class="conn">·</span> ');
 }
 
@@ -2965,7 +4037,11 @@ function renderCounterCollapsed(sc, idx) {
         </div>
       </div>
     </div>`;
-  card.querySelector('.scEdit').addEventListener('click', () => { collapseAllExtras(sc); sc.collapsed = false; save().then(renderAllExtras); });
+  card.querySelector('.scEdit').addEventListener('click', () => {
+    collapseAllExtras(sc);
+    sc.collapsed = false;
+    save().then(renderAllExtras);
+  });
   return card;
 }
 
@@ -3011,10 +4087,23 @@ function renderCounterExpanded(sc, idx) {
     const url = card.querySelector('.scTestUrl').value;
     const next = nextValueOf(sc, url);
     const branchesHtml = next.branches.length
-      ? next.branches.map(b => `<b>${escapeText(b.label || '—')}</b>: <span style="color:var(--primary)">${escapeText(b.preview)}</span>`).join(' · ')
+      ? next.branches
+          .map(
+            b =>
+              `<b>${escapeText(b.label || '—')}</b>: <span style="color:var(--primary)">${escapeText(b.preview)}</span>`
+          )
+          .join(' · ')
       : '<span style="color:var(--text-mute)">доменов нет</span>';
-    card.querySelector('.scPreviewBoth').innerHTML = '<b>основной:</b> <span style="color:var(--text)">' + escapeText(next.base) + '</span> · ' + branchesHtml;
-    card.querySelector('.scTestOut').innerHTML = 'Для этого URL → <b>' + escapeText(next.forUrl) + '</b>' + (next.firedLabel ? ' (домен: ' + escapeText(next.firedLabel) + ')' : ' (основной)');
+    card.querySelector('.scPreviewBoth').innerHTML =
+      '<b>основной:</b> <span style="color:var(--text)">' +
+      escapeText(next.base) +
+      '</span> · ' +
+      branchesHtml;
+    card.querySelector('.scTestOut').innerHTML =
+      'Для этого URL → <b>' +
+      escapeText(next.forUrl) +
+      '</b>' +
+      (next.firedLabel ? ' (домен: ' + escapeText(next.firedLabel) + ')' : ' (основной)');
     card.querySelector('.scTestBadge').textContent = next.firedLabel || 'main';
     card.querySelector('.scChipName').textContent = sc.name || '';
     const addBtn = card.querySelector('.scAddBranch');
@@ -3034,9 +4123,21 @@ function renderCounterExpanded(sc, idx) {
           <input type="text" class="scBrSuffix shrink" value="${escapeAttr(b.suffix || '')}" style="flex:0 0 90px" placeholder="суффикс" title="Что дописать после числа">
           <button class="btn-x small scBrDel" title="Удалить домен">×</button>
         </div>`;
-      row.querySelector('.scBrLabel').addEventListener('input', e => { b.label = e.target.value; refresh(); saveDebounced(); });
-      row.querySelector('.scBrRegex').addEventListener('input', e => { b.regex = e.target.value; refresh(); saveDebounced(); });
-      row.querySelector('.scBrSuffix').addEventListener('input', e => { b.suffix = e.target.value; refresh(); saveDebounced(); });
+      row.querySelector('.scBrLabel').addEventListener('input', e => {
+        b.label = e.target.value;
+        refresh();
+        saveDebounced();
+      });
+      row.querySelector('.scBrRegex').addEventListener('input', e => {
+        b.regex = e.target.value;
+        refresh();
+        saveDebounced();
+      });
+      row.querySelector('.scBrSuffix').addEventListener('input', e => {
+        b.suffix = e.target.value;
+        refresh();
+        saveDebounced();
+      });
       row.querySelector('.scBrDel').addEventListener('click', () => {
         sc.branches.splice(idx, 1);
         renderBranches();
@@ -3076,7 +4177,10 @@ function renderCounterExpanded(sc, idx) {
     });
   }
   card.querySelector('.scAddBranch').addEventListener('click', () => {
-    if ((sc.branches || []).length >= 3) { toast('Максимум 3 домена', 'error'); return; }
+    if ((sc.branches || []).length >= 3) {
+      toast('Максимум 3 домена', 'error');
+      return;
+    }
     sc.branches = sc.branches || [];
     sc.branches.push({ label: '', regex: '', suffix: '' });
     renderBranches();
@@ -3084,30 +4188,46 @@ function renderCounterExpanded(sc, idx) {
     save();
   });
   const nameEl = card.querySelector('.scName');
-  nameEl.addEventListener('input', (e) => {
+  nameEl.addEventListener('input', e => {
     const clean = e.target.value.replace(/[\s:{}|]/g, '');
     if (clean !== e.target.value) e.target.value = clean;
-    sc.name = clean; refresh(); saveDebounced();
+    sc.name = clean;
+    refresh();
+    saveDebounced();
   });
   const inputs = {
-    scPrefix:    (v) => sc.prefix = v,
-    scWidth:     (v) => sc.width = parseInt(v, 10) || 0,
-    scCurrent:   (v) => sc.current = parseInt(v, 10) || 0,
-    scTestUrl:   (v) => sc.testUrl = v
+    scPrefix: v => (sc.prefix = v),
+    scWidth: v => (sc.width = parseInt(v, 10) || 0),
+    scCurrent: v => (sc.current = parseInt(v, 10) || 0),
+    scTestUrl: v => (sc.testUrl = v),
   };
   for (const cls of Object.keys(inputs)) {
-    card.querySelector('.' + cls).addEventListener('input', (e) => { inputs[cls](e.target.value); refresh(); saveDebounced(); });
+    card.querySelector('.' + cls).addEventListener('input', e => {
+      inputs[cls](e.target.value);
+      refresh();
+      saveDebounced();
+    });
   }
   card.querySelector('.scInc').addEventListener('click', () => {
     const url = card.querySelector('.scTestUrl').value || '';
-    const ctx = { smartCounters: state.smartCounters, customWordLists: state.customWordLists || [], url, dryRun: false, counters: {} };
+    const ctx = {
+      smartCounters: state.smartCounters,
+      customWordLists: state.customWordLists || [],
+      url,
+      dryRun: false,
+      counters: {},
+    };
     window.FF.render('{{seq:' + sc.name + '}}', ctx);
     card.querySelector('.scCurrent').value = sc.current;
-    save().then(() => { renderCounterHistory(card, sc); refresh(); });
+    save().then(() => {
+      renderCounterHistory(card, sc);
+      refresh();
+    });
   });
   card.querySelector('.scResetHist').addEventListener('click', () => {
     if (!confirm('Очистить историю инкрементора?')) return;
-    sc.history = []; save().then(() => renderCounterHistory(card, sc));
+    sc.history = [];
+    save().then(() => renderCounterHistory(card, sc));
   });
   card.querySelector('.scToggleHist').addEventListener('click', () => {
     const box = card.querySelector('.scHistoryBox');
@@ -3123,15 +4243,25 @@ function renderCounterHistory(card, sc) {
   body.innerHTML = '';
   const hist = sc.history || [];
   if (!hist.length) {
-    body.innerHTML = '<tr><td colspan="4" style="color:var(--text-mute);text-align:center">— пусто —</td></tr>';
+    body.innerHTML =
+      '<tr><td colspan="4" style="color:var(--text-mute);text-align:center">— пусто —</td></tr>';
   } else {
     for (const h of hist) {
       const tr = document.createElement('tr');
       const when = h.at ? new Date(h.at).toISOString().slice(0, 19).replace('T', ' ') : '';
-      tr.innerHTML = '<td><code>' + escapeText(h.value) + '</code></td>' +
-        '<td class="mono" style="color:var(--primary);text-align:center">' + escapeText(h.branch || '—') + '</td>' +
-        '<td style="max-width:340px;word-break:break-all"><span class="mono" style="color:var(--text-subtle)">' + escapeText(h.url || '') + '</span></td>' +
-        '<td class="mono" style="color:var(--text-subtle)">' + escapeText(when) + '</td>';
+      tr.innerHTML =
+        '<td><code>' +
+        escapeText(h.value) +
+        '</code></td>' +
+        '<td class="mono" style="color:var(--primary);text-align:center">' +
+        escapeText(h.branch || '—') +
+        '</td>' +
+        '<td style="max-width:340px;word-break:break-all"><span class="mono" style="color:var(--text-subtle)">' +
+        escapeText(h.url || '') +
+        '</span></td>' +
+        '<td class="mono" style="color:var(--text-subtle)">' +
+        escapeText(when) +
+        '</td>';
       body.appendChild(tr);
     }
   }
@@ -3142,19 +4272,19 @@ function renderCounterHistory(card, sc) {
    ================ PAGE SHORTCUTS =================================
    ================================================================ */
 const SHORTCUT_ACTIONS = [
-  { key: '',                      label: '— выбрать действие —' },
-  { key: 'FILL_ALL',              label: 'Заполнить все поля (fill-all)' },
-  { key: 'FILL_SPECIAL',          label: 'Спец. вставка по текущему URL' },
-  { key: 'FILL_INSERTION_BY_ID',  label: 'Конкретная спец. вставка →' }
+  { key: '', label: '— выбрать действие —' },
+  { key: 'FILL_ALL', label: 'Заполнить все поля (fill-all)' },
+  { key: 'FILL_SPECIAL', label: 'Спец. вставка по текущему URL' },
+  { key: 'FILL_INSERTION_BY_ID', label: 'Конкретная спец. вставка →' },
 ];
 
 function formatCombo(sc) {
   const parts = [];
-  if (sc.ctrl)  parts.push('Ctrl');
-  if (sc.alt)   parts.push('Alt');
+  if (sc.ctrl) parts.push('Ctrl');
+  if (sc.alt) parts.push('Alt');
   if (sc.shift) parts.push('Shift');
-  if (sc.meta)  parts.push('Meta');
-  if (sc.key)   parts.push(sc.key);
+  if (sc.meta) parts.push('Meta');
+  if (sc.key) parts.push(sc.key);
   return parts.length ? parts.join(' + ') : '(не задано)';
 }
 
@@ -3168,12 +4298,15 @@ function renderPageShortcuts() {
     box.innerHTML = '<div class="hint">Пока пусто.</div>';
     return;
   }
-  list.forEach((sc) => {
+  list.forEach(sc => {
     const row = document.createElement('div');
     row.className = 'shortcut-row';
-    const insOptions = insertions.map(i =>
-      `<option value="${i.id}" ${sc.targetId === i.id ? 'selected' : ''}>${escapeText(i.name || '(без имени)')}</option>`
-    ).join('');
+    const insOptions = insertions
+      .map(
+        i =>
+          `<option value="${i.id}" ${sc.targetId === i.id ? 'selected' : ''}>${escapeText(i.name || '(без имени)')}</option>`
+      )
+      .join('');
     row.innerHTML = `
       <button class="small shortcut-capture">${escapeText(formatCombo(sc))}</button>
       <select class="shortcut-action">
@@ -3185,14 +4318,19 @@ function renderPageShortcuts() {
       </select>
       <button class="btn-x small shortcut-del" title="Удалить шорткей">×</button>
     `;
-    row.querySelector('.shortcut-capture').addEventListener('click', (e) => captureShortcut(e.currentTarget, sc));
-    row.querySelector('.shortcut-action').addEventListener('change', (e) => {
+    row
+      .querySelector('.shortcut-capture')
+      .addEventListener('click', e => captureShortcut(e.currentTarget, sc));
+    row.querySelector('.shortcut-action').addEventListener('change', e => {
       sc.action = e.target.value;
-      row.querySelector('.shortcut-target').disabled = (sc.action !== 'FILL_INSERTION_BY_ID');
+      row.querySelector('.shortcut-target').disabled = sc.action !== 'FILL_INSERTION_BY_ID';
       if (sc.action !== 'FILL_INSERTION_BY_ID') sc.targetId = '';
       saveDebounced();
     });
-    row.querySelector('.shortcut-target').addEventListener('change', (e) => { sc.targetId = e.target.value; saveDebounced(); });
+    row.querySelector('.shortcut-target').addEventListener('change', e => {
+      sc.targetId = e.target.value;
+      saveDebounced();
+    });
     row.querySelector('.shortcut-del').addEventListener('click', () => {
       state.pageShortcuts = state.pageShortcuts.filter(x => x !== sc);
       save().then(renderPageShortcuts);
@@ -3205,7 +4343,7 @@ function captureShortcut(btn, sc) {
   const oldText = btn.textContent;
   btn.textContent = 'Нажмите клавиши… (Esc — отмена)';
   btn.classList.add('capturing');
-  const handler = (e) => {
+  const handler = e => {
     if (e.key === 'Escape') {
       btn.textContent = oldText;
       btn.classList.remove('capturing');
@@ -3214,12 +4352,13 @@ function captureShortcut(btn, sc) {
     }
     // игнорируем чистые модификаторы
     if (['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) return;
-    e.preventDefault(); e.stopPropagation();
-    sc.ctrl  = e.ctrlKey;
-    sc.alt   = e.altKey;
+    e.preventDefault();
+    e.stopPropagation();
+    sc.ctrl = e.ctrlKey;
+    sc.alt = e.altKey;
     sc.shift = e.shiftKey;
-    sc.meta  = e.metaKey;
-    sc.key   = e.key.length === 1 ? e.key.toUpperCase() : e.key;
+    sc.meta = e.metaKey;
+    sc.key = e.key.length === 1 ? e.key.toUpperCase() : e.key;
     btn.textContent = formatCombo(sc);
     btn.classList.remove('capturing');
     window.removeEventListener('keydown', handler, true);
@@ -3230,7 +4369,16 @@ function captureShortcut(btn, sc) {
 
 $('addPageShortcut').addEventListener('click', () => {
   state.pageShortcuts = state.pageShortcuts || [];
-  state.pageShortcuts.push({ id: uid(), ctrl: true, alt: false, shift: false, meta: false, key: '', action: '', targetId: '' });
+  state.pageShortcuts.push({
+    id: uid(),
+    ctrl: true,
+    alt: false,
+    shift: false,
+    meta: false,
+    key: '',
+    action: '',
+    targetId: '',
+  });
   save().then(renderPageShortcuts);
 });
 
@@ -3246,12 +4394,17 @@ function renderWordLists() {
     box.innerHTML = '<div class="empty">Пока нет списков. Создайте первый.</div>';
     return;
   }
-  lists.forEach(wl => box.appendChild(wl.collapsed ? renderWordListCollapsed(wl) : renderWordListExpanded(wl)));
+  lists.forEach(wl =>
+    box.appendChild(wl.collapsed ? renderWordListCollapsed(wl) : renderWordListExpanded(wl))
+  );
 }
 
 function wordListWordCount(wl) {
   if (!wl.words) return 0;
-  return wl.words.split(/[\n,]+/).map(w => w.trim()).filter(Boolean).length;
+  return wl.words
+    .split(/[\n,]+/)
+    .map(w => w.trim())
+    .filter(Boolean).length;
 }
 
 function renderWordListCollapsed(wl) {
@@ -3275,13 +4428,25 @@ function renderWordListCollapsed(wl) {
         </div>
       </div>
     </div>`;
-  card.querySelector('.wlEdit').addEventListener('click', () => { collapseAllExtras(wl); wl.collapsed = false; save().then(renderAllExtras); });
+  card.querySelector('.wlEdit').addEventListener('click', () => {
+    collapseAllExtras(wl);
+    wl.collapsed = false;
+    save().then(renderAllExtras);
+  });
   card.querySelector('.wlDel').addEventListener('click', () => {
-    const word = prompt('Для удаления списка «' + (wl.name || 'без имени') + '» введите слово "удалить":');
+    const word = prompt(
+      'Для удаления списка «' + (wl.name || 'без имени') + '» введите слово "удалить":'
+    );
     if (word == null) return;
-    if (word.trim().toLowerCase() !== 'удалить') { toast('Неверное слово — удаление отменено', 'error'); return; }
+    if (word.trim().toLowerCase() !== 'удалить') {
+      toast('Неверное слово — удаление отменено', 'error');
+      return;
+    }
     state.customWordLists = (state.customWordLists || []).filter(x => x.id !== wl.id);
-    save().then(() => { renderWordLists(); toast('Список удалён', 'ok'); });
+    save().then(() => {
+      renderWordLists();
+      toast('Список удалён', 'ok');
+    });
   });
   return card;
 }
@@ -3339,12 +4504,20 @@ function renderWordListExpanded(wl) {
     });
   }
   card.querySelector('.wlDelete').addEventListener('click', () => {
-    const word = prompt('Для удаления списка «' + (wl.name || 'без имени') + '» введите слово "удалить":');
+    const word = prompt(
+      'Для удаления списка «' + (wl.name || 'без имени') + '» введите слово "удалить":'
+    );
     if (word == null) return;
-    if (word.trim().toLowerCase() !== 'удалить') { toast('Неверное слово — удаление отменено', 'error'); return; }
+    if (word.trim().toLowerCase() !== 'удалить') {
+      toast('Неверное слово — удаление отменено', 'error');
+      return;
+    }
     addLog('удалено', 'список слов', wl.name);
     state.customWordLists = (state.customWordLists || []).filter(x => x.id !== wl.id);
-    save().then(() => { renderWordLists(); toast('Список удалён', 'ok'); });
+    save().then(() => {
+      renderWordLists();
+      toast('Список удалён', 'ok');
+    });
   });
   return card;
 }
@@ -3363,14 +4536,15 @@ function ensurePresetWordLists() {
   if (!presets) return false;
   state.customWordLists = state.customWordLists || [];
   const existingNames = new Set(state.customWordLists.map(w => w.name));
-  const entries = [
-    { name: 'english_words',  data: presets.english_words }
-  ];
+  const entries = [{ name: 'english_words', data: presets.english_words }];
   let added = 0;
   for (const e of entries) {
     if (!e.data || existingNames.has(e.name)) continue;
     state.customWordLists.push({
-      id: uid(), name: e.name, words: e.data.join('\n'), collapsed: true
+      id: uid(),
+      name: e.name,
+      words: e.data.join('\n'),
+      collapsed: true,
     });
     added++;
   }
@@ -3402,16 +4576,27 @@ function openManageWordLists() {
 $('manageWordLists').addEventListener('click', openManageWordLists);
 $('mwClose').addEventListener('click', () => $('manageWordListsModal').classList.remove('open'));
 $('mwDone').addEventListener('click', () => $('manageWordListsModal').classList.remove('open'));
-$('mwSelectAll').addEventListener('click', () => $$('.mm-cb', $('mwList')).forEach(cb => cb.checked = true));
-$('mwDeselectAll').addEventListener('click', () => $$('.mm-cb', $('mwList')).forEach(cb => cb.checked = false));
+$('mwSelectAll').addEventListener('click', () =>
+  $$('.mm-cb', $('mwList')).forEach(cb => (cb.checked = true))
+);
+$('mwDeselectAll').addEventListener('click', () =>
+  $$('.mm-cb', $('mwList')).forEach(cb => (cb.checked = false))
+);
 $('mwDeleteSelected').addEventListener('click', () => {
   const ids = $$('.mm-cb:checked', $('mwList')).map(cb => cb.dataset.id);
-  if (!ids.length) { toast('Ничего не выбрано', 'error'); return; }
+  if (!ids.length) {
+    toast('Ничего не выбрано', 'error');
+    return;
+  }
   if (!confirm('Удалить ' + ids.length + ' списков? Действие необратимо.')) return;
   const idSet = new Set(ids);
   addLog('удалено (' + ids.length + ')', 'списки слов', 'массовое');
   state.customWordLists = (state.customWordLists || []).filter(x => !idSet.has(x.id));
-  save().then(() => { openManageWordLists(); renderWordLists(); toast('Удалено списков: ' + ids.length, 'ok'); });
+  save().then(() => {
+    openManageWordLists();
+    renderWordLists();
+    toast('Удалено списков: ' + ids.length, 'ok');
+  });
 });
 
 /* ================================================================
@@ -3423,18 +4608,33 @@ function renderGlobalCounters() {
   box.innerHTML = '';
   const c = state.counters || {};
   const keys = Object.keys(c);
-  if (!keys.length) { box.innerHTML = '<div class="hint">Пока пусто. Появятся, когда шаблон с <code>{{counter}}</code> будет использован.</div>'; return; }
+  if (!keys.length) {
+    box.innerHTML =
+      '<div class="hint">Пока пусто. Появятся, когда шаблон с <code>{{counter}}</code> будет использован.</div>';
+    return;
+  }
   const table = document.createElement('table');
   table.className = 'tokens';
   table.innerHTML = '<thead><tr><th>Имя</th><th>Значение</th><th></th></tr></thead><tbody></tbody>';
   const tb = table.querySelector('tbody');
   for (const k of keys) {
     const tr = document.createElement('tr');
-    tr.innerHTML = '<td><code>' + escapeText(k) + '</code></td>' +
-      '<td><input type="number" class="cvInput" style="width:120px" value="' + escapeAttr(c[k]) + '"></td>' +
+    tr.innerHTML =
+      '<td><code>' +
+      escapeText(k) +
+      '</code></td>' +
+      '<td><input type="number" class="cvInput" style="width:120px" value="' +
+      escapeAttr(c[k]) +
+      '"></td>' +
       '<td><button class="btn-x small cvDel" title="Удалить счётчик">×</button></td>';
-    tr.querySelector('.cvInput').addEventListener('input', (e) => { state.counters[k] = parseInt(e.target.value, 10) || 0; saveDebounced(); });
-    tr.querySelector('.cvDel').addEventListener('click', () => { delete state.counters[k]; save().then(renderGlobalCounters); });
+    tr.querySelector('.cvInput').addEventListener('input', e => {
+      state.counters[k] = parseInt(e.target.value, 10) || 0;
+      saveDebounced();
+    });
+    tr.querySelector('.cvDel').addEventListener('click', () => {
+      delete state.counters[k];
+      save().then(renderGlobalCounters);
+    });
     tb.appendChild(tr);
   }
   box.appendChild(table);
@@ -3453,11 +4653,19 @@ function renderSnapshots() {
   const manualSnaps = snaps.filter(s => !s.auto);
   const autoSnaps = snaps.filter(s => s.auto);
 
-  if (!manualSnaps.length) { box.innerHTML = '<div class="empty">Пока нет сохранённых версий.</div>'; }
-  manualSnaps.slice().reverse().forEach(snap => box.appendChild(buildSnapRow(snap)));
+  if (!manualSnaps.length) {
+    box.innerHTML = '<div class="empty">Пока нет сохранённых версий.</div>';
+  }
+  manualSnaps
+    .slice()
+    .reverse()
+    .forEach(snap => box.appendChild(buildSnapRow(snap)));
 
   autoHeading.style.display = autoSnaps.length ? '' : 'none';
-  autoSnaps.slice().reverse().forEach(snap => autoBox.appendChild(buildSnapRow(snap)));
+  autoSnaps
+    .slice()
+    .reverse()
+    .forEach(snap => autoBox.appendChild(buildSnapRow(snap)));
 }
 
 function buildSnapRow(snap) {
@@ -3465,7 +4673,12 @@ function buildSnapRow(snap) {
   row.className = 'snap-row' + (snap.auto ? ' snap-auto' : '');
   const iso = fmtDate(snap.createdAt);
   const snapSize = new Blob([JSON.stringify(snap.data)]).size;
-  const sizeLabel = snapSize < 1024 ? snapSize + ' B' : snapSize < 1048576 ? (snapSize / 1024).toFixed(1) + ' KB' : (snapSize / 1048576).toFixed(1) + ' MB';
+  const sizeLabel =
+    snapSize < 1024
+      ? snapSize + ' B'
+      : snapSize < 1048576
+        ? (snapSize / 1024).toFixed(1) + ' KB'
+        : (snapSize / 1048576).toFixed(1) + ' MB';
   row.innerHTML = `
     <button class="snap-star ${snap.starred ? 'on' : ''}" title="Пометить как важную">${snap.starred ? '★' : '☆'}</button>
     <div class="snap-name">
@@ -3478,11 +4691,24 @@ function buildSnapRow(snap) {
       <button class="small snapRestore">↺ Восстановить</button>
       <button class="small snapDel">×</button>
     </div>`;
-  row.querySelector('.snap-star').addEventListener('click', () => { snap.starred = !snap.starred; save().then(renderSnapshots); });
-  row.querySelector('.snapName').addEventListener('input', (e) => { snap.name = e.target.value; saveDebounced(); });
-  row.querySelector('.snapDl').addEventListener('click', () => { downloadJSON(snap.data, 'dpi-' + safeName(snap.name || 'version') + '.json'); });
+  row.querySelector('.snap-star').addEventListener('click', () => {
+    snap.starred = !snap.starred;
+    save().then(renderSnapshots);
+  });
+  row.querySelector('.snapName').addEventListener('input', e => {
+    snap.name = e.target.value;
+    saveDebounced();
+  });
+  row.querySelector('.snapDl').addEventListener('click', () => {
+    downloadJSON(snap.data, 'dpi-' + safeName(snap.name || 'version') + '.json');
+  });
   row.querySelector('.snapRestore').addEventListener('click', () => {
-    if (!confirm('Заменить текущее состояние на «' + snap.name + '»? Текущие настройки будут перезаписаны.')) return;
+    if (
+      !confirm(
+        'Заменить текущее состояние на «' + snap.name + '»? Текущие настройки будут перезаписаны.'
+      )
+    )
+      return;
     const preservedSnaps = state.snapshots;
     const preservedShortcuts = state.pageShortcuts;
     state = migrateShape(deepClone(snap.data));
@@ -3493,13 +4719,19 @@ function buildSnapRow(snap) {
   });
   row.querySelector('.snapDel').addEventListener('click', () => {
     if (snap.starred) {
-      toast('Версия «' + (snap.name || '') + '» помечена звёздочкой — снимите ★, чтобы удалить.', 'error');
+      toast(
+        'Версия «' + (snap.name || '') + '» помечена звёздочкой — снимите ★, чтобы удалить.',
+        'error'
+      );
       return;
     }
     if (!confirm('Удалить версию «' + (snap.name || '') + '»?\nДействие необратимо.')) return;
     if (!confirm('Подтвердите ещё раз: удалить версию?')) return;
     state.snapshots = state.snapshots.filter(s => s.id !== snap.id);
-    save().then(() => { renderSnapshots(); toast('Версия удалена.', 'ok'); });
+    save().then(() => {
+      renderSnapshots();
+      toast('Версия удалена.', 'ok');
+    });
   });
   return row;
 }
@@ -3507,11 +4739,20 @@ function buildSnapRow(snap) {
 function stripTransientSnap(obj) {
   const copy = deepClone(obj);
   delete copy.snapshots;
-  for (const arr of [copy.rules, copy.specialInsertions, copy.smartCounters, copy.customWordLists]) {
+  for (const arr of [
+    copy.rules,
+    copy.specialInsertions,
+    copy.smartCounters,
+    copy.customWordLists,
+  ]) {
     if (!Array.isArray(arr)) continue;
     for (let i = arr.length - 1; i >= 0; i--) {
-      if (arr[i]._isNew) { arr.splice(i, 1); continue; }
-      delete arr[i]._snapshot; delete arr[i]._isNew;
+      if (arr[i]._isNew) {
+        arr.splice(i, 1);
+        continue;
+      }
+      delete arr[i]._snapshot;
+      delete arr[i]._isNew;
     }
   }
   return copy;
@@ -3531,20 +4772,35 @@ function autoSnapshot(reason) {
     createdAt: new Date().toISOString(),
     starred: false,
     auto: true,
-    data: dataCopy
+    data: dataCopy,
   });
 }
 
 $('saveSnapshot').addEventListener('click', () => {
-  const name = prompt('Название версии:', 'Снапшот ' + new Date().toISOString().slice(0, 16).replace('T', ' '));
+  const name = prompt(
+    'Название версии:',
+    'Снапшот ' + new Date().toISOString().slice(0, 16).replace('T', ' ')
+  );
   if (name === null) return;
   const dataCopy = stripTransientSnap(state);
   state.snapshots = state.snapshots || [];
-  state.snapshots.push({ id: uid(), name: name.trim() || 'Без имени', createdAt: new Date().toISOString(), starred: false, auto: false, data: dataCopy });
+  state.snapshots.push({
+    id: uid(),
+    name: name.trim() || 'Без имени',
+    createdAt: new Date().toISOString(),
+    starred: false,
+    auto: false,
+    data: dataCopy,
+  });
   const manualSnaps = state.snapshots.filter(s => !s.auto);
   while (manualSnaps.length > SNAP_LIMIT) {
     const oldest = manualSnaps.find(s => !s.starred);
-    if (!oldest) { alert('Все ' + SNAP_LIMIT + ' версий помечены звёздочкой. Удалите одну вручную.'); state.snapshots.pop(); renderSnapshots(); return; }
+    if (!oldest) {
+      alert('Все ' + SNAP_LIMIT + ' версий помечены звёздочкой. Удалите одну вручную.');
+      state.snapshots.pop();
+      renderSnapshots();
+      return;
+    }
     state.snapshots = state.snapshots.filter(s => s.id !== oldest.id);
     manualSnaps.splice(manualSnaps.indexOf(oldest), 1);
   }
@@ -3559,7 +4815,10 @@ $('exportBtn').addEventListener('click', () => {
   function stripTransient(arr) {
     if (!Array.isArray(arr)) return;
     for (let i = arr.length - 1; i >= 0; i--) {
-      if (arr[i]._isNew) { arr.splice(i, 1); continue; }
+      if (arr[i]._isNew) {
+        arr.splice(i, 1);
+        continue;
+      }
       delete arr[i]._snapshot;
       delete arr[i]._isNew;
     }
@@ -3571,7 +4830,7 @@ $('exportBtn').addEventListener('click', () => {
   downloadJSON(exportData, 'dpi-backup-' + tsForFilename() + '.json');
   $('backupStatus').textContent = 'Файл скачан.';
 });
-$('importFile').addEventListener('change', async (e) => {
+$('importFile').addEventListener('change', async e => {
   const file = e.target.files[0];
   if (!file) return;
   try {
@@ -3586,28 +4845,31 @@ $('importFile').addEventListener('change', async (e) => {
       state.folders = state.folders || [];
       const nameToId = new Map(state.folders.map(f => [f.name, f.id]));
       const folderRemap = new Map();
-      for (const f of (data.folders || [])) {
-        if (nameToId.has(f.name)) { folderRemap.set(f.id, nameToId.get(f.name)); continue; }
+      for (const f of data.folders || []) {
+        if (nameToId.has(f.name)) {
+          folderRemap.set(f.id, nameToId.get(f.name));
+          continue;
+        }
         const nf = { ...f, id: 'f_' + uid() };
         folderRemap.set(f.id, nf.id);
         state.folders.push(nf);
       }
       // merge rules
       const existingIds = new Set(state.rules.map(r => r.id));
-      for (const r of (data.rules || [])) {
+      for (const r of data.rules || []) {
         if (existingIds.has(r.id)) r.id = 'r_' + uid();
         if (r.folderId && folderRemap.has(r.folderId)) r.folderId = folderRemap.get(r.folderId);
         state.rules.push(r);
       }
       // special insertions
-      for (const ins of (data.specialInsertions || [])) {
+      for (const ins of data.specialInsertions || []) {
         state.specialInsertions = state.specialInsertions || [];
         state.specialInsertions.push({ ...ins, id: uid() });
       }
       // smart counters
       state.smartCounters = state.smartCounters || [];
       const takenNames = new Set(state.smartCounters.map(x => x.name));
-      for (const sc of (data.smartCounters || [])) {
+      for (const sc of data.smartCounters || []) {
         if (takenNames.has(sc.name)) sc.name = uniqueCounterName(sc.name);
         takenNames.add(sc.name);
         state.smartCounters.push(sc);
@@ -3620,7 +4882,7 @@ $('importFile').addEventListener('change', async (e) => {
       // custom word lists
       state.customWordLists = state.customWordLists || [];
       const wlNames = new Set(state.customWordLists.map(x => x.name));
-      for (const wl of (data.customWordLists || [])) {
+      for (const wl of data.customWordLists || []) {
         if (!wlNames.has(wl.name)) {
           state.customWordLists.push({ ...wl, id: uid() });
           wlNames.add(wl.name);
@@ -3628,15 +4890,23 @@ $('importFile').addEventListener('change', async (e) => {
       }
       // Page shortcuts — merge по key+action, чтобы не задваивать
       state.pageShortcuts = state.pageShortcuts || [];
-      const key = sc => (sc.ctrl?'C':'') + (sc.alt?'A':'') + (sc.shift?'S':'') + (sc.meta?'M':'') + '+' + (sc.key || '') + '@' + (sc.action || '');
+      const key = sc =>
+        (sc.ctrl ? 'C' : '') +
+        (sc.alt ? 'A' : '') +
+        (sc.shift ? 'S' : '') +
+        (sc.meta ? 'M' : '') +
+        '+' +
+        (sc.key || '') +
+        '@' +
+        (sc.action || '');
       const existing = new Set(state.pageShortcuts.map(key));
-      for (const sc of (data.pageShortcuts || [])) {
+      for (const sc of data.pageShortcuts || []) {
         if (!existing.has(key(sc))) state.pageShortcuts.push({ ...sc, id: uid() });
       }
       // Snapshots
       state.snapshots = state.snapshots || [];
       const snapNames = new Set(state.snapshots.map(s => s.name + '|' + s.createdAt));
-      for (const snap of (data.snapshots || [])) {
+      for (const snap of data.snapshots || []) {
         const snapKey = snap.name + '|' + snap.createdAt;
         if (!snapNames.has(snapKey)) {
           state.snapshots.push({ ...snap, id: uid() });
@@ -3654,10 +4924,17 @@ $('importFile').addEventListener('change', async (e) => {
 });
 
 /* ================ Reset ================ */
-$('resetConfirmInput').addEventListener('input', (e) => { $('resetBtn').disabled = e.target.value.trim() !== 'УДАЛИТЬ'; });
+$('resetConfirmInput').addEventListener('input', e => {
+  $('resetBtn').disabled = e.target.value.trim() !== 'УДАЛИТЬ';
+});
 $('resetBtn').addEventListener('click', async () => {
   if ($('resetConfirmInput').value.trim() !== 'УДАЛИТЬ') return;
-  if (!confirm('Точно сбросить настройки? Правила, вставки, инкременторы, списки слов — всё удалится. Версии останутся.')) return;
+  if (
+    !confirm(
+      'Точно сбросить настройки? Правила, вставки, инкременторы, списки слов — всё удалится. Версии останутся.'
+    )
+  )
+    return;
   if (!confirm('Последнее предупреждение. Отменить действие будет невозможно.')) return;
   const savedSnapshots = JSON.parse(JSON.stringify(state.snapshots || []));
   await new Promise(r => chrome.storage.local.remove(['state'], r));
@@ -3670,7 +4947,10 @@ $('resetBtn').addEventListener('click', async () => {
 /* ================ Shortcuts & version ================ */
 const shortcutsLink = document.getElementById('openShortcutsPage');
 if (shortcutsLink) {
-  shortcutsLink.addEventListener('click', (e) => { e.preventDefault(); chrome.tabs.create({ url: 'chrome://extensions/shortcuts' }); });
+  shortcutsLink.addEventListener('click', e => {
+    e.preventDefault();
+    chrome.tabs.create({ url: 'chrome://extensions/shortcuts' });
+  });
 }
 try {
   const manifest = chrome.runtime.getManifest();
@@ -3679,7 +4959,7 @@ try {
 } catch (e) {}
 
 /* ================ Debug mode ================ */
-$('debugModeToggle').addEventListener('change', (e) => {
+$('debugModeToggle').addEventListener('change', e => {
   state.debugMode = e.target.checked;
   save();
 });
@@ -3700,7 +4980,7 @@ function addLog(action, target, name) {
     author: state.authorName || '',
     action,
     target,
-    name: name || ''
+    name: name || '',
   });
   if (state.activityLog.length > LOG_LIMIT) state.activityLog.length = LOG_LIMIT;
 }
@@ -3709,17 +4989,36 @@ function renderActivityLog() {
   const box = $('activityLogBox');
   if (!box) return;
   const log = state.activityLog || [];
-  if (!log.length) { box.innerHTML = '<div class="hint">Пока нет записей.</div>'; return; }
-  const rows = log.map(e =>
-    '<tr>' +
-    '<td class="mono" style="font-size:11px;white-space:nowrap;color:var(--text-mute)">' + fmtDate(e.at) + '</td>' +
-    '<td>' + escapeText(e.author || '—') + '</td>' +
-    '<td>' + escapeText(e.action) + '</td>' +
-    '<td>' + escapeText(e.target) + '</td>' +
-    '<td>' + escapeText(e.name) + '</td>' +
-    '</tr>'
-  ).join('');
-  box.innerHTML = '<table class="tokens"><thead><tr><th>Дата</th><th>Автор</th><th>Действие</th><th>Тип</th><th>Название</th></tr></thead><tbody>' + rows + '</tbody></table>';
+  if (!log.length) {
+    box.innerHTML = '<div class="hint">Пока нет записей.</div>';
+    return;
+  }
+  const rows = log
+    .map(
+      e =>
+        '<tr>' +
+        '<td class="mono" style="font-size:11px;white-space:nowrap;color:var(--text-mute)">' +
+        fmtDate(e.at) +
+        '</td>' +
+        '<td>' +
+        escapeText(e.author || '—') +
+        '</td>' +
+        '<td>' +
+        escapeText(e.action) +
+        '</td>' +
+        '<td>' +
+        escapeText(e.target) +
+        '</td>' +
+        '<td>' +
+        escapeText(e.name) +
+        '</td>' +
+        '</tr>'
+    )
+    .join('');
+  box.innerHTML =
+    '<table class="tokens"><thead><tr><th>Дата</th><th>Автор</th><th>Действие</th><th>Тип</th><th>Название</th></tr></thead><tbody>' +
+    rows +
+    '</tbody></table>';
 }
 
 function renderProfile() {
@@ -3763,7 +5062,6 @@ $('profileNameEdit').addEventListener('click', () => {
   input.focus();
 });
 
-
 /* ================ Init ================ */
 function renderAll() {
   renderFolders();
@@ -3789,49 +5087,57 @@ async function grabPreviewUrl() {
   } catch (e) {}
 }
 
-grabPreviewUrl().then(load).then(() => {
-  cleanupUnsaved();
-  collapseAllExtras(null);
-  ensurePresetWordLists();
-  // одноразовая миграция: проставить автора существующим записям
-  if (state.authorName && !state._authorsMigrated) {
-    for (const r of state.rules) {
-      if (!r.createdBy) r.createdBy = state.authorName;
-      if (!r.modifiedBy) r.modifiedBy = state.authorName;
+grabPreviewUrl()
+  .then(load)
+  .then(() => {
+    cleanupUnsaved();
+    collapseAllExtras(null);
+    ensurePresetWordLists();
+    // одноразовая миграция: проставить автора существующим записям
+    if (state.authorName && !state._authorsMigrated) {
+      for (const r of state.rules) {
+        if (!r.createdBy) r.createdBy = state.authorName;
+        if (!r.modifiedBy) r.modifiedBy = state.authorName;
+      }
+      for (const sc of state.smartCounters) {
+        if (!sc.createdBy) sc.createdBy = state.authorName;
+        if (!sc.modifiedBy) sc.modifiedBy = state.authorName;
+      }
+      state._authorsMigrated = true;
     }
-    for (const sc of state.smartCounters) {
-      if (!sc.createdBy) sc.createdBy = state.authorName;
-      if (!sc.modifiedBy) sc.modifiedBy = state.authorName;
-    }
-    state._authorsMigrated = true;
-  }
-  // одноразовая миграция: начальная запись в истории с правильным автором
-  if (!state._historySeeded2) {
-    for (const r of state.rules) {
-      const own = r.createdBy || r.modifiedBy || '';
-      if (!r.history || !r.history.length) {
-        r.history = [{ at: r.createdAt || new Date().toISOString(), author: own, summary: 'правило создано' }];
-      } else {
-        for (const h of r.history) {
-          if (!h.author) h.author = own;
-        }
-        if (r.history.length === 1 && r.history[0].summary === 'правило создано') {
-          r.history[0].author = own;
+    // одноразовая миграция: начальная запись в истории с правильным автором
+    if (!state._historySeeded2) {
+      for (const r of state.rules) {
+        const own = r.createdBy || r.modifiedBy || '';
+        if (!r.history || !r.history.length) {
+          r.history = [
+            {
+              at: r.createdAt || new Date().toISOString(),
+              author: own,
+              summary: 'правило создано',
+            },
+          ];
+        } else {
+          for (const h of r.history) {
+            if (!h.author) h.author = own;
+          }
+          if (r.history.length === 1 && r.history[0].summary === 'правило создано') {
+            r.history[0].author = own;
+          }
         }
       }
+      state._historySeeded2 = true;
     }
-    state._historySeeded2 = true;
-  }
-  save().then(() => {
-    switchTab('rules');
-    renderAll();
-    const params = new URLSearchParams(location.search);
-    if (params.get('add') === '1') {
-      switchTab('extras');
-      openAddModal(decodeURIComponent(params.get('url') || ''));
-    }
+    save().then(() => {
+      switchTab('rules');
+      renderAll();
+      const params = new URLSearchParams(location.search);
+      if (params.get('add') === '1') {
+        switchTab('extras');
+        openAddModal(decodeURIComponent(params.get('url') || ''));
+      }
+    });
   });
-});
 
 window.addEventListener('beforeunload', () => {
   cleanupUnsaved();

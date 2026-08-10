@@ -35,9 +35,7 @@ export class DomValueSetter {
     const oldValue = element.value;
 
     // Устанавливаем значение через native setter
-    const nativeSetter = Object.getOwnPropertyDescriptor(
-      HTMLInputElement.prototype, 'value'
-    )?.set;
+    const nativeSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
 
     if (nativeSetter) {
       nativeSetter.call(element, value);
@@ -52,8 +50,10 @@ export class DomValueSetter {
   }
 
   _setCheckboxRadio(element, value) {
-    const shouldCheck = typeof value === 'boolean' ? value :
-                       value === 'true' || value === '1' || value === 'on' || value === 'checked';
+    const shouldCheck =
+      typeof value === 'boolean'
+        ? value
+        : value === 'true' || value === '1' || value === 'on' || value === 'checked';
 
     const oldChecked = element.checked;
     if (shouldCheck !== oldChecked) {

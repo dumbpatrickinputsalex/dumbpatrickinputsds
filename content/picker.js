@@ -21,7 +21,13 @@
     // 3) data-* атрибуты
     for (const attr of el.attributes) {
       if (attr.name.startsWith('data-') && attr.value) {
-        const sel = el.tagName.toLowerCase() + '[' + attr.name + '="' + attr.value.replace(/"/g, '\\"') + '"]';
+        const sel =
+          el.tagName.toLowerCase() +
+          '[' +
+          attr.name +
+          '="' +
+          attr.value.replace(/"/g, '\\"') +
+          '"]';
         if (document.querySelectorAll(sel).length === 1) return sel;
       }
     }
@@ -47,11 +53,13 @@
   function ensureOverlay() {
     if (overlay) return;
     overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;pointer-events:none;z-index:2147483646;' +
+    overlay.style.cssText =
+      'position:fixed;pointer-events:none;z-index:2147483646;' +
       'border:2px solid #1e78d2;background:rgba(30,120,210,0.10);border-radius:2px;' +
       'transition:all 0.05s linear;';
     label = document.createElement('div');
-    label.style.cssText = 'position:fixed;z-index:2147483647;background:#1e78d2;color:#fff;' +
+    label.style.cssText =
+      'position:fixed;z-index:2147483647;background:#1e78d2;color:#fff;' +
       'font:12px/1.4 system-ui,sans-serif;padding:4px 8px;border-radius:4px;' +
       'pointer-events:none;max-width:60vw;word-break:break-all;';
     label.textContent = 'Клик — выбрать • Esc — отмена';
@@ -71,13 +79,17 @@
   }
 
   function onClick(e) {
-    e.preventDefault(); e.stopPropagation();
+    e.preventDefault();
+    e.stopPropagation();
     const el = document.elementFromPoint(e.clientX, e.clientY);
     stop({ ok: true, selector: buildSelector(el) });
   }
 
   function onKey(e) {
-    if (e.key === 'Escape') { e.preventDefault(); stop({ ok: false, cancelled: true }); }
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      stop({ ok: false, cancelled: true });
+    }
   }
 
   function stop(result) {
@@ -88,12 +100,19 @@
     document.removeEventListener('keydown', onKey, true);
     if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
     if (label && label.parentNode) label.parentNode.removeChild(label);
-    if (resolveFn) { const r = resolveFn; resolveFn = null; r(result); }
+    if (resolveFn) {
+      const r = resolveFn;
+      resolveFn = null;
+      r(result);
+    }
   }
 
   function startPicker() {
     return new Promise(resolve => {
-      if (active) { resolve({ ok: false, error: 'already-active' }); return; }
+      if (active) {
+        resolve({ ok: false, error: 'already-active' });
+        return;
+      }
       active = true;
       resolveFn = resolve;
       ensureOverlay();

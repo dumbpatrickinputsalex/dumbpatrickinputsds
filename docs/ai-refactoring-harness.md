@@ -5,15 +5,19 @@
 Этот документ описывает строгий процесс поэтапного рефакторинга проекта несколькими AI-агентами.
 
 Рефакторинг должен выполняться строго по плану из:
+
 ```
 docs/refactoring-guide.md
 ```
+
 Агенты не имеют права перескакивать этапы, объединять этапы без разрешения или менять поведение приложения вне явно согласованного acceptance criteria.
 
 Каждый этап должен проходить полный цикл:
+
 ```
 Планирование → Реализация → Самопроверка → Ревью → Исправления → Финальная проверка → Git commit
 ```
+
 ---
 
 ## 2. Роли агентов
@@ -104,6 +108,7 @@ Agent C может быть объединён с Reviewer, но логичес�
 Любой этап рефакторинга должен иметь тестовый и процедурный harness — набор средств, который доказывает, что поведение осталось прежним.
 
 Harness включает:
+
 ```
 1. Baseline before
 2. Список изменённых файлов
@@ -113,6 +118,7 @@ Harness включает:
 6. Review checklist
 7. Commit after approval
 ```
+
 Нельзя считать этап завершённым, если нет проверяемого результата.
 
 ---
@@ -128,6 +134,7 @@ Harness включает:
 Agent A создаёт короткий план этапа.
 
 Формат:
+
 ```
 markdown
 ## Stage Plan
@@ -155,6 +162,7 @@ Acceptance criteria:
 - [ ] ...
 - [ ] ...
 ```
+
 Reviewer должен подтвердить, что план соответствует `docs/refactoring-guide.md`.
 
 ---
@@ -179,6 +187,7 @@ Agent A выполняет только согласованный объём.
 Agent A после реализации обязан подготовить отчёт.
 
 Формат:
+
 ```
 markdown
 ## Implementer Self-check
@@ -205,6 +214,7 @@ markdown
 Известные ограничения:
 - ...
 ```
+
 ---
 
 ### 4.4. Step 4 — Review
@@ -212,6 +222,7 @@ markdown
 Agent B проверяет изменения.
 
 Формат ревью:
+
 ```
 markdown
 ## Reviewer Report
@@ -235,6 +246,7 @@ markdown
 Необходимые исправления:
 - ...
 ```
+
 Если статус `CHANGES_REQUESTED`, Agent A обязан исправить замечания и снова пройти self-check.
 
 ---
@@ -244,6 +256,7 @@ markdown
 Agent C проверяет тесты и ручные сценарии.
 
 Формат:
+
 ```
 markdown
 ## Regression Audit
@@ -268,23 +281,29 @@ markdown
 Вывод:
 - PASS / FAIL
 ```
+
 ---
 
 ### 4.6. Step 6 — Commit
 
 Коммит разрешён только если:
+
 ```
 Reviewer: APPROVED
 Regression Audit: PASS
 Acceptance criteria: выполнены
 ```
+
 Коммит должен быть атомарным.
 
 Формат commit message:
+
 ```
 refactor(<area>): <short description>
 ```
+
 Примеры:
+
 ```
 refactor(shared): extract url matcher
 refactor(content): split value setter from content script
@@ -292,6 +311,7 @@ refactor(background): extract state migrator
 refactor(popup): isolate fill panel
 refactor(options): extract special insertions controller
 ```
+
 После коммита агент должен указать hash коммита в отчёте этапа.
 
 ---
@@ -353,6 +373,7 @@ AI-агентам запрещено:
 ### 6.3. Runtime API инварианты
 
 До полного перехода на новую архитектуру должны работать:
+
 ```
 javascript
 window.FF.render
@@ -365,6 +386,7 @@ window.FF.fillAll
 window.FF.fillSpecial
 window.FF.fillSpecialById
 ```
+
 Если реализация переносится в классы, старые методы должны остаться как compatibility layer.
 
 ---
@@ -372,6 +394,7 @@ window.FF.fillSpecialById
 ### 6.4. Message contract инварианты
 
 Должны продолжать работать message types:
+
 ```
 FILL_ALL
 FILL_SPECIAL
@@ -384,6 +407,7 @@ COPYFX_GET_TRADERS
 COPYFX_GET_INVESTORS
 PROXY_TO_TAB
 ```
+
 ---
 
 ### 6.5. UI инварианты
@@ -399,6 +423,7 @@ PROXY_TO_TAB
 ## 7. Порядок этапов
 
 Агенты обязаны идти строго в следующем порядке.
+
 ```
 0. Baseline и checklist
 1. Инфраструктура качества
@@ -414,13 +439,16 @@ PROXY_TO_TAB
 11. Tests expansion
 12. Финальная стабилизация
 ```
+
 Нельзя начинать следующий этап, пока предыдущий не:
+
 ```
 - реализован;
 - проверен;
 - отревьювен;
 - закоммичен.
 ```
+
 ---
 
 ## 8. Детальное ТЗ по этапам
@@ -436,16 +464,20 @@ PROXY_TO_TAB
 ## Agent A должен
 
 1. Создать или обновить:
+
 ```
 docs/manual-regression-checklist.md
 ```
+
 2. Добавить список ручных проверок.
 3. Добавить инструкцию по загрузке расширения.
 4. Добавить checklist фич.
 5. Создать baseline notes:
+
 ```
 docs/baseline.md
 ```
+
 6. Зафиксировать текущую структуру проекта.
 7. Не менять runtime-код.
 
@@ -470,9 +502,11 @@ docs/baseline.md
 - [ ] Этап закоммичен.
 
 ## Commit
+
 ```
 docs(refactoring): add baseline checklist
 ```
+
 ---
 
 # Этап 1. Инфраструктура качества
@@ -519,9 +553,11 @@ docs(refactoring): add baseline checklist
 - [ ] Этап закоммичен.
 
 ## Commit
+
 ```
 chore(quality): add lint and test harness
 ```
+
 ---
 
 # Этап 2. Shared utilities
@@ -533,6 +569,7 @@ chore(quality): add lint and test harness
 ## Agent A должен
 
 Создать модули:
+
 ```
 shared/url-matcher.js
 shared/selector-builder.js
@@ -541,6 +578,7 @@ shared/css-utils.js
 shared/object-utils.js
 shared/logger.js
 ```
+
 Начинать рекомендуется только с одного utility за PR, например `url-matcher`.
 
 ## Обязательное правило
@@ -582,11 +620,13 @@ shared/logger.js
 - [ ] Нет XSS через selector output.
 
 ## Commit examples
+
 ```
 refactor(shared): extract url matcher
 refactor(shared): extract selector builder
 refactor(shared): extract html escaping helpers
 ```
+
 ---
 
 # Этап 3. Storage/state layer
@@ -598,18 +638,22 @@ refactor(shared): extract html escaping helpers
 ## Agent A должен
 
 Создать:
+
 ```
 domain/state-schema.js
 domain/state-migrator.js
 infrastructure/chrome-storage-repository.js
 ```
+
 Перенести:
+
 ```
 DEFAULT_STATE
 migrate
 ensureShape
 ensureState
 ```
+
 из background в новые модули, сохранив compatibility.
 
 ## Agent B проверяет
@@ -638,9 +682,11 @@ ensureState
 - [ ] Этап закоммичен.
 
 ## Commit
+
 ```
 refactor(state): extract storage repository and migrator
 ```
+
 ---
 
 # Этап 4. Templates/generators
@@ -652,12 +698,14 @@ refactor(state): extract storage repository and migrator
 ## Agent A должен
 
 Создать:
+
 ```
 domain/templates/template-parser.js
 domain/templates/template-renderer.js
 domain/generators/generator-registry.js
 domain/generators/*
 ```
+
 Переносить постепенно:
 
 1. parser;
@@ -695,9 +743,11 @@ domain/generators/*
 - [ ] Этап закоммичен.
 
 ## Commit
+
 ```
 refactor(templates): split parser renderer and generators
 ```
+
 ---
 
 # Этап 5. Matcher logic
@@ -709,6 +759,7 @@ refactor(templates): split parser renderer and generators
 ## Agent A должен
 
 Создать:
+
 ```
 domain/matching/field-kind-detector.js
 domain/matching/label-resolver.js
@@ -716,13 +767,16 @@ domain/matching/attribute-matcher.js
 domain/matching/condition-evaluator.js
 domain/matching/rule-matcher.js
 ```
+
 Сохранить compatibility:
+
 ```
 javascript
 window.FF.findMatches
 window.FF.fieldKind
 window.FF.evalConditions
 ```
+
 ## Agent B проверяет
 
 - Не изменился порядок matching.
@@ -750,9 +804,11 @@ window.FF.evalConditions
 - [ ] Этап закоммичен.
 
 ## Commit
+
 ```
 refactor(matching): extract rule matcher services
 ```
+
 ---
 
 # Этап 6. Content script
@@ -764,6 +820,7 @@ refactor(matching): extract rule matcher services
 ## Agent A должен
 
 Создать:
+
 ```
 content/dom-value-setter.js
 content/field-highlighter.js
@@ -775,6 +832,7 @@ content/page-shortcut-controller.js
 content/content-message-router.js
 content/content-bootstrap.js
 ```
+
 Переносить по одному блоку.
 
 ## Особо важно
@@ -818,9 +876,11 @@ content/content-bootstrap.js
 - [ ] Этап закоммичен.
 
 ## Commit
+
 ```
 refactor(content): split content script services
 ```
+
 ---
 
 # Этап 7. Background service worker
@@ -832,6 +892,7 @@ refactor(content): split content script services
 ## Agent A должен
 
 Создать:
+
 ```
 background/background-app.js
 background/command-controller.js
@@ -841,6 +902,7 @@ background/ua-rules-service.js
 background/copyfx-bridge-service.js
 background/state-initializer.js
 ```
+
 ## Agent B проверяет
 
 - MV3 service worker semantics сохранены.
@@ -870,9 +932,11 @@ background/state-initializer.js
 - [ ] Этап закоммичен.
 
 ## Commit
+
 ```
 refactor(background): split service worker controllers
 ```
+
 ---
 
 # Этап 8. Popup
@@ -884,6 +948,7 @@ refactor(background): split service worker controllers
 ## Agent A должен
 
 Создать:
+
 ```
 popup/popup-app.js
 popup/popup-bootstrap.js
@@ -895,6 +960,7 @@ popup/ua-panel.js
 popup/result-table.js
 popup/popup-message-client.js
 ```
+
 ## Agent B проверяет
 
 - Панели не зависят друг от друга напрямую.
@@ -925,9 +991,11 @@ popup/popup-message-client.js
 - [ ] Этап закоммичен.
 
 ## Commit
+
 ```
 refactor(popup): split popup panels
 ```
+
 ---
 
 # Этап 9. Options page
@@ -939,6 +1007,7 @@ refactor(popup): split popup panels
 ## Agent A должен
 
 Идти только по одному sub-stage за раз:
+
 ```
 9.1 options bootstrap/router
 9.2 rules
@@ -954,6 +1023,7 @@ refactor(popup): split popup panels
 9.12 word lists
 9.13 modals/analyzer integration
 ```
+
 Каждый sub-stage должен иметь отдельный review и commit.
 
 ## Agent B проверяет
@@ -991,12 +1061,14 @@ refactor(popup): split popup panels
 - [ ] Этапы закоммичены отдельно.
 
 ## Commit examples
+
 ```
 refactor(options): extract options bootstrap
 refactor(options): extract rules controller
 refactor(options): extract special insertions controller
 refactor(options): extract smart counters controller
 ```
+
 ---
 
 # Этап 10. CopyFX/interceptor
@@ -1038,9 +1110,11 @@ refactor(options): extract smart counters controller
 - [ ] Этап закоммичен.
 
 ## Commit
+
 ```
 refactor(copyfx): harden network interceptor
 ```
+
 ---
 
 # Этап 11. Tests expansion
@@ -1052,6 +1126,7 @@ refactor(copyfx): harden network interceptor
 ## Agent A должен
 
 Добавить тесты для:
+
 ```
 UrlMatcher
 TemplateParser
@@ -1063,6 +1138,7 @@ StateMigrator
 SelectorBuilder
 Analyzer
 ```
+
 ## Agent B проверяет
 
 - Тесты проверяют поведение.
@@ -1085,9 +1161,11 @@ Analyzer
 - [ ] Этап закоммичен.
 
 ## Commit
+
 ```
 test(domain): add regression coverage for core logic
 ```
+
 ---
 
 # Этап 12. Финальная стабилизация
@@ -1131,9 +1209,11 @@ test(domain): add regression coverage for core logic
 - [ ] Финальный commit сделан.
 
 ## Commit
+
 ```
 docs(refactoring): finalize architecture documentation
 ```
+
 ---
 
 ## 9. Правила работы с Git
@@ -1141,10 +1221,12 @@ docs(refactoring): finalize architecture documentation
 ### 9.1. Перед началом этапа
 
 Agent A должен выполнить:
+
 ```
 bash
 git status
 ```
+
 Рабочее дерево должно быть чистым.
 
 Если есть чужие изменения — остановиться и запросить решение человека.
@@ -1154,10 +1236,12 @@ git status
 ### 9.2. После реализации
 
 Agent A должен показать:
+
 ```
 bash
 git diff
 ```
+
 И кратко объяснить каждый изменённый файл.
 
 ---
@@ -1165,12 +1249,14 @@ git diff
 ### 9.3. Перед commit
 
 Должны быть выполнены:
+
 ```
 bash
 npm run lint
 npm run test
 npm run format:check
 ```
+
 Если scripts ещё не заведены, Agent C должен отметить это в regression audit.
 
 ---
@@ -1178,19 +1264,24 @@ npm run format:check
 ### 9.4. Commit только после approval
 
 Запрещено делать commit без:
+
 ```
 Reviewer: APPROVED
 Regression Audit: PASS
 ```
+
 ---
 
 ### 9.5. Commit message
 
 Формат:
+
 ```
 <type>(<scope>): <summary>
 ```
+
 Разрешённые type:
+
 ```
 refactor
 test
@@ -1198,6 +1289,7 @@ docs
 chore
 fix
 ```
+
 `fix` используется только если этап явно исправляет баг, найденный в процессе.
 
 ---
@@ -1205,6 +1297,7 @@ fix
 ## 10. Формат финального отчёта этапа
 
 После commit Agent A должен создать отчёт:
+
 ```
 markdown
 # Stage Completion Report
@@ -1244,10 +1337,13 @@ Commit:
 
 - ...
 ```
+
 Отчёт можно хранить в:
+
 ```
 docs/refactoring-reports/stage-XX.md
 ```
+
 ---
 
 ## 11. Definition of Done
@@ -1292,6 +1388,7 @@ docs/refactoring-reports/stage-XX.md
 ## 13. Минимальный smoke checklist после каждого этапа
 
 После каждого этапа нужно проверить:
+
 ```
 [ ] Расширение загружается в chrome://extensions
 [ ] Popup открывается
@@ -1304,6 +1401,7 @@ docs/refactoring-reports/stage-XX.md
 [ ] Existing state читается
 [ ] Export state работает
 ```
+
 Для этапов, затрагивающих конкретные зоны, добавляются дополнительные проверки.
 
 ---
@@ -1315,7 +1413,8 @@ docs/refactoring-reports/stage-XX.md
 Если агент видит баг, не относящийся к текущему этапу — он фиксирует его в `Known follow-ups`, но не исправляет без отдельного approval.
 
 Главная цель процесса — не быстрый рефакторинг, а безопасная, проверяемая и объяснимая декомпозиция проекта.
-```
+
+````
 
 
 ---
@@ -1325,10 +1424,9 @@ docs/refactoring-reports/stage-XX.md
 В самый верх файла `docs/refactoring-guide.md` можно добавить короткую ссылку:
 
 ```markdown
-> Для AI-агентов и автоматизированного рефакторинга см.  
+> Для AI-агентов и автоматизированного рефакторинга см.
 > [`docs/ai-refactoring-harness.md`](./ai-refactoring-harness.md).
-```
-
+````
 
 ---
 
@@ -1346,12 +1444,11 @@ docs/refactoring-reports/stage-XX.md
 
 Твоя роль: <Implementer / Reviewer / Regression Auditor>.
 
-Работай строго по текущему этапу. 
+Работай строго по текущему этапу.
 Не переходи к следующему этапу, пока текущий не принят, не проверен и не закоммичен.
 Не меняй поведение приложения без отдельного approval.
 После каждого этапа подготовь отчёт в формате из ai-refactoring-harness.md.
 ```
-
 
 ---
 
@@ -1363,7 +1460,6 @@ docs/refactoring-reports/stage-XX.md
 Этап 0. Baseline и checklist
 ```
 
-
 То есть первый AI-агент должен создать:
 
 ```plain text
@@ -1371,6 +1467,5 @@ docs/manual-regression-checklist.md
 docs/baseline.md
 docs/refactoring-reports/
 ```
-
 
 И только после review/commit переходить к инструментам качества и декомпозиции.

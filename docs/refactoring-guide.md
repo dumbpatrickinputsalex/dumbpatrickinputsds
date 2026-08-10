@@ -1,6 +1,7 @@
 # Гайд по поэтапному рефакторингу проекта
 
 ---
+
 # Dumb Patrick Inputs — гайд по поэтапному рефакторингу
 
 ## Оглавление
@@ -71,10 +72,13 @@
 Каждый этап должен быть самостоятельным и проверяемым.
 
 Плохой подход:
+
 ```
 Переписать весь проект за один PR.
 ```
+
 Хороший подход:
+
 ```
 PR 1: добавить тестовую инфраструктуру.
 PR 2: вынести UrlMatcher.
@@ -82,6 +86,7 @@ PR 3: заменить дубли URL matching.
 PR 4: вынести StorageRepository.
 PR 5: разделить popup на панели.
 ```
+
 ---
 
 ### 2.3. Сначала тесты и baseline, потом декомпозиция
@@ -98,6 +103,7 @@ PR 5: разделить popup на панели.
 ### 2.4. Чистая архитектура для Chrome Extension
 
 Проект должен быть разделён на слои:
+
 ```
 UI layer
 ↓
@@ -107,7 +113,9 @@ Domain logic
 ↓
 Infrastructure
 ```
+
 Пример:
+
 ```
 Popup UI
 ↓
@@ -117,6 +125,7 @@ RuleExecutionService
 ↓
 ChromeMessageBus / ChromeStorageRepository
 ```
+
 ---
 
 ## 3. Текущая проблема архитектуры
@@ -126,12 +135,14 @@ ChromeMessageBus / ChromeStorageRepository
 ### 3.1. Большие файлы
 
 Особенно перегружены:
+
 ```
 options/options.js
 popup/popup.js
 content/content.js
 background.js
 ```
+
 В них смешаны:
 
 - DOM-рендеринг;
@@ -148,10 +159,12 @@ background.js
 ### 3.2. Глобальный объект `window.FF`
 
 Многие файлы используют общий глобальный namespace:
+
 ```
 javascript
 window.FF = window.FF || {};
 ```
+
 Это создаёт неявные зависимости между файлами и порядком их подключения.
 
 ---
@@ -173,6 +186,7 @@ window.FF = window.FF || {};
 ### 3.4. Сложность state
 
 В одном объекте `state` лежит всё:
+
 ```
 rules
 folders
@@ -187,6 +201,7 @@ uaRules
 customWordLists
 activityLog
 ```
+
 Любая запись в storage перезаписывает весь state.
 
 ---
@@ -194,6 +209,7 @@ activityLog
 ## 4. Целевая архитектура
 
 Целевая архитектура должна выглядеть так:
+
 ```
 src/
 ├── domain/
@@ -229,7 +245,9 @@ src/
 ├── constants/
 └── types/
 ```
+
 Если проект пока остаётся без сборщика, можно не создавать `src`, а постепенно раскладывать модули по существующим папкам:
+
 ```
 lib/
 content/
@@ -238,6 +256,7 @@ options/
 background/
 shared/
 ```
+
 Но целевая модель должна быть именно слоистой.
 
 ---
@@ -245,6 +264,7 @@ shared/
 ## 5. Предлагаемая структура проекта
 
 ### 5.1. Промежуточная структура без сборщика
+
 ```
 formfiller-extension/
 ├── manifest.json
@@ -325,11 +345,13 @@ formfiller-extension/
 ├── refactoring-guide.md
 └── manual-regression-checklist.md
 ```
+
 ---
 
 ### 5.2. Финальная структура со сборщиком
 
 В идеале проект стоит перевести на сборку через Vite/Rollup/Webpack и TypeScript.
+
 ```
 src/
 ├── background/
@@ -342,7 +364,9 @@ src/
 ├── shared/
 └── types/
 ```
+
 Сборка должна генерировать:
+
 ```
 dist/
 ├── manifest.json
@@ -353,6 +377,7 @@ dist/
 ├── icons/
 └── assets/
 ```
+
 ---
 
 ## 6. Иерархия классов и модулей
@@ -371,6 +396,7 @@ Domain layer не должен знать про Chrome API и DOM.
 
 - парсит строковый шаблон;
 - возвращает список text/token частей.
+
 ```
 javascript
 class TemplateParser {
@@ -379,6 +405,7 @@ parse(template) {
 }
 }
 ```
+
 ---
 
 #### `TemplateRenderer`
@@ -388,6 +415,7 @@ parse(template) {
 - принимает AST или строку;
 - вызывает генераторы;
 - возвращает итоговое значение.
+
 ```
 javascript
 class TemplateRenderer {
@@ -396,6 +424,7 @@ constructor(parser, generatorRegistry) {}
 render(template, context) {}
 }
 ```
+
 ---
 
 #### `GeneratorRegistry`
@@ -405,6 +434,7 @@ render(template, context) {}
 - хранит генераторы;
 - регистрирует генераторы;
 - возвращает генератор по имени.
+
 ```
 javascript
 class GeneratorRegistry {
@@ -413,11 +443,13 @@ get(name) {}
 list() {}
 }
 ```
+
 ---
 
 #### `BaseGenerator`
 
 Базовая идея для генераторов.
+
 ```
 javascript
 class BaseGenerator {
@@ -426,9 +458,11 @@ throw new Error('Not implemented');
 }
 }
 ```
+
 ---
 
 #### Конкретные генераторы
+
 ```
 NameGenerator
 EmailGenerator
@@ -445,7 +479,9 @@ RegexGenerator
 SmartSequenceGenerator
 CustomListGenerator
 ```
+
 Пример:
+
 ```
 javascript
 class CounterGenerator extends BaseGenerator {
@@ -456,6 +492,7 @@ return String(context.counters[key]);
 }
 }
 ```
+
 ---
 
 #### `RuleMatcher`
@@ -464,6 +501,7 @@ return String(context.counters[key]);
 
 - проверяет DOM-field descriptor against rule;
 - не должен напрямую зависеть от реального DOM, если возможно.
+
 ```
 javascript
 class RuleMatcher {
@@ -471,6 +509,7 @@ matches(rule, fieldDescriptor) {}
 findMatches(rule, fields) {}
 }
 ```
+
 ---
 
 #### `ConditionEvaluator`
@@ -479,12 +518,14 @@ findMatches(rule, fields) {}
 
 - вычисляет AND/OR-условия;
 - поддерживает selector/attribute/order.
+
 ```
 javascript
 class ConditionEvaluator {
 evaluate(conditions, target, context) {}
 }
 ```
+
 ---
 
 #### `UrlMatcher`
@@ -492,6 +533,7 @@ evaluate(conditions, target, context) {}
 Ответственность:
 
 - единая логика URL matching для popup/content/options/background.
+
 ```
 javascript
 class UrlMatcher {
@@ -499,6 +541,7 @@ matchesPattern(pattern, url) {}
 matchesConditions(conditions, url) {}
 }
 ```
+
 ---
 
 #### `SpecialInsertionRunner`
@@ -507,6 +550,7 @@ matchesConditions(conditions, url) {}
 
 - выполняет спецвставку;
 - использует абстракции DOM и TemplateRenderer.
+
 ```
 javascript
 class SpecialInsertionRunner {
@@ -515,6 +559,7 @@ constructor(templateRenderer, valueSetter, elementWaiter) {}
 run(insertion, context) {}
 }
 ```
+
 ---
 
 #### `SmartCounterService`
@@ -524,12 +569,14 @@ run(insertion, context) {}
 - считает следующее значение `seq`;
 - ведёт history;
 - применяет branch rules.
+
 ```
 javascript
 class SmartCounterService {
 next(counterConfig, url, options) {}
 }
 ```
+
 ---
 
 ### 6.2. Infrastructure layer
@@ -537,6 +584,7 @@ next(counterConfig, url, options) {}
 Infrastructure знает про Chrome API, storage, tabs, scripting.
 
 #### `ChromeStorageRepository`
+
 ```
 javascript
 class ChromeStorageRepository {
@@ -545,6 +593,7 @@ async setState(state) {}
 async updateState(mutator) {}
 }
 ```
+
 Reviewer должен проверять:
 
 - нет ли прямого `chrome.storage.local.set({ state })` вне repository;
@@ -554,6 +603,7 @@ Reviewer должен проверять:
 ---
 
 #### `ChromeMessageBus`
+
 ```
 javascript
 class ChromeMessageBus {
@@ -561,9 +611,11 @@ async sendToActiveTab(message) {}
 onMessage(type, handler) {}
 }
 ```
+
 ---
 
 #### `ActiveTabService`
+
 ```
 javascript
 class ActiveTabService {
@@ -571,9 +623,11 @@ async getActiveTab() {}
 isSupportedUrl(url) {}
 }
 ```
+
 ---
 
 #### `ChromeScriptingService`
+
 ```
 javascript
 class ChromeScriptingService {
@@ -581,6 +635,7 @@ async injectContentScripts(tabId) {}
 async executeInMainWorld(tabId, func, args) {}
 }
 ```
+
 ---
 
 ### 6.3. Content UI/application layer
@@ -592,33 +647,40 @@ async executeInMainWorld(tabId, func, args) {}
 - безопасно устанавливает значение в DOM;
 - поддерживает input/textarea/select/checkbox/radio/contenteditable;
 - генерирует события.
+
 ```
 javascript
 class DomValueSetter {
 setValue(element, value) {}
 }
 ```
+
 ---
 
 #### `FieldHighlighter`
+
 ```
 javascript
 class FieldHighlighter {
 highlight(element) {}
 }
 ```
+
 ---
 
 #### `ElementWaiter`
+
 ```
 javascript
 class ElementWaiter {
 waitForSelector(selector, timeoutMs) {}
 }
 ```
+
 ---
 
 #### `ContentRuleExecutor`
+
 ```
 javascript
 class ContentRuleExecutor {
@@ -627,9 +689,11 @@ constructor(ruleMatcher, templateRenderer, valueSetter, highlighter) {}
 async execute(rule, context, usedFields, details) {}
 }
 ```
+
 ---
 
 #### `FillAllUseCase`
+
 ```
 javascript
 class FillAllUseCase {
@@ -638,18 +702,22 @@ constructor(stateRepository, ruleExecutor, urlMatcher) {}
 async execute() {}
 }
 ```
+
 ---
 
 #### `ContentMessageRouter`
+
 ```
 javascript
 class ContentMessageRouter {
 register() {}
 }
 ```
+
 ---
 
 #### `PageShortcutController`
+
 ```
 javascript
 class PageShortcutController {
@@ -658,20 +726,24 @@ stop() {}
 reloadShortcuts() {}
 }
 ```
+
 ---
 
 ### 6.4. Background layer
 
 #### `BackgroundApp`
+
 ```
 javascript
 class BackgroundApp {
 async boot() {}
 }
 ```
+
 ---
 
 #### `StateMigrator`
+
 ```
 javascript
 class StateMigrator {
@@ -679,27 +751,33 @@ migrate(rawState) {}
 ensureShape(state) {}
 }
 ```
+
 ---
 
 #### `CommandController`
+
 ```
 javascript
 class CommandController {
 register() {}
 }
 ```
+
 ---
 
 #### `UaRulesService`
+
 ```
 javascript
 class UaRulesService {
 async syncFromState(state) {}
 }
 ```
+
 ---
 
 #### `CopyfxBridgeService`
+
 ```
 javascript
 class CopyfxBridgeService {
@@ -707,20 +785,24 @@ async getTraders(payload) {}
 async getInvestors() {}
 }
 ```
+
 ---
 
 ### 6.5. Popup layer
 
 #### `PopupApp`
+
 ```
 javascript
 class PopupApp {
 async boot() {}
 }
 ```
+
 ---
 
 #### Панели popup
+
 ```
 FillPanel
 ScraperPanel
@@ -728,12 +810,14 @@ CopyfxPanel
 InvestorPanel
 UaPanel
 ```
+
 Каждая панель должна:
 
 - сама находить свои DOM-элементы;
 - иметь `init()`;
 - иметь `render()`;
 - не знать внутренности других панелей.
+
 ```
 javascript
 class FillPanel {
@@ -745,11 +829,13 @@ async fillAll() {}
 async fillSpecial() {}
 }
 ```
+
 ---
 
 ### 6.6. Options layer
 
 Options нужно делить агрессивно.
+
 ```
 OptionsApp
 OptionsRouter
@@ -765,6 +851,7 @@ CopyfxConfigController
 UaRulesController
 WordListsController
 ```
+
 Каждый controller отвечает за одну вкладку или одну фичу.
 
 ---
@@ -814,10 +901,13 @@ WordListsController
 ### Что сделать
 
 1. Создать документ:
+
 ```
 docs/manual-regression-checklist.md
 ```
+
 2. Описать ручные сценарии:
+
 ```
 - установка расширения;
 - открытие popup;
@@ -834,12 +924,16 @@ docs/manual-regression-checklist.md
 - CopyFX;
 - UA rule.
 ```
+
 3. Экспортировать текущий state через UI расширения.
 4. Сделать git commit:
+
 ```
 baseline before refactoring
 ```
+
 5. Снять метрики:
+
 ```
 количество файлов;
 количество строк;
@@ -847,6 +941,7 @@ baseline before refactoring
 количество warning'ов;
 самые большие файлы.
 ```
+
 ### Acceptance criteria
 
 - Есть git commit baseline.
@@ -881,6 +976,7 @@ baseline before refactoring
 ### Рекомендуемый стек
 
 Если проект остаётся на JavaScript:
+
 ```
 ESLint
 Prettier
@@ -888,7 +984,9 @@ Vitest
 jsdom
 @types/chrome
 ```
+
 Если проект переводится на TypeScript:
+
 ```
 TypeScript
 ESLint
@@ -898,6 +996,7 @@ jsdom
 @types/chrome
 Vite/Rollup
 ```
+
 ### Acceptance criteria
 
 - Команда lint запускается одной командой.
@@ -922,6 +1021,7 @@ Vite/Rollup
 Убрать дублирование и создать foundation для дальнейшего рефакторинга.
 
 ### Что вынести
+
 ```
 shared/url-matcher.js
 shared/selector-builder.js
@@ -931,18 +1031,22 @@ shared/date-utils.js
 shared/logger.js
 shared/object-utils.js
 ```
+
 ---
 
 ### 10.1. `UrlMatcher`
 
 Должен заменить дубли URL matching в:
+
 ```
 content
 popup
 options
 background, если требуется
 ```
+
 Пример API:
+
 ```
 javascript
 class UrlMatcher {
@@ -950,6 +1054,7 @@ matchesPattern(pattern, url) {}
 matchesConditions(conditions, url) {}
 }
 ```
+
 ### Acceptance criteria
 
 - Popup показывает то же количество активных правил, что и до изменения.
@@ -977,12 +1082,15 @@ matchesConditions(conditions, url) {}
 ### 10.2. `SelectorBuilder`
 
 Должен объединить логику из:
+
 ```
 content/picker.js
 options/analyzer.js
 content/content.js shortSelector
 ```
+
 Пример API:
+
 ```
 javascript
 class SelectorBuilder {
@@ -991,6 +1099,7 @@ buildStableSelector(element) {}
 buildDebugSelector(element) {}
 }
 ```
+
 ### Acceptance criteria
 
 - Picker возвращает рабочий селектор.
@@ -1011,6 +1120,7 @@ buildDebugSelector(element) {}
 ### 10.3. `HtmlUtils`
 
 Пример API:
+
 ```
 javascript
 class HtmlUtils {
@@ -1018,6 +1128,7 @@ escapeText(value) {}
 escapeAttr(value) {}
 }
 ```
+
 ### Acceptance criteria
 
 - Все места с `innerHTML`, куда попадают пользовательские значения, используют escaping.
@@ -1039,6 +1150,7 @@ escapeAttr(value) {}
 Централизовать работу с `chrome.storage.local`.
 
 ### Целевой класс
+
 ```
 javascript
 class ChromeStorageRepository {
@@ -1047,7 +1159,9 @@ async saveState(state) {}
 async updateState(mutator) {}
 }
 ```
+
 ### Дополнительные классы
+
 ```
 javascript
 class StateSchema {
@@ -1059,21 +1173,26 @@ migrate(state) {}
 ensureShape(state) {}
 }
 ```
+
 ### Что перенести
 
 Из `background.js`:
+
 ```
 DEFAULT_STATE
 migrate
 ensureShape
 ensureState
 ```
+
 В отдельные модули:
+
 ```
 domain/state-schema.js
 domain/state-migrator.js
 infrastructure/chrome-storage-repository.js
 ```
+
 ### Acceptance criteria
 
 - При чистой установке создаётся тот же default state.
@@ -1105,6 +1224,7 @@ infrastructure/chrome-storage-repository.js
 Сейчас генераторы и словари находятся в одном большом файле. Часть генераторов мутирует context.
 
 ### Целевая структура
+
 ```
 domain/templates/template-parser.js
 domain/templates/template-renderer.js
@@ -1128,6 +1248,7 @@ domain/generators/data/name-data.js
 domain/generators/data/word-lists.js
 domain/generators/data/lorem-data.js
 ```
+
 ### Acceptance criteria
 
 - Все старые токены работают:
@@ -1168,6 +1289,7 @@ domain/generators/data/lorem-data.js
 Сделать matcher тестируемым и независимым от остального приложения.
 
 ### Целевая структура
+
 ```
 domain/matching/field-kind-detector.js
 domain/matching/label-resolver.js
@@ -1176,7 +1298,9 @@ domain/matching/condition-evaluator.js
 domain/matching/rule-matcher.js
 domain/matching/dom-field-collector.js
 ```
+
 ### Классы
+
 ```
 javascript
 class FieldKindDetector {
@@ -1199,6 +1323,7 @@ class RuleMatcher {
 findMatches(rule, root) {}
 }
 ```
+
 ### Acceptance criteria
 
 - Правила по selector работают.
@@ -1233,6 +1358,7 @@ findMatches(rule, root) {}
 Разделить выполнение правил, работу с DOM, сообщения и горячие клавиши.
 
 ### Целевая структура
+
 ```
 content/
 ├── content-bootstrap.js
@@ -1246,7 +1372,9 @@ content/
 ├── page-shortcut-controller.js
 └── content-public-api.js
 ```
+
 ### Классы
+
 ```
 javascript
 class DomValueSetter {}
@@ -1258,9 +1386,11 @@ class SpecialInsertionUseCase {}
 class PageShortcutController {}
 class ContentMessageRouter {}
 ```
+
 ### Особое место: `DomValueSetter`
 
 Он должен сохранить framework-safe поведение:
+
 ```
 native setter
 input/change/blur events
@@ -1268,6 +1398,7 @@ checkbox/radio support
 select support
 contenteditable support
 ```
+
 ### Acceptance criteria
 
 - `FILL_ALL` работает.
@@ -1303,6 +1434,7 @@ contenteditable support
 Разделить service worker на bootstrap, команды, миграции, messaging, UA rules, CopyFX bridge.
 
 ### Целевая структура
+
 ```
 background/
 ├── background-bootstrap.js
@@ -1315,7 +1447,9 @@ background/
 ├── copyfx-bridge-service.js
 └── state-initializer.js
 ```
+
 ### Классы
+
 ```
 javascript
 class BackgroundApp {
@@ -1343,6 +1477,7 @@ async getTraders(payload) {}
 async getInvestors() {}
 }
 ```
+
 ### Acceptance criteria
 
 - Расширение инициализирует state при установке.
@@ -1371,6 +1506,7 @@ async getInvestors() {}
 Разделить popup на независимые панели.
 
 ### Целевая структура
+
 ```
 popup/
 ├── popup-bootstrap.js
@@ -1385,7 +1521,9 @@ popup/
 ├── country-format-service.js
 └── popup-message-client.js
 ```
+
 ### Панели
+
 ```
 javascript
 class FillPanel {}
@@ -1394,6 +1532,7 @@ class CopyfxPanel {}
 class InvestorPanel {}
 class UaPanel {}
 ```
+
 ### Acceptance criteria
 
 - Popup открывается быстро.
@@ -1426,6 +1565,7 @@ class UaPanel {}
 Разложить самый крупный файл на фичевые модули.
 
 ### Целевая структура
+
 ```
 options/
 ├── options-bootstrap.js
@@ -1480,6 +1620,7 @@ options/
 └── word-lists/
 └── word-lists-controller.js
 ```
+
 ### Acceptance criteria
 
 - Все вкладки options открываются.
@@ -1525,6 +1666,7 @@ options/
 Сделать сетевой interceptor безопасным и изолированным.
 
 ### Целевая структура
+
 ```
 content/copyfx-interceptor.js
 domain/copyfx/copyfx-cache-service.js
@@ -1533,6 +1675,7 @@ background/copyfx-bridge-service.js
 popup/copyfx-panel.js
 popup/investor-panel.js
 ```
+
 ### Что улучшить
 
 1. Добавить guard от повторной установки.
@@ -1570,6 +1713,7 @@ popup/investor-panel.js
 Покрыть чистую логику тестами.
 
 ### Что тестировать в первую очередь
+
 ```
 UrlMatcher
 TemplateParser
@@ -1584,7 +1728,9 @@ StateMigrator
 SelectorBuilder
 Analyzer
 ```
+
 ### Пример тестовых групп
+
 ```
 template-parser.test.js
 template-renderer.test.js
@@ -1596,6 +1742,7 @@ state-migrator.test.js
 selector-builder.test.js
 analyzer.test.js
 ```
+
 ### Acceptance criteria
 
 - Есть тесты для ключевой domain-логики.
@@ -1719,22 +1866,28 @@ analyzer.test.js
 Это почти гарантированно создаст регрессии.
 
 Правильно:
+
 ```
 перенести один модуль → проверить → закоммитить.
 ```
+
 ---
 
 ### 22.2. Анти-паттерн: смешать рефакторинг и фичи
 
 Плохо:
+
 ```
 Разделить popup и заодно поменять UI CopyFX.
 ```
+
 Хорошо:
+
 ```
 Сначала разделить popup без изменения UI.
 Потом отдельным PR изменить UI CopyFX.
 ```
+
 ---
 
 ### 22.3. Анти-паттерн: скрытые изменения state
@@ -1763,10 +1916,12 @@ analyzer.test.js
 ### 22.5. Анти-паттерн: оставить compatibility wrapper навсегда
 
 Временные мосты допустимы:
+
 ```
 javascript
 window.FF.render = templateRenderer.render.bind(templateRenderer);
 ```
+
 Но нужно добавить TODO с планом удаления.
 
 ---
@@ -1774,6 +1929,7 @@ window.FF.render = templateRenderer.render.bind(templateRenderer);
 ## 23. Итоговая стратегия
 
 Рефакторинг должен идти от безопасного к опасному:
+
 ```
 1. Baseline и checklist
 2. Lint/test/types
@@ -1788,7 +1944,9 @@ window.FF.render = templateRenderer.render.bind(templateRenderer);
 11. CopyFX/interceptor hardening
 12. Финальная документация
 ```
+
 Самые важные правила:
+
 ```
 - не менять поведение без необходимости;
 - каждый PR должен быть маленьким;
@@ -1800,4 +1958,5 @@ window.FF.render = templateRenderer.render.bind(templateRenderer);
 - state мигрируем осторожно;
 - window.FF постепенно превращаем в compatibility layer.
 ```
+
 Финальная цель — проект, где новый разработчик может открыть папку конкретной фичи и понять её без чтения всего приложения.

@@ -2,15 +2,19 @@
 // Экспорт: window.FFAnalyzer.analyze(html, url) -> { ok, element, selector, urlPattern, suggestions }
 
 (function () {
-  function escapeRegex(s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
-  function cssEscape(s) { return (window.CSS && CSS.escape) ? CSS.escape(s) : String(s).replace(/(["\\])/g, '\\$1'); }
+  function escapeRegex(s) {
+    return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+  function cssEscape(s) {
+    return window.CSS && CSS.escape ? CSS.escape(s) : String(s).replace(/(["\\])/g, '\\$1');
+  }
 
   function isStableId(id) {
     if (!id) return false;
-    if (/^:/.test(id)) return false;                        // React :r0:
+    if (/^:/.test(id)) return false; // React :r0:
     if (/^ember\d+/i.test(id)) return false;
     if (/^__/.test(id)) return false;
-    if (/^[a-z]+-\d+-/i.test(id)) return false;             // react-select-9-input
+    if (/^[a-z]+-\d+-/i.test(id)) return false; // react-select-9-input
     if (/^[a-z]{1,4}-?[0-9a-f]{8,}$/i.test(id)) return false; // hash-подобные
     if (id.length > 40) return false;
     return true;
@@ -20,7 +24,7 @@
     if (!c) return false;
     // CSS modules: name_hash, name--hash
     if (/^[a-zA-Z][\w-]*(?:_+|--+)[a-zA-Z0-9]{4,}/.test(c)) return false;
-    if (/^[a-z]{1,2}\d+$/i.test(c)) return false;           // короткие обфусцированные
+    if (/^[a-z]{1,2}\d+$/i.test(c)) return false; // короткие обфусцированные
     if (/^_[a-z0-9]{4,}/i.test(c)) return false;
     if (/\d{5,}/.test(c)) return false;
     return true;
@@ -34,7 +38,14 @@
     if (isStableId(id)) return '#' + cssEscape(id);
 
     // 2) тестовые data-* атрибуты
-    for (const attr of ['data-testid', 'data-test', 'data-qa', 'data-cy', 'data-test-id', 'data-e2e']) {
+    for (const attr of [
+      'data-testid',
+      'data-test',
+      'data-qa',
+      'data-cy',
+      'data-test-id',
+      'data-e2e',
+    ]) {
       const v = el.getAttribute(attr);
       if (v) return tag + '[' + attr + '="' + v.replace(/"/g, '\\"') + '"]';
     }
@@ -54,7 +65,8 @@
     // 6) type + placeholder
     const type = el.getAttribute('type');
     const placeholder = el.getAttribute('placeholder');
-    if (type && placeholder) return tag + '[type="' + type + '"][placeholder="' + placeholder.replace(/"/g, '\\"') + '"]';
+    if (type && placeholder)
+      return tag + '[type="' + type + '"][placeholder="' + placeholder.replace(/"/g, '\\"') + '"]';
     if (placeholder) return tag + '[placeholder="' + placeholder.replace(/"/g, '\\"') + '"]';
 
     // 7) стабильные классы
@@ -103,7 +115,8 @@
     if (type === 'color') return 'color';
     if (type === 'range') return 'number';
     if (type === 'search') return 'text';
-    if (type === 'hidden' || type === 'submit' || type === 'button' || type === 'reset') return 'skip';
+    if (type === 'hidden' || type === 'submit' || type === 'button' || type === 'reset')
+      return 'skip';
 
     const bag = [
       el.getAttribute('name'),
@@ -111,19 +124,24 @@
       el.getAttribute('placeholder'),
       el.getAttribute('aria-label'),
       el.getAttribute('autocomplete'),
-      el.getAttribute('data-testid')
-    ].filter(Boolean).join(' ').toLowerCase();
+      el.getAttribute('data-testid'),
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
 
-    const has = (arr) => arr.some(k => bag.includes(k));
+    const has = arr => arr.some(k => bag.includes(k));
     if (has(['email', 'e-mail', 'mail', 'почт'])) return 'email';
     if (has(['phone', 'tel', 'mobile', 'моб', 'телеф'])) return 'phone';
     if (has(['card', 'pan', 'карт'])) return 'card';
     if (has(['cvc', 'cvv', 'ccv', 'securitycode'])) return 'cvc';
     if (has(['expir', 'exp-', 'exp_', 'срок'])) return 'expiry';
-    if (has(['amount', 'price', 'sum', 'total', 'cost', 'стоимость', 'цена', 'сумм'])) return 'money';
+    if (has(['amount', 'price', 'sum', 'total', 'cost', 'стоимость', 'цена', 'сумм']))
+      return 'money';
     if (has(['currency', 'валют'])) return 'currency';
     if (has(['firstname', 'first-name', 'first_name', 'given', 'имя'])) return 'firstname';
-    if (has(['lastname', 'last-name', 'last_name', 'surname', 'family', 'фамил'])) return 'lastname';
+    if (has(['lastname', 'last-name', 'last_name', 'surname', 'family', 'фамил']))
+      return 'lastname';
     if (has(['fullname', 'full-name', 'full_name', 'полное имя', 'фио'])) return 'fullname';
     if (has(['company', 'organization', 'organisation', 'компан', 'организац'])) return 'company';
     if (has(['address', 'street', 'адрес', 'улиц'])) return 'address';
@@ -136,7 +154,8 @@
     if (has(['ogrn', 'огрн'])) return 'ogrn';
     if (has(['url', 'website', 'site', 'сайт'])) return 'url';
     if (has(['dob', 'birth', 'рожден'])) return 'birthdate';
-    if (has(['comment', 'message', 'description', 'коммент', 'сообщен', 'описан'])) return 'longtext';
+    if (has(['comment', 'message', 'description', 'коммент', 'сообщен', 'описан']))
+      return 'longtext';
     if (has(['code', 'otp', 'confirm', 'код'])) return 'otp';
     return 'text';
   }
@@ -146,21 +165,41 @@
     const s = [];
     switch (category) {
       case 'email':
-        s.push({ label: 'Случайный email', template: '{{email}}', desc: 'ivan.petrov42@example.com' });
-        s.push({ label: 'Email с меткой времени', template: 'test+{{now:yyyyMMddHHmmss}}@example.com', desc: 'Плюс-адрес для уникальности' });
+        s.push({
+          label: 'Случайный email',
+          template: '{{email}}',
+          desc: 'ivan.petrov42@example.com',
+        });
+        s.push({
+          label: 'Email с меткой времени',
+          template: 'test+{{now:yyyyMMddHHmmss}}@example.com',
+          desc: 'Плюс-адрес для уникальности',
+        });
         s.push({ label: 'Email на mail.ru', template: '{{email:mail.ru}}' });
         break;
       case 'phone':
-        s.push({ label: 'Российский моб. в формате', template: '{{phone}}', desc: '+7 (912) 345-67-89' });
+        s.push({
+          label: 'Российский моб. в формате',
+          template: '{{phone}}',
+          desc: '+7 (912) 345-67-89',
+        });
         s.push({ label: 'Только цифры', template: '{{phone:79#########}}' });
         break;
       case 'password':
-        s.push({ label: 'Тестовый пароль', template: 'Test{{regex:[A-Z]{2}}}{{number:100:999}}!', desc: 'Смешанный регистр, цифры, спецсимвол' });
+        s.push({
+          label: 'Тестовый пароль',
+          template: 'Test{{regex:[A-Z]{2}}}{{number:100:999}}!',
+          desc: 'Смешанный регистр, цифры, спецсимвол',
+        });
         s.push({ label: 'Простой', template: 'Password123!' });
         s.push({ label: 'Длинный случайный', template: '{{regex:[A-Za-z0-9]{16}}}' });
         break;
       case 'card':
-        s.push({ label: 'Тестовая карта Visa', template: '4111 1111 1111 1111', desc: 'Только для тестирования!' });
+        s.push({
+          label: 'Тестовая карта Visa',
+          template: '4111 1111 1111 1111',
+          desc: 'Только для тестирования!',
+        });
         s.push({ label: 'Тестовая MasterCard', template: '5555 5555 5555 4444' });
         s.push({ label: 'Тестовая карта без пробелов', template: '4242424242424242' });
         break;
@@ -205,7 +244,10 @@
         break;
       case 'country':
         s.push({ label: 'Россия', template: 'Россия' });
-        s.push({ label: 'Случайная из списка', template: '{{pick:Россия|Казахстан|Беларусь|Украина}}' });
+        s.push({
+          label: 'Случайная из списка',
+          template: '{{pick:Россия|Казахстан|Беларусь|Украина}}',
+        });
         break;
       case 'login':
         s.push({ label: 'user + число', template: 'user{{number:1000:9999}}' });
@@ -216,7 +258,10 @@
         s.push({ label: '10 цифр (юрлицо)', template: '{{regex:\\d{10}}}' });
         break;
       case 'snils':
-        s.push({ label: 'XXX-XXX-XXX XX', template: '{{regex:\\d{3}}}-{{regex:\\d{3}}}-{{regex:\\d{3}}} {{regex:\\d{2}}}' });
+        s.push({
+          label: 'XXX-XXX-XXX XX',
+          template: '{{regex:\\d{3}}}-{{regex:\\d{3}}}-{{regex:\\d{3}}} {{regex:\\d{2}}}',
+        });
         break;
       case 'ogrn':
         s.push({ label: '13 цифр', template: '{{regex:\\d{13}}}' });
@@ -230,7 +275,10 @@
         break;
       case 'date':
         s.push({ label: 'Сегодня', template: '{{now:yyyy-MM-dd}}' });
-        s.push({ label: 'Случайная за 5 лет', template: '{{date:2020-01-01:2025-12-31:yyyy-MM-dd}}' });
+        s.push({
+          label: 'Случайная за 5 лет',
+          template: '{{date:2020-01-01:2025-12-31:yyyy-MM-dd}}',
+        });
         break;
       case 'datetime':
         s.push({ label: 'Сейчас', template: '{{now:yyyy-MM-ddTHH:mm}}' });
@@ -246,7 +294,10 @@
         s.push({ label: 'Текущая неделя', template: '{{now:yyyy}}-W{{number:1:52}}' });
         break;
       case 'birthdate':
-        s.push({ label: 'Взрослый (18–60 лет)', template: '{{date:1965-01-01:2007-12-31:yyyy-MM-dd}}' });
+        s.push({
+          label: 'Взрослый (18–60 лет)',
+          template: '{{date:1965-01-01:2007-12-31:yyyy-MM-dd}}',
+        });
         break;
       case 'number':
         s.push({ label: '1–100', template: '{{number:1:100}}' });
@@ -261,7 +312,8 @@
         break;
       case 'radio': {
         const val = el.getAttribute('value');
-        if (val) s.push({ label: 'Выбрать этот radio', template: 'true', desc: 'value="' + val + '"' });
+        if (val)
+          s.push({ label: 'Выбрать этот radio', template: 'true', desc: 'value="' + val + '"' });
         else s.push({ label: 'Выбрать этот radio', template: 'true' });
         break;
       }
@@ -271,10 +323,24 @@
           .map(o => (o.getAttribute('value') || o.textContent).trim())
           .filter(v => v && v !== '-1');
         if (opts.length) {
-          s.push({ label: 'Случайный из опций', template: '{{pick:' + opts.slice(0, 10).map(v => v.replace(/\|/g, '')).join('|') + '}}', desc: opts.length > 10 ? 'первые 10 из ' + opts.length : opts.length + ' опций' });
+          s.push({
+            label: 'Случайный из опций',
+            template:
+              '{{pick:' +
+              opts
+                .slice(0, 10)
+                .map(v => v.replace(/\|/g, ''))
+                .join('|') +
+              '}}',
+            desc: opts.length > 10 ? 'первые 10 из ' + opts.length : opts.length + ' опций',
+          });
           for (const o of opts.slice(0, 3)) s.push({ label: 'Всегда: ' + o, template: o });
         } else {
-          s.push({ label: 'Первый непустой option', template: '{{pick:option1|option2}}', desc: 'дозаполните вручную' });
+          s.push({
+            label: 'Первый непустой option',
+            template: '{{pick:option1|option2}}',
+            desc: 'дозаполните вручную',
+          });
         }
         break;
       }
@@ -283,16 +349,25 @@
         s.push({ label: 'Короткий комментарий', template: '{{lorem.sentence:8}}' });
         s.push({ label: 'Длинный текст', template: '{{lorem.paragraph:4}}' });
         break;
-      default: // text
+      default: {
         // если есть pattern, попробуем regex
-        {
-          const pattern = el.getAttribute('pattern');
-          const maxLen = parseInt(el.getAttribute('maxlength'), 10);
-          if (pattern) s.push({ label: 'По HTML pattern', template: '{{regex:' + pattern + '}}', desc: 'из атрибута pattern' });
-          if (maxLen > 0 && maxLen < 40) s.push({ label: 'Латиница до maxlength', template: '{{regex:[a-z]{' + Math.min(maxLen, 12) + '}}}' });
-          s.push({ label: 'Короткий текст', template: '{{lorem.words:3}}' });
-          s.push({ label: 'Слово + число', template: '{{lorem.words:1}}_{{number:100:999}}' });
-        }
+        // text
+        const pattern = el.getAttribute('pattern');
+        const maxLen = parseInt(el.getAttribute('maxlength'), 10);
+        if (pattern)
+          s.push({
+            label: 'По HTML pattern',
+            template: '{{regex:' + pattern + '}}',
+            desc: 'из атрибута pattern',
+          });
+        if (maxLen > 0 && maxLen < 40)
+          s.push({
+            label: 'Латиница до maxlength',
+            template: '{{regex:[a-z]{' + Math.min(maxLen, 12) + '}}}',
+          });
+        s.push({ label: 'Короткий текст', template: '{{lorem.words:3}}' });
+        s.push({ label: 'Слово + число', template: '{{lorem.words:1}}_{{number:100:999}}' });
+      }
     }
     // Всегда добавляем "свой шаблон"
     s.push({ label: '✎ Свой шаблон', template: '', desc: 'написать вручную' });
@@ -319,7 +394,14 @@
     if (!el) return { ok: false, error: 'Не удалось распознать элемент' };
 
     const category = guessCategory(el);
-    if (category === 'skip') return { ok: false, error: 'Элемент типа ' + (el.getAttribute('type') || el.tagName) + ' не поддерживается для заполнения' };
+    if (category === 'skip')
+      return {
+        ok: false,
+        error:
+          'Элемент типа ' +
+          (el.getAttribute('type') || el.tagName) +
+          ' не поддерживается для заполнения',
+      };
 
     const selector = buildSelector(el);
     const urlPattern = autoUrlPattern(url);
@@ -332,7 +414,7 @@
       tagName: el.tagName.toLowerCase(),
       selector,
       urlPattern,
-      suggestions
+      suggestions,
     };
   }
 
@@ -352,9 +434,17 @@
       ok: true,
       selector: buildSelector(el),
       element: describeElement(el),
-      tagName: el.tagName.toLowerCase()
+      tagName: el.tagName.toLowerCase(),
     };
   }
 
-  window.FFAnalyzer = { analyze, analyzeTrigger, escapeRegex, autoUrlPattern, buildSelector, guessCategory, suggestionsFor };
+  window.FFAnalyzer = {
+    analyze,
+    analyzeTrigger,
+    escapeRegex,
+    autoUrlPattern,
+    buildSelector,
+    guessCategory,
+    suggestionsFor,
+  };
 })();

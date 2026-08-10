@@ -15,8 +15,8 @@ export class ContentScriptInjector {
           'lib/template.js',
           'lib/matcher.js',
           'content/picker.js',
-          'content/content.js'
-        ]
+          'content/content.js',
+        ],
       });
       this.injectedTabs.add(tabId);
       return true;
@@ -31,7 +31,7 @@ export class ContentScriptInjector {
       await chrome.scripting.executeScript({
         target: { tabId },
         world: 'MAIN',
-        files: ['content/copyfx-interceptor.js']
+        files: ['content/copyfx-interceptor.js'],
       });
       return true;
     } catch (error) {

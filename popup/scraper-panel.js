@@ -4,7 +4,7 @@ export class ScraperPanel {
     this.elements = {
       scraperBox: document.getElementById('scraperBox'),
       scrapeButton: document.getElementById('scrapeButton'),
-      scraperResults: document.getElementById('scraperResults')
+      scraperResults: document.getElementById('scraperResults'),
     };
   }
 
@@ -24,7 +24,7 @@ export class ScraperPanel {
   }
 
   _sendMessage(type, payload) {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       chrome.runtime.sendMessage({ type, payload }, resolve);
     });
   }

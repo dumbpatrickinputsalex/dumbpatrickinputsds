@@ -37,25 +37,25 @@ export class BackgroundApp {
     await this.uaService.syncFromState(currentState);
 
     // Регистрируем обработчики команд
-    chrome.commands.onCommand.addListener((command) => {
+    chrome.commands.onCommand.addListener(command => {
       this._handleCommand(command);
     });
   }
 
   _setupCommands() {
-    this.commandController.register('fill-all', async (tab) => {
+    this.commandController.register('fill-all', async tab => {
       await this.injector.ensureInjected(tab.id);
       await this._sendToTab(tab.id, { type: 'FILL_ALL' });
     });
 
-    this.commandController.register('fill-special', async (tab) => {
+    this.commandController.register('fill-special', async tab => {
       await this.injector.ensureInjected(tab.id);
       await this._sendToTab(tab.id, { type: 'FILL_SPECIAL' });
     });
   }
 
   _setupMessageHandlers() {
-    this.messageProxy.register('COPYFX_GET_TRADERS', async (payload) => {
+    this.messageProxy.register('COPYFX_GET_TRADERS', async payload => {
       return this.copyfxService.getTraders(payload);
     });
 
@@ -104,9 +104,7 @@ export class BackgroundApp {
 
   _isSupportedUrl(url) {
     if (!url) return false;
-    const unsupported = [
-      'chrome://', 'edge://', 'about:', 'chrome-extension://'
-    ];
+    const unsupported = ['chrome://', 'edge://', 'about:', 'chrome-extension://'];
     return !unsupported.some(u => url.startsWith(u));
   }
 }

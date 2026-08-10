@@ -17,12 +17,12 @@ const DEFAULT_STATE = {
         customLogic: false,
         conditions: [
           { type: 'attribute', attr: 'type', pattern: 'email', regex: false, connector: 'AND' },
-          { type: 'attribute', attr: 'name', pattern: 'email', regex: false, connector: 'OR' }
-        ]
+          { type: 'attribute', attr: 'name', pattern: 'email', regex: false, connector: 'OR' },
+        ],
       },
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      history: []
+      history: [],
     },
     {
       id: 'r_phone',
@@ -36,19 +36,19 @@ const DEFAULT_STATE = {
       match: {
         customLogic: false,
         conditions: [
-          { type: 'attribute', attr: 'type', pattern: 'tel', regex: false, connector: 'AND' }
-        ]
+          { type: 'attribute', attr: 'type', pattern: 'tel', regex: false, connector: 'AND' },
+        ],
       },
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      history: []
-    }
+      history: [],
+    },
   ],
   specialInsertions: [],
   smartCounters: [],
   snapshots: [],
   pageShortcuts: [],
-  counters: {}
+  counters: {},
 };
 
 // Миграция со старой схемы (profiles → folders + rules)
@@ -62,9 +62,18 @@ function migrate(state) {
   const now = new Date().toISOString();
   const folders = [];
   const rules = [];
-  const palette = ['#0052CC','#00875A','#DE350B','#FF8B00','#6554C0','#00B8D9','#EB5A46','#403294'];
+  const palette = [
+    '#0052CC',
+    '#00875A',
+    '#DE350B',
+    '#FF8B00',
+    '#6554C0',
+    '#00B8D9',
+    '#EB5A46',
+    '#403294',
+  ];
 
-  for (const profile of (state.profiles || [])) {
+  for (const profile of state.profiles || []) {
     let folderId = null;
     if (!profile.isDefault && profile.name) {
       const fid = 'f_' + Math.random().toString(36).slice(2, 10);
@@ -72,14 +81,14 @@ function migrate(state) {
         id: fid,
         name: profile.name,
         icon: '',
-        collapsed: false
+        collapsed: false,
       });
       folderId = fid;
     }
-    for (const oldRule of (profile.rules || [])) {
+    for (const oldRule of profile.rules || []) {
       const conds = ((oldRule.match && oldRule.match.conditions) || []).map(c => ({
         ...c,
-        connector: 'AND'
+        connector: 'AND',
       }));
       // старая mode 'OR' на всё правило → customLogic ON, все connectors OR
       const wasOR = oldRule.match && oldRule.match.mode === 'OR';
@@ -87,7 +96,7 @@ function migrate(state) {
         for (let i = 1; i < conds.length; i++) conds[i].connector = 'OR';
       }
       rules.push({
-        id: oldRule.id || ('r_' + Math.random().toString(36).slice(2, 10)),
+        id: oldRule.id || 'r_' + Math.random().toString(36).slice(2, 10),
         folderId,
         name: oldRule.label || oldRule.name || 'Правило',
         enabled: oldRule.enabled !== false,
@@ -97,11 +106,11 @@ function migrate(state) {
         template: oldRule.template || '',
         match: {
           customLogic: !!wasOR,
-          conditions: conds
+          conditions: conds,
         },
         createdAt: now,
         updatedAt: now,
-        history: []
+        history: [],
       });
     }
   }
@@ -114,7 +123,7 @@ function migrate(state) {
     smartCounters: state.smartCounters || [],
     customWordLists: state.customWordLists || [],
     snapshots: state.snapshots || [],
-    counters: state.counters || {}
+    counters: state.counters || {},
   };
   ensureShape(migrated);
   return migrated;
@@ -122,34 +131,53 @@ function migrate(state) {
 
 function ensureShape(s) {
   s.version = 2;
-  if (!Array.isArray(s.folders))          s.folders = [];
-  if (!Array.isArray(s.rules))            s.rules = [];
-  if (!Array.isArray(s.specialInsertions))s.specialInsertions = [];
-  if (!Array.isArray(s.smartCounters))    s.smartCounters = [];
-  if (!Array.isArray(s.snapshots))        s.snapshots = [];
-  if (!Array.isArray(s.pageShortcuts))    s.pageShortcuts = [];
+  if (!Array.isArray(s.folders)) s.folders = [];
+  if (!Array.isArray(s.rules)) s.rules = [];
+  if (!Array.isArray(s.specialInsertions)) s.specialInsertions = [];
+  if (!Array.isArray(s.smartCounters)) s.smartCounters = [];
+  if (!Array.isArray(s.snapshots)) s.snapshots = [];
+  if (!Array.isArray(s.pageShortcuts)) s.pageShortcuts = [];
   if (!Array.isArray(s.customWordLists)) s.customWordLists = [];
   if (typeof s.debugMode !== 'boolean') s.debugMode = false;
   if (!Array.isArray(s.activityLog)) s.activityLog = [];
   if (!Array.isArray(s.uaRules)) s.uaRules = [];
-  if (!s.scraperConfig) s.scraperConfig = { enabled: false, urls: [''], parentSelector: 'div.debug_plugin_client', fields: [], collapsed: true };
-  if (!Array.isArray(s.scraperConfig.urls)) s.scraperConfig.urls = s.scraperConfig.url ? [s.scraperConfig.url] : [''];
+  if (!s.scraperConfig)
+    s.scraperConfig = {
+      enabled: false,
+      urls: [''],
+      parentSelector: 'div.debug_plugin_client',
+      fields: [],
+      collapsed: true,
+    };
+  if (!Array.isArray(s.scraperConfig.urls))
+    s.scraperConfig.urls = s.scraperConfig.url ? [s.scraperConfig.url] : [''];
   delete s.scraperConfig.url;
-  if (!s.copyfxConfig) s.copyfxConfig = { enabled: false, collapsed: true, pageUrl: '/copyfx/my/strategies/', apiUrl: '/copyfx2-api/copyfx/strategies', extraFields: [] };
+  if (!s.copyfxConfig)
+    s.copyfxConfig = {
+      enabled: false,
+      collapsed: true,
+      pageUrl: '/copyfx/my/strategies/',
+      apiUrl: '/copyfx2-api/copyfx/strategies',
+      extraFields: [],
+    };
   if (!Array.isArray(s.copyfxConfig.extraFields)) s.copyfxConfig.extraFields = [];
   if (!s.counters || typeof s.counters !== 'object') s.counters = {};
   for (const ins of s.specialInsertions) {
     if (!ins.actionType) ins.actionType = 'fill';
   }
   if (!s._historyV2) {
-    for (const r of s.rules) { r.history = []; }
+    for (const r of s.rules) {
+      r.history = [];
+    }
     s._historyV2 = true;
   }
   if (!s._historySeeded2) {
     for (const r of s.rules) {
       const own = r.createdBy || r.modifiedBy || '';
       if (!r.history || !r.history.length) {
-        r.history = [{ at: r.createdAt || new Date().toISOString(), author: own, summary: 'правило создано' }];
+        r.history = [
+          { at: r.createdAt || new Date().toISOString(), author: own, summary: 'правило создано' },
+        ];
       } else {
         for (const h of r.history) {
           if (!h.author) h.author = own;
@@ -213,7 +241,7 @@ const CONTENT_FILES = [
   'lib/template.js',
   'lib/matcher.js',
   'content/picker.js',
-  'content/content.js'
+  'content/content.js',
 ];
 
 // Пробуем послать сообщение. Если content script не загружен (вкладка открыта до
@@ -233,7 +261,7 @@ async function sendToActive(msg) {
     try {
       await chrome.scripting.executeScript({
         target: { tabId: tab.id },
-        files: CONTENT_FILES
+        files: CONTENT_FILES,
       });
       return await chrome.tabs.sendMessage(tab.id, msg);
     } catch (e2) {
@@ -247,14 +275,16 @@ const UA_RULE_ID_BASE = 90000;
 
 async function syncUaRules() {
   const { state } = await chrome.storage.local.get(['state']);
-  const uaRules = (state && state.uaRules || []).filter(r => r.enabled && r.userAgent);
+  const uaRules = ((state && state.uaRules) || []).filter(r => r.enabled && r.userAgent);
 
-  const oldIds = (await chrome.declarativeNetRequest.getDynamicRules()).filter(r => r.id >= UA_RULE_ID_BASE).map(r => r.id);
+  const oldIds = (await chrome.declarativeNetRequest.getDynamicRules())
+    .filter(r => r.id >= UA_RULE_ID_BASE)
+    .map(r => r.id);
 
   const addRules = [];
   let idx = 0;
   for (const r of uaRules) {
-    const urls = Array.isArray(r.urls) ? r.urls : (r.url ? [r.url] : []);
+    const urls = Array.isArray(r.urls) ? r.urls : r.url ? [r.url] : [];
     for (const u of urls) {
       if (!u) continue;
       let urlFilter = u;
@@ -266,30 +296,40 @@ async function syncUaRules() {
         priority: 1,
         action: {
           type: 'modifyHeaders',
-          requestHeaders: [{ header: 'User-Agent', operation: 'set', value: r.userAgent }]
+          requestHeaders: [{ header: 'User-Agent', operation: 'set', value: r.userAgent }],
         },
         condition: {
           urlFilter,
-          resourceTypes: ['main_frame', 'sub_frame', 'xmlhttprequest', 'script', 'stylesheet', 'image', 'font', 'media', 'other']
-        }
+          resourceTypes: [
+            'main_frame',
+            'sub_frame',
+            'xmlhttprequest',
+            'script',
+            'stylesheet',
+            'image',
+            'font',
+            'media',
+            'other',
+          ],
+        },
       });
     }
   }
 
   await chrome.declarativeNetRequest.updateDynamicRules({
     removeRuleIds: oldIds,
-    addRules
+    addRules,
   });
   console.info('[DPI/bg] UA rules synced:', addRules.length);
 }
 
-chrome.storage.onChanged.addListener((changes) => {
+chrome.storage.onChanged.addListener(changes => {
   if (changes.state) syncUaRules();
 });
 
-chrome.commands.onCommand.addListener(async (command) => {
+chrome.commands.onCommand.addListener(async command => {
   console.info('[DPI/bg] command:', command);
-  if (command === 'fill-all')     await sendToActive({ type: 'FILL_ALL' });
+  if (command === 'fill-all') await sendToActive({ type: 'FILL_ALL' });
   if (command === 'fill-special') await sendToActive({ type: 'FILL_SPECIAL' });
 });
 
@@ -301,16 +341,18 @@ async function handleCopyfxGetTraders(payload) {
     const results = await chrome.scripting.executeScript({
       target: { tabId: tab.id },
       world: 'MAIN',
-      func: (pattern) => {
+      func: pattern => {
         var store = window.__dpi_copyfx_cache;
         if (!store) return { ok: false, error: 'no_interceptor' };
         var keys = Object.keys(store);
-        var matched = keys.filter(function(k) { return k.indexOf(pattern) !== -1; });
+        var matched = keys.filter(function (k) {
+          return k.indexOf(pattern) !== -1;
+        });
         if (!matched.length) return { ok: false, error: 'no_requests' };
         var last = matched[matched.length - 1];
         return { ok: true, data: store[last] };
       },
-      args: [apiPattern]
+      args: [apiPattern],
     });
     return (results && results[0] && results[0].result) || { ok: false, error: 'no_result' };
   } catch (e) {
@@ -326,17 +368,19 @@ async function handleCopyfxGetInvestors() {
     const results = await chrome.scripting.executeScript({
       target: { tabId: tab.id },
       world: 'MAIN',
-      func: (pattern) => {
+      func: pattern => {
         var store = window.__dpi_copyfx_cache;
         if (!store) return { ok: false, error: 'no_interceptor' };
         var keys = Object.keys(store);
-        var matched = keys.filter(function(k) { return k.indexOf(pattern) !== -1 && k.indexOf('::body') === -1; });
+        var matched = keys.filter(function (k) {
+          return k.indexOf(pattern) !== -1 && k.indexOf('::body') === -1;
+        });
         if (!matched.length) return { ok: false, error: 'no_requests' };
         var last = matched[matched.length - 1];
         var body = store[last + '::body'] || null;
         return { ok: true, data: store[last], body: body };
       },
-      args: [apiPattern]
+      args: [apiPattern],
     });
     return (results && results[0] && results[0].result) || { ok: false, error: 'no_result' };
   } catch (e) {

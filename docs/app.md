@@ -52,44 +52,43 @@ formfiller-extension/
     └── patrick.gif
 ```
 
-
 Это **Chrome Extension Manifest V3**.
 
 Главные точки входа:
 
-| Зона | Файл |
-|---|---|
-| Manifest | `manifest.json` |
-| Background service worker | `background.js` |
-| Content scripts | `content/content.js`, `content/picker.js`, `content/copyfx-interceptor.js` |
-| Popup UI | `popup/popup.html`, `popup/popup.css`, `popup/popup.js` |
-| Options UI | `options/options.html`, `options/options.css`, `options/options.js`, `options/analyzer.js` |
-| Shared logic | `lib/generators.js`, `lib/template.js`, `lib/matcher.js` |
+| Зона                      | Файл                                                                                       |
+| ------------------------- | ------------------------------------------------------------------------------------------ |
+| Manifest                  | `manifest.json`                                                                            |
+| Background service worker | `background.js`                                                                            |
+| Content scripts           | `content/content.js`, `content/picker.js`, `content/copyfx-interceptor.js`                 |
+| Popup UI                  | `popup/popup.html`, `popup/popup.css`, `popup/popup.js`                                    |
+| Options UI                | `options/options.html`, `options/options.css`, `options/options.js`, `options/analyzer.js` |
+| Shared logic              | `lib/generators.js`, `lib/template.js`, `lib/matcher.js`                                   |
 
 ---
 
 # 2. Сводная таблица файлов
 
-| Файл | Примерно строк | Примерно функций/методов | Назначение | Риск рефакторинга |
-|---|---:|---:|---|---|
-| `manifest.json` | ~70 | 0 | Конфигурация расширения, permissions, content scripts, popup, options, shortcuts | Средний |
-| `background.js` | ~360 | ~9 | Service worker: init state, миграции, hotkeys, прокси сообщений, UA rules, CopyFX bridge | Высокий |
-| `content/content.js` | ~460 | ~19 | Главный content script: заполнение форм, спецвставки, page-shortcuts, сообщения | Высокий |
-| `content/picker.js` | ~100 | ~6 | Overlay-пикер DOM-элемента и генерация CSS-селектора | Средний |
-| `content/copyfx-interceptor.js` | ~35 | 0 именованных, 4 monkey-patch callbacks | Перехват `fetch`/`XHR` в MAIN world для CopyFX API | Высокий |
-| `lib/generators.js` | ~500+ | ~8 helper + много генераторов | Генераторы токенов шаблонов: email, phone, date, regex, seq и т.д. | Средний/Высокий |
-| `lib/template.js` | ~70 | 2 | Парсер и рендер Mustache-подобных шаблонов | Средний |
-| `lib/matcher.js` | ~150 | ~8 | Матчинг DOM-полей по правилам и URL-условиям | Высокий |
-| `popup/popup.html` | неизвестно | 0 | Разметка popup | Средний |
-| `popup/popup.css` | неизвестно | 0 | Стили popup | Низкий/Средний |
-| `popup/popup.js` | ~800–1000 | ~30+ | Логика popup: fill actions, scraper, CopyFX, investors, UA toggle | Очень высокий |
-| `options/options.html` | неизвестно | 0 | Разметка страницы настроек | Средний |
-| `options/options.css` | неизвестно | 0 | Стили страницы настроек | Средний |
-| `options/options.js` | очень большой, вероятно 2500+ | много, вероятно 80+ | Главная логика настроек: правила, вставки, счётчики, версии, импорт/экспорт, UA, scraper, CopyFX | Критически высокий |
-| `options/analyzer.js` | ~250 | ~8 | Анализ HTML элемента, подбор селектора и шаблона для вставки | Средний |
-| `README.md` | ~200+ | 0 | Пользовательская документация | Низкий |
-| `icons/*` | — | — | Иконки расширения | Низкий |
-| `.idea/*` | — | — | Настройки IDE | Низкий |
+| Файл                            |                Примерно строк |                Примерно функций/методов | Назначение                                                                                       | Риск рефакторинга  |
+| ------------------------------- | ----------------------------: | --------------------------------------: | ------------------------------------------------------------------------------------------------ | ------------------ |
+| `manifest.json`                 |                           ~70 |                                       0 | Конфигурация расширения, permissions, content scripts, popup, options, shortcuts                 | Средний            |
+| `background.js`                 |                          ~360 |                                      ~9 | Service worker: init state, миграции, hotkeys, прокси сообщений, UA rules, CopyFX bridge         | Высокий            |
+| `content/content.js`            |                          ~460 |                                     ~19 | Главный content script: заполнение форм, спецвставки, page-shortcuts, сообщения                  | Высокий            |
+| `content/picker.js`             |                          ~100 |                                      ~6 | Overlay-пикер DOM-элемента и генерация CSS-селектора                                             | Средний            |
+| `content/copyfx-interceptor.js` |                           ~35 | 0 именованных, 4 monkey-patch callbacks | Перехват `fetch`/`XHR` в MAIN world для CopyFX API                                               | Высокий            |
+| `lib/generators.js`             |                         ~500+ |           ~8 helper + много генераторов | Генераторы токенов шаблонов: email, phone, date, regex, seq и т.д.                               | Средний/Высокий    |
+| `lib/template.js`               |                           ~70 |                                       2 | Парсер и рендер Mustache-подобных шаблонов                                                       | Средний            |
+| `lib/matcher.js`                |                          ~150 |                                      ~8 | Матчинг DOM-полей по правилам и URL-условиям                                                     | Высокий            |
+| `popup/popup.html`              |                    неизвестно |                                       0 | Разметка popup                                                                                   | Средний            |
+| `popup/popup.css`               |                    неизвестно |                                       0 | Стили popup                                                                                      | Низкий/Средний     |
+| `popup/popup.js`                |                     ~800–1000 |                                    ~30+ | Логика popup: fill actions, scraper, CopyFX, investors, UA toggle                                | Очень высокий      |
+| `options/options.html`          |                    неизвестно |                                       0 | Разметка страницы настроек                                                                       | Средний            |
+| `options/options.css`           |                    неизвестно |                                       0 | Стили страницы настроек                                                                          | Средний            |
+| `options/options.js`            | очень большой, вероятно 2500+ |                     много, вероятно 80+ | Главная логика настроек: правила, вставки, счётчики, версии, импорт/экспорт, UA, scraper, CopyFX | Критически высокий |
+| `options/analyzer.js`           |                          ~250 |                                      ~8 | Анализ HTML элемента, подбор селектора и шаблона для вставки                                     | Средний            |
+| `README.md`                     |                         ~200+ |                                       0 | Пользовательская документация                                                                    | Низкий             |
+| `icons/*`                       |                             — |                                       — | Иконки расширения                                                                                | Низкий             |
+| `.idea/*`                       |                             — |                                       — | Настройки IDE                                                                                    | Низкий             |
 
 ---
 
@@ -128,7 +127,6 @@ formfiller-extension/
 "host_permissions": ["<all_urls>"]
 ```
 
-
 Расширение имеет доступ ко всем сайтам. Это удобно, но перед публикацией/поддержкой стоит проверить необходимость такого широкого доступа.
 
 ### Риск
@@ -140,7 +138,6 @@ formfiller-extension/
 ```plain text
 generators.js → template.js → matcher.js → picker.js → content.js
 ```
-
 
 ---
 
@@ -168,17 +165,17 @@ generators.js → template.js → matcher.js → picker.js → content.js
 
 ### Примерный список функций
 
-| Функция | Назначение |
-|---|---|
-| `migrate(state)` | Миграция старого формата настроек в новый |
-| `ensureShape(s)` | Дозаполнение недостающих полей в `state` |
-| `ensureState()` | Создание/миграция state при старте |
-| `activeTab()` | Получение активной вкладки |
-| `sendToActive(msg)` | Отправка команды в активную вкладку |
-| `syncUaRules()` | Обновление DNR-правил для User-Agent |
-| `handleCopyfxGetTraders(payload)` | Получение трейдеров из перехваченного CopyFX API |
-| `handleCopyfxGetInvestors()` | Получение инвесторов из перехваченного CopyFX API |
-| `chrome.runtime.onMessage` callback | Роутинг сообщений от popup/options |
+| Функция                             | Назначение                                        |
+| ----------------------------------- | ------------------------------------------------- |
+| `migrate(state)`                    | Миграция старого формата настроек в новый         |
+| `ensureShape(s)`                    | Дозаполнение недостающих полей в `state`          |
+| `ensureState()`                     | Создание/миграция state при старте                |
+| `activeTab()`                       | Получение активной вкладки                        |
+| `sendToActive(msg)`                 | Отправка команды в активную вкладку               |
+| `syncUaRules()`                     | Обновление DNR-правил для User-Agent              |
+| `handleCopyfxGetTraders(payload)`   | Получение трейдеров из перехваченного CopyFX API  |
+| `handleCopyfxGetInvestors()`        | Получение инвесторов из перехваченного CopyFX API |
+| `chrome.runtime.onMessage` callback | Роутинг сообщений от popup/options                |
 
 ### Найденные предупреждения PhpStorm
 
@@ -186,12 +183,12 @@ generators.js → template.js → matcher.js → picker.js → content.js
 
 #### Существенные
 
-| Тип | Описание |
-|---|---|
-| `WARNING` | `Unused constant palette` — константа объявлена, но не используется |
-| `WARNING` | Можно упростить `!!(r.match.mode === 'OR')` |
-| `WEAK WARNING` | `Promise returned from syncUaRules is ignored` |
-| `WEAK WARNING` | `Unresolved variable isDefault` |
+| Тип            | Описание                                                                                                     |
+| -------------- | ------------------------------------------------------------------------------------------------------------ |
+| `WARNING`      | `Unused constant palette` — константа объявлена, но не используется                                          |
+| `WARNING`      | Можно упростить `!!(r.match.mode === 'OR')`                                                                  |
+| `WEAK WARNING` | `Promise returned from syncUaRules is ignored`                                                               |
+| `WEAK WARNING` | `Unresolved variable isDefault`                                                                              |
 | `WEAK WARNING` | Условия по `command === 'fill-all'` определены IDE как всегда false — вероятно проблема типизации Chrome API |
 
 #### Контекстные/возможно ложные
@@ -204,7 +201,6 @@ Unresolved variable runtime
 Unresolved function executeScript()
 Deprecated symbol used
 ```
-
 
 Они связаны с тем, что IDE не всегда знает типы Chrome Extension API. Это можно улучшить подключением типов.
 
@@ -249,35 +245,35 @@ Deprecated symbol used
 
 ### Примерный список функций
 
-| Функция | Назначение |
-|---|---|
-| `setValue(el, value)` | Установка значения в input/textarea/select/checkbox/radio/contenteditable |
-| `highlight(el)` | Подсветка обработанного элемента |
-| `isElementChecked(el)` | Определение состояния checkbox/radio/custom toggle |
-| `shouldClickByGuard(el, guard)` | Решение, нужно ли кликать с учётом guard |
-| `buildCtx(state)` | Создание контекста для шаблонизатора |
-| `shortSelector(el)` | Короткое описание элемента для логов |
-| `loadPageShortcuts()` | Загрузка page-scoped шорткатов |
-| `eventMatches(e, sc)` | Проверка совпадения KeyboardEvent и настройки |
-| `keyOfEvent(e)` | Нормализация клавиши |
-| `isEditableTarget(t)` | Проверка, что фокус в редактируемом элементе |
-| `formatComboFromSc(sc)` | Форматирование shortcut в строку |
-| `fillAll()` | Массовое заполнение страницы |
-| `waitForElement(selector, timeoutMs)` | Ожидание появления элемента |
-| `executeRule(rule, ctx, usedFields, details, dbg)` | Выполнение одного правила |
-| `fillSpecialById(insertionId)` | Спецвставка по ID |
-| `fillSpecial()` | Поиск спецвставки для текущего URL |
-| `runInsertion(state, ins)` | Выполнение спецвставки |
-| `getState()` | Чтение состояния из storage |
-| `persistCtx(state, ctx)` | Сохранение счётчиков после рендера |
+| Функция                                            | Назначение                                                                |
+| -------------------------------------------------- | ------------------------------------------------------------------------- |
+| `setValue(el, value)`                              | Установка значения в input/textarea/select/checkbox/radio/contenteditable |
+| `highlight(el)`                                    | Подсветка обработанного элемента                                          |
+| `isElementChecked(el)`                             | Определение состояния checkbox/radio/custom toggle                        |
+| `shouldClickByGuard(el, guard)`                    | Решение, нужно ли кликать с учётом guard                                  |
+| `buildCtx(state)`                                  | Создание контекста для шаблонизатора                                      |
+| `shortSelector(el)`                                | Короткое описание элемента для логов                                      |
+| `loadPageShortcuts()`                              | Загрузка page-scoped шорткатов                                            |
+| `eventMatches(e, sc)`                              | Проверка совпадения KeyboardEvent и настройки                             |
+| `keyOfEvent(e)`                                    | Нормализация клавиши                                                      |
+| `isEditableTarget(t)`                              | Проверка, что фокус в редактируемом элементе                              |
+| `formatComboFromSc(sc)`                            | Форматирование shortcut в строку                                          |
+| `fillAll()`                                        | Массовое заполнение страницы                                              |
+| `waitForElement(selector, timeoutMs)`              | Ожидание появления элемента                                               |
+| `executeRule(rule, ctx, usedFields, details, dbg)` | Выполнение одного правила                                                 |
+| `fillSpecialById(insertionId)`                     | Спецвставка по ID                                                         |
+| `fillSpecial()`                                    | Поиск спецвставки для текущего URL                                        |
+| `runInsertion(state, ins)`                         | Выполнение спецвставки                                                    |
+| `getState()`                                       | Чтение состояния из storage                                               |
+| `persistCtx(state, ctx)`                           | Сохранение счётчиков после рендера                                        |
 
 ### Найденные предупреждения PhpStorm
 
-| Тип | Описание |
-|---|---|
-| `WEAK WARNING` | `Unresolved variable value/text` у `option.value` / `option.text` |
-| `WEAK WARNING` | `Unresolved variable or type chrome` |
-| `WEAK WARNING` | `Deprecated symbol used` для Chrome listeners |
+| Тип            | Описание                                                                                     |
+| -------------- | -------------------------------------------------------------------------------------------- |
+| `WEAK WARNING` | `Unresolved variable value/text` у `option.value` / `option.text`                            |
+| `WEAK WARNING` | `Unresolved variable or type chrome`                                                         |
+| `WEAK WARNING` | `Deprecated symbol used` для Chrome listeners                                                |
 | `WEAK WARNING` | `Promise returned from fillAll/fillSpecial/fillSpecialById is ignored` в обработчике hotkeys |
 
 ### Логические замечания
@@ -285,16 +281,15 @@ Deprecated symbol used
 Есть важный момент:
 
 ```javascript
-let filled = 0, matched = 0;
+let filled = 0,
+  matched = 0;
 ```
-
 
 `matched` сейчас фактически не увеличивается. Значит popup может показывать:
 
 ```plain text
 Заполнено: N из 0 совпадений
 ```
-
 
 Это нужно исправлять до/во время рефакторинга.
 
@@ -305,7 +300,6 @@ setTimeout(async () => {
   await executeRule(...)
 }, delay);
 ```
-
 
 Они выполняются после `persistCtx(state, ctx)`, поэтому изменения счётчиков в delayed-правилах могут не сохраниться.
 
@@ -330,15 +324,15 @@ Overlay-пикер DOM-элемента:
 
 ### Функции
 
-| Функция | Назначение |
-|---|---|
-| `buildSelector(el)` | Генерация CSS-селектора |
-| `ensureOverlay()` | Создание overlay и label |
-| `onMove(e)` | Обновление позиции overlay при движении мыши |
-| `onClick(e)` | Выбор элемента кликом |
-| `onKey(e)` | Отмена по `Esc` |
-| `stop(result)` | Завершение picker-сессии |
-| `startPicker()` | Запуск picker |
+| Функция             | Назначение                                   |
+| ------------------- | -------------------------------------------- |
+| `buildSelector(el)` | Генерация CSS-селектора                      |
+| `ensureOverlay()`   | Создание overlay и label                     |
+| `onMove(e)`         | Обновление позиции overlay при движении мыши |
+| `onClick(e)`        | Выбор элемента кликом                        |
+| `onKey(e)`          | Отмена по `Esc`                              |
+| `stop(result)`      | Завершение picker-сессии                     |
+| `startPicker()`     | Запуск picker                                |
 
 ### Риск
 
@@ -368,9 +362,8 @@ Overlay-пикер DOM-элемента:
 И складывает JSON-запросы/ответы CopyFX API в:
 
 ```javascript
-window.__dpi_copyfx_cache
+window.__dpi_copyfx_cache;
 ```
-
 
 ### Особенности
 
@@ -381,7 +374,6 @@ window.fetch = function () { ... }
 XMLHttpRequest.prototype.open = function (...) { ... }
 XMLHttpRequest.prototype.send = function () { ... }
 ```
-
 
 ### Риск
 
@@ -414,13 +406,12 @@ Mustache-подобный шаблонизатор.
 \{{ escaped }}
 ```
 
-
 ### Функции
 
-| Функция | Назначение |
-|---|---|
-| `parse(template)` | Разбор шаблона на части: текст и токены |
-| `render(template, ctx)` | Генерация итоговой строки |
+| Функция                 | Назначение                              |
+| ----------------------- | --------------------------------------- |
+| `parse(template)`       | Разбор шаблона на части: текст и токены |
+| `render(template, ctx)` | Генерация итоговой строки               |
 
 ### Экспорт
 
@@ -428,7 +419,6 @@ Mustache-подобный шаблонизатор.
 window.FF.parse = parse;
 window.FF.render = render;
 ```
-
 
 ### Риск
 
@@ -461,18 +451,18 @@ window.FF.render = render;
 
 ### Функции
 
-| Функция | Назначение |
-|---|---|
-| `getLabelText(el)` | Поиск текста label для поля |
-| `fieldKind(el)` | Определение типа поля |
-| `normalize(s)` | Нормализация строки для сравнения |
-| `testAttr(el, attr, pattern, useRegex)` | Проверка атрибута |
-| `testCondition(el, cond, indexInForm)` | Проверка одного условия |
-| `evalConditions(...)` | Вычисление AND/OR-логики |
-| `findMatches(rule, root)` | Поиск всех подходящих элементов |
-| `urlMatches(patterns, url)` | Legacy URL matching |
-| `urlMatchesConditions(conditions, url)` | Новые URL conditions |
-| `testUrlCond(cond, url)` | Проверка одного URL-условия |
+| Функция                                 | Назначение                        |
+| --------------------------------------- | --------------------------------- |
+| `getLabelText(el)`                      | Поиск текста label для поля       |
+| `fieldKind(el)`                         | Определение типа поля             |
+| `normalize(s)`                          | Нормализация строки для сравнения |
+| `testAttr(el, attr, pattern, useRegex)` | Проверка атрибута                 |
+| `testCondition(el, cond, indexInForm)`  | Проверка одного условия           |
+| `evalConditions(...)`                   | Вычисление AND/OR-логики          |
+| `findMatches(rule, root)`               | Поиск всех подходящих элементов   |
+| `urlMatches(patterns, url)`             | Legacy URL matching               |
+| `urlMatchesConditions(conditions, url)` | Новые URL conditions              |
+| `testUrlCond(cond, url)`                | Проверка одного URL-условия       |
 
 ### Риск
 
@@ -513,13 +503,13 @@ window.FF.render = render;
 
 ### Основные helper-функции
 
-| Функция | Назначение |
-|---|---|
-| `rand(n)` | Случайное число |
-| `pick(arr)` | Случайный элемент массива |
-| `translit(s)` | Транслитерация |
-| `formatDate(d, fmt)` | Форматирование даты |
-| `parseDate(s)` | Парсинг даты |
+| Функция                      | Назначение                           |
+| ---------------------------- | ------------------------------------ |
+| `rand(n)`                    | Случайное число                      |
+| `pick(arr)`                  | Случайный элемент массива            |
+| `translit(s)`                | Транслитерация                       |
+| `formatDate(d, fmt)`         | Форматирование даты                  |
+| `parseDate(s)`               | Парсинг даты                         |
 | `generateFromRegex(pattern)` | Упрощённая генерация строки по regex |
 
 ### Важные токены
@@ -538,7 +528,6 @@ window.FF.render = render;
 {{seq:name}}
 {{list:name}}
 ```
-
 
 ### Риск
 
@@ -592,33 +581,33 @@ window.FF.render = render;
 
 ### Примерные функции
 
-| Функция | Назначение |
-|---|---|
-| `$` | Быстрый `getElementById` |
-| `currentTab()` | Активная вкладка |
-| `updateStatusLabel()` | Статус активных правил |
-| `renderResultTable(details)` | Таблица результатов заполнения |
-| `escapeHtml(s)` | Экранирование HTML |
-| `send(type)` | Отправка команды в background |
-| `scraperUrlMatches(...)` | Проверка URL для scraper |
-| `loadScraperData()` | Загрузка scraper-блока |
-| `countryAlpha2(val)` | Преобразование страны в alpha-2 |
-| `formatScraperValue(key, val)` | Отображение значения scraper |
-| `copyfxUrlMatches(...)` | Проверка CopyFX URL |
-| `getCopyfxLang(url)` | Язык из URL |
-| `getCopyfxAdminDomain(hostname)` | Admin domain |
-| `copyfxSaveSession()` | Сохранение CopyFX cache |
-| `copyfxClearSession()` | Очистка CopyFX cache |
-| `loadCopyfxData()` | Инициализация CopyFX блока |
-| `renderCopyfxEntries(cfg, append)` | Рендер трейдеров |
-| `isTraderDetailPage(url)` | Проверка страницы трейдера |
-| `investorSaveSession()` | Сохранение investors cache |
-| `investorClearSession()` | Очистка investors cache |
-| `loadInvestorData()` | Инициализация investors |
-| `updateInvestorTitle()` | Заголовок investors |
-| `getCoefficient(cmv)` | Коэффициент копирования |
-| `renderInvestorEntries(append)` | Рендер инвесторов |
-| `loadUaStatus()` | Статус UA toggle |
+| Функция                            | Назначение                      |
+| ---------------------------------- | ------------------------------- |
+| `$`                                | Быстрый `getElementById`        |
+| `currentTab()`                     | Активная вкладка                |
+| `updateStatusLabel()`              | Статус активных правил          |
+| `renderResultTable(details)`       | Таблица результатов заполнения  |
+| `escapeHtml(s)`                    | Экранирование HTML              |
+| `send(type)`                       | Отправка команды в background   |
+| `scraperUrlMatches(...)`           | Проверка URL для scraper        |
+| `loadScraperData()`                | Загрузка scraper-блока          |
+| `countryAlpha2(val)`               | Преобразование страны в alpha-2 |
+| `formatScraperValue(key, val)`     | Отображение значения scraper    |
+| `copyfxUrlMatches(...)`            | Проверка CopyFX URL             |
+| `getCopyfxLang(url)`               | Язык из URL                     |
+| `getCopyfxAdminDomain(hostname)`   | Admin domain                    |
+| `copyfxSaveSession()`              | Сохранение CopyFX cache         |
+| `copyfxClearSession()`             | Очистка CopyFX cache            |
+| `loadCopyfxData()`                 | Инициализация CopyFX блока      |
+| `renderCopyfxEntries(cfg, append)` | Рендер трейдеров                |
+| `isTraderDetailPage(url)`          | Проверка страницы трейдера      |
+| `investorSaveSession()`            | Сохранение investors cache      |
+| `investorClearSession()`           | Очистка investors cache         |
+| `loadInvestorData()`               | Инициализация investors         |
+| `updateInvestorTitle()`            | Заголовок investors             |
+| `getCoefficient(cmv)`              | Коэффициент копирования         |
+| `renderInvestorEntries(append)`    | Рендер инвесторов               |
+| `loadUaStatus()`                   | Статус UA toggle                |
 
 ### Риск
 
@@ -676,7 +665,6 @@ copyfxBox
 investorSection
 uaBox
 ```
-
 
 ---
 
@@ -773,7 +761,6 @@ options/
 └── dom-utils.js                  // $, $$, escapeText, toast etc.
 ```
 
-
 ---
 
 ## `options/analyzer.js`
@@ -804,19 +791,19 @@ options/
 
 ### Функции
 
-| Функция | Назначение |
-|---|---|
-| `escapeRegex(s)` | Экранирование regex |
-| `cssEscape(s)` | CSS escape fallback |
-| `isStableId(id)` | Проверка стабильности id |
-| `isStableClass(c)` | Проверка стабильности class |
-| `buildSelector(el)` | Построение селектора |
-| `autoUrlPattern(rawUrl)` | Генерация URL-паттерна |
-| `guessCategory(el)` | Определение категории поля |
-| `suggestionsFor(category, el)` | Предложения шаблонов |
-| `describeElement(el)` | Краткое описание элемента |
-| `analyze(html, url)` | Анализ целевого HTML |
-| `analyzeTrigger(html)` | Анализ HTML триггера |
+| Функция                        | Назначение                  |
+| ------------------------------ | --------------------------- |
+| `escapeRegex(s)`               | Экранирование regex         |
+| `cssEscape(s)`                 | CSS escape fallback         |
+| `isStableId(id)`               | Проверка стабильности id    |
+| `isStableClass(c)`             | Проверка стабильности class |
+| `buildSelector(el)`            | Построение селектора        |
+| `autoUrlPattern(rawUrl)`       | Генерация URL-паттерна      |
+| `guessCategory(el)`            | Определение категории поля  |
+| `suggestionsFor(category, el)` | Предложения шаблонов        |
+| `describeElement(el)`          | Краткое описание элемента   |
+| `analyze(html, url)`           | Анализ целевого HTML        |
+| `analyzeTrigger(html)`         | Анализ HTML триггера        |
 
 ### Риск
 
@@ -893,7 +880,6 @@ Can be simplified to (r.match.mode === 'OR')
 Unresolved variable isDefault
 ```
 
-
 ### `content/content.js`
 
 Около **15 предупреждений**.
@@ -907,7 +893,6 @@ Promise returned from fillSpecialById is ignored
 Unresolved variable or type chrome
 Deprecated symbol used
 ```
-
 
 ### `popup/popup.js`
 
@@ -945,7 +930,6 @@ content/content.js вставляет значения в DOM
 chrome.storage.local обновляет counters/state
 ```
 
-
 ---
 
 ## Поток настройки правил
@@ -961,7 +945,6 @@ background.js ensureShape/migrate
  ↓
 content.js использует state при заполнении
 ```
-
 
 ---
 
@@ -979,7 +962,6 @@ popup/popup.js
 рендер карточек CopyFX / investors
 ```
 
-
 ---
 
 # 6. Главные зоны риска перед рефакторингом
@@ -991,7 +973,6 @@ popup/popup.js
 ```javascript
 window.FF = window.FF || {};
 ```
-
 
 Туда добавляются:
 
@@ -1005,7 +986,6 @@ startPicker
 fillAll
 fillSpecial
 ```
-
 
 ### Риск
 
@@ -1023,7 +1003,6 @@ template.js должен быть до content.js/options.js preview
 matcher.js должен быть до content.js
 picker.js должен быть до content.js
 ```
-
 
 ---
 
@@ -1046,15 +1025,13 @@ customWordLists
 activityLog
 ```
 
-
 ### Риск
 
 Любая запись:
 
 ```javascript
-chrome.storage.local.set({ state })
+chrome.storage.local.set({ state });
 ```
-
 
 перезаписывает весь объект.
 
@@ -1111,7 +1088,6 @@ URL matching есть минимум в:
 lib/url-matcher.js
 ```
 
-
 ---
 
 ## 5. Дублирование selector builder
@@ -1134,7 +1110,6 @@ lib/url-matcher.js
 lib/selector-utils.js
 ```
 
-
 ---
 
 ## 6. Monkey patching сетевых API
@@ -1142,11 +1117,10 @@ lib/selector-utils.js
 `copyfx-interceptor.js` патчит:
 
 ```javascript
-window.fetch
-XMLHttpRequest.prototype.open
-XMLHttpRequest.prototype.send
+window.fetch;
+XMLHttpRequest.prototype.open;
+XMLHttpRequest.prototype.send;
 ```
-
 
 ### Риск
 
@@ -1163,7 +1137,6 @@ XMLHttpRequest.prototype.send
 if (window.__dpi_copyfx_interceptor_installed) return;
 window.__dpi_copyfx_interceptor_installed = true;
 ```
-
 
 ---
 
@@ -1195,7 +1168,6 @@ window.__dpi_copyfx_interceptor_installed = true;
 [ ] UA toggle работает
 ```
 
-
 ---
 
 ## Этап 1. Метрики и диагностика
@@ -1214,7 +1186,6 @@ Get-ChildItem -Recurse -Include *.js,*.html,*.css,*.json,*.md |
   } | Format-Table -AutoSize
 ```
 
-
 Для примерного количества функций в JS:
 
 ```textmate
@@ -1229,22 +1200,21 @@ Get-ChildItem -Recurse -Include *.js |
   } | Format-Table -AutoSize
 ```
 
-
 ---
 
 ## Этап 2. Безопасные мелкие исправления
 
 Сначала править то, что не меняет архитектуру:
 
-| Файл | Действие |
-|---|---|
-| `background.js` | Удалить `palette`, если не нужна |
-| `content/content.js` | Исправить `matched` |
-| `content/content.js` | Сохранять `ctx` после delayed rules |
-| `content/content.js` | Улучшить `shortSelector` |
+| Файл                    | Действие                              |
+| ----------------------- | ------------------------------------- |
+| `background.js`         | Удалить `palette`, если не нужна      |
+| `content/content.js`    | Исправить `matched`                   |
+| `content/content.js`    | Сохранять `ctx` после delayed rules   |
+| `content/content.js`    | Улучшить `shortSelector`              |
 | `copyfx-interceptor.js` | Добавить guard от повторной установки |
-| `popup/popup.js` | Обработать ignored promises |
-| все JS | Подключить типы Chrome API для IDE |
+| `popup/popup.js`        | Обработать ignored promises           |
+| все JS                  | Подключить типы Chrome API для IDE    |
 
 ---
 
@@ -1258,7 +1228,6 @@ lib/selector-utils.js
 lib/dom-utils.js
 lib/storage.js
 ```
-
 
 ---
 
@@ -1278,7 +1247,6 @@ popup/
 ├── ua-panel.js
 └── popup-utils.js
 ```
-
 
 ---
 
@@ -1305,37 +1273,36 @@ options/
 └── modal-add-from-html.js
 ```
 
-
 ---
 
 # 8. Приоритеты файлов для рефакторинга
 
 ## Высший приоритет
 
-| Файл | Почему |
-|---|---|
-| `options/options.js` | Самый большой и перегруженный |
-| `popup/popup.js` | Много разных фич в одном файле |
-| `content/content.js` | Ядро выполнения правил |
-| `background.js` | Центральный маршрутизатор и миграции |
+| Файл                 | Почему                               |
+| -------------------- | ------------------------------------ |
+| `options/options.js` | Самый большой и перегруженный        |
+| `popup/popup.js`     | Много разных фич в одном файле       |
+| `content/content.js` | Ядро выполнения правил               |
+| `background.js`      | Центральный маршрутизатор и миграции |
 
 ## Средний приоритет
 
-| Файл | Почему |
-|---|---|
-| `lib/matcher.js` | Важная бизнес-логика, нужны тесты |
-| `lib/generators.js` | Много генераторов, есть мутации ctx |
+| Файл                  | Почему                                     |
+| --------------------- | ------------------------------------------ |
+| `lib/matcher.js`      | Важная бизнес-логика, нужны тесты          |
+| `lib/generators.js`   | Много генераторов, есть мутации ctx        |
 | `options/analyzer.js` | Можно изолированно улучшить selector logic |
-| `content/picker.js` | Можно объединить selector generation |
+| `content/picker.js`   | Можно объединить selector generation       |
 
 ## Низкий приоритет
 
-| Файл | Почему |
-|---|---|
+| Файл            | Почему                     |
+| --------------- | -------------------------- |
 | `manifest.json` | Менять осторожно, но редко |
-| CSS/HTML | После стабилизации JS |
-| icons | Не требуют рефакторинга |
-| README | Обновлять после изменений |
+| CSS/HTML        | После стабилизации JS      |
+| icons           | Не требуют рефакторинга    |
+| README          | Обновлять после изменений  |
 
 ---
 

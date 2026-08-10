@@ -11,6 +11,7 @@ The project is vanilla JavaScript with no build step — load it as an unpacked 
 ## Architecture
 
 ### Execution Flow
+
 User → Popup / Hotkey (Ctrl+Shift+F / Ctrl+Shift+1)
 → background.js (service worker: routes commands, manages state)
 → content/content.js (fills fields on the page)
@@ -18,6 +19,7 @@ User → Popup / Hotkey (Ctrl+Shift+F / Ctrl+Shift+1)
 → lib/template.js (parses {{token}} templates)
 → lib/generators.js (generates values: email, phone, counter, seq, regex, etc.)
 → chrome.storage.local (persists counters/state)
+
 ### Global Namespace `window.FF`
 
 All content-script modules register on `window.FF`. Load order in manifest is critical:
@@ -45,18 +47,18 @@ Single `state` object in `chrome.storage.local` contains: `rules[]`, `folders[]`
 
 ## Key Files
 
-| File | Role |
-|---|---|
-| `background.js` | Service worker: state init/migration, hotkey routing, UA rules (declarativeNetRequest), CopyFX bridge |
-| `content/content.js` | Main content script: fills fields, runs special insertions, handles page shortcuts |
-| `content/picker.js` | DOM element picker overlay — generates CSS selectors on click |
-| `content/copyfx-interceptor.js` | MAIN world script; intercepts fetch/XHR for CopyFX API caching |
-| `lib/generators.js` | All template token generators (email, phone, counter, seq, regex, etc.) |
-| `lib/template.js` | `{{token:param}}` parser and renderer |
-| `lib/matcher.js` | Rule-to-field matching: selector/attribute/order conditions with AND/OR logic |
-| `options/options.js` | Full options page logic (~2500+ lines) — rules, insertions, counters, snapshots, import/export |
-| `options/analyzer.js` | Analyzes pasted HTML to auto-generate selectors and suggest templates |
-| `popup/popup.js` | Popup logic: fill actions, scraper, CopyFX traders/investors, UA toggle |
+| File                            | Role                                                                                                  |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `background.js`                 | Service worker: state init/migration, hotkey routing, UA rules (declarativeNetRequest), CopyFX bridge |
+| `content/content.js`            | Main content script: fills fields, runs special insertions, handles page shortcuts                    |
+| `content/picker.js`             | DOM element picker overlay — generates CSS selectors on click                                         |
+| `content/copyfx-interceptor.js` | MAIN world script; intercepts fetch/XHR for CopyFX API caching                                        |
+| `lib/generators.js`             | All template token generators (email, phone, counter, seq, regex, etc.)                               |
+| `lib/template.js`               | `{{token:param}}` parser and renderer                                                                 |
+| `lib/matcher.js`                | Rule-to-field matching: selector/attribute/order conditions with AND/OR logic                         |
+| `options/options.js`            | Full options page logic (~2500+ lines) — rules, insertions, counters, snapshots, import/export        |
+| `options/analyzer.js`           | Analyzes pasted HTML to auto-generate selectors and suggest templates                                 |
+| `popup/popup.js`                | Popup logic: fill actions, scraper, CopyFX traders/investors, UA toggle                               |
 
 ## Template Token Syntax
 
@@ -89,6 +91,7 @@ Documented in `docs/app.md` and `docs/refactoring-guide.md`:
 ## AI Refactoring Harness & Agent Protocol
 
 When refactoring or making code modifications in this project, you MUST strictly follow the process described in:
+
 - `docs/refactoring-guide.md`
 - `docs/ai-refactoring-harness.md`
 
@@ -120,6 +123,7 @@ When assigned a role during a session, adhere strictly to its duties:
 ### Verification & Check Commands
 
 When configured/available during or after Stage 1, run these checks during self-check and audit steps:
+
 - **Lint:** `npm run lint`
 - **Tests:** `npm run test`
 - **Format check:** `npm run format:check`

@@ -38,3 +38,4 @@
 git add docs/
 git commit -m "docs(refactoring): stage 0 baseline checklist"
 git push origin master
+```

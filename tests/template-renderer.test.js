@@ -6,7 +6,7 @@ import { GeneratorRegistry } from '../domain/generators/generator-registry.js';
 describe('TemplateRenderer', () => {
   const registry = new GeneratorRegistry();
   const mockGenerator = {
-    generate: vi.fn().mockReturnValue('mocked_value')
+    generate: vi.fn().mockReturnValue('mocked_value'),
   };
   registry.register('mock', mockGenerator);
 

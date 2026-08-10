@@ -18,7 +18,9 @@ describe('UrlMatcher', () => {
     it('должен поддерживать wildcard (*)', () => {
       expect(matcher.matchesPattern('*.example.com', 'https://api.example.com')).toBe(true);
       expect(matcher.matchesPattern('*.example.com', 'https://example.com')).toBe(false);
-      expect(matcher.matchesPattern('https://*.example.com/*', 'https://api.example.com/path')).toBe(true);
+      expect(
+        matcher.matchesPattern('https://*.example.com/*', 'https://api.example.com/path')
+      ).toBe(true);
     });
 
     it('должен поддерживать RegExp', () => {
@@ -37,7 +39,7 @@ describe('UrlMatcher', () => {
     it('должен поддерживать AND режим', () => {
       const conditions = {
         mode: 'AND',
-        items: ['example', 'https']
+        items: ['example', 'https'],
       };
       expect(matcher.matchesConditions(conditions, 'https://example.com')).toBe(true);
       expect(matcher.matchesConditions(conditions, 'http://example.com')).toBe(false);
@@ -46,7 +48,7 @@ describe('UrlMatcher', () => {
     it('должен поддерживать OR режим', () => {
       const conditions = {
         mode: 'OR',
-        items: ['example', 'google']
+        items: ['example', 'google'],
       };
       expect(matcher.matchesConditions(conditions, 'https://example.com')).toBe(true);
       expect(matcher.matchesConditions(conditions, 'https://google.com')).toBe(true);

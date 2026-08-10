@@ -14,15 +14,13 @@ describe('TemplateParser', () => {
     const result = parser.parse('Hello {{name}}');
     expect(result).toEqual([
       { type: 'text', value: 'Hello ' },
-      { type: 'token', value: 'name' }
+      { type: 'token', value: 'name' },
     ]);
   });
 
   it('should parse token with params', () => {
     const result = parser.parse('{{counter:users}}');
-    expect(result).toEqual([
-      { type: 'token', value: 'counter:users' }
-    ]);
+    expect(result).toEqual([{ type: 'token', value: 'counter:users' }]);
   });
 
   it('should parse multiple tokens', () => {
@@ -30,15 +28,13 @@ describe('TemplateParser', () => {
     expect(result).toEqual([
       { type: 'token', value: 'a' },
       { type: 'text', value: ' and ' },
-      { type: 'token', value: 'b' }
+      { type: 'token', value: 'b' },
     ]);
   });
 
   it('should handle escaped tokens', () => {
     const result = parser.parse('\\{{escaped}}');
-    expect(result).toEqual([
-      { type: 'text', value: '{{escaped}}' }
-    ]);
+    expect(result).toEqual([{ type: 'text', value: '{{escaped}}' }]);
   });
 
   it('should handle empty template', () => {

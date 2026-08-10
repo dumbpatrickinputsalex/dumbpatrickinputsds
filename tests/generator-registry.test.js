@@ -6,7 +6,7 @@ describe('GeneratorRegistry', () => {
   const registry = new GeneratorRegistry();
 
   const mockGenerator = {
-    generate: () => 'test'
+    generate: () => 'test',
   };
 
   it('should register and retrieve generator', () => {

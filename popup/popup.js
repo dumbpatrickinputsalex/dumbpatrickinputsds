@@ -1,4 +1,4 @@
-const $ = (id) => document.getElementById(id);
+const $ = id => document.getElementById(id);
 
 async function currentTab() {
   const [t] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -7,17 +7,26 @@ async function currentTab() {
 
 async function updateStatusLabel() {
   const tab = await currentTab();
-  if (!tab || !tab.url) { $('profile').textContent = '—'; return; }
+  if (!tab || !tab.url) {
+    $('profile').textContent = '—';
+    return;
+  }
   const { state } = await chrome.storage.local.get(['state']);
-  if (!state) { $('profile').textContent = '—'; return; }
+  if (!state) {
+    $('profile').textContent = '—';
+    return;
+  }
   const url = tab.url;
 
   function testUrlCond(cond) {
     const val = String(cond?.value || '').trim();
     if (!val) return true;
     const pattern = val.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*');
-    try { return new RegExp(pattern, 'i').test(url); }
-    catch (e) { return url.toLowerCase().includes(val.toLowerCase()); }
+    try {
+      return new RegExp(pattern, 'i').test(url);
+    } catch (e) {
+      return url.toLowerCase().includes(val.toLowerCase());
+    }
   }
   function urlMatchesConditions(conditions) {
     const active = (conditions || []).filter(c => c && String(c.value || '').trim());
@@ -26,21 +35,29 @@ async function updateStatusLabel() {
     for (let i = 1; i < active.length; i++) {
       const r = testUrlCond(active[i]);
       const conn = (active[i].connector || 'AND').toUpperCase();
-      acc = conn === 'OR' ? (acc || r) : (acc && r);
+      acc = conn === 'OR' ? acc || r : acc && r;
     }
     return acc;
   }
   function urlMatchesPattern(pattern) {
     const p = String(pattern || '').trim();
     if (!p) return false;
-    try { return new RegExp(p).test(url); } catch (e) { return url.includes(p); }
+    try {
+      return new RegExp(p).test(url);
+    } catch (e) {
+      return url.includes(p);
+    }
   }
 
   const rules = state.rules || [];
-  const applicable = rules.filter(r => r.enabled !== false && urlMatchesConditions(r.urlConditions));
+  const applicable = rules.filter(
+    r => r.enabled !== false && urlMatchesConditions(r.urlConditions)
+  );
   $('profile').textContent = applicable.length + ' правил активно';
 
-  const ins = (state.specialInsertions || []).find(i => i.enabled !== false && urlMatchesPattern(i.urlPattern));
+  const ins = (state.specialInsertions || []).find(
+    i => i.enabled !== false && urlMatchesPattern(i.urlPattern)
+  );
   if ($('fillSpecial')) {
     $('fillSpecial').disabled = !ins;
     if (!ins) $('fillSpecial').title = 'Нет специальной вставки для этого URL';
@@ -50,34 +67,44 @@ async function updateStatusLabel() {
 function renderResultTable(details) {
   const box = $('resultDetails');
   const tbl = $('resultTable');
-  if (!details || !details.length) { box.style.display = 'none'; return; }
+  if (!details || !details.length) {
+    box.style.display = 'none';
+    return;
+  }
   tbl.innerHTML = '<thead><tr><th>Правило</th><th>Селектор</th><th>Значение</th></tr></thead>';
   const tb = document.createElement('tbody');
   for (const d of details) {
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td class="rule-name" title="${d.rule.replace(/"/g,'&quot;')}">${escapeHtml(d.rule)}</td>
-      <td class="selector" title="${d.selector.replace(/"/g,'&quot;')}">${escapeHtml(d.selector)}</td>
-      <td class="value" title="${String(d.value).replace(/"/g,'&quot;')}">${escapeHtml(String(d.value))}</td>`;
+      <td class="rule-name" title="${d.rule.replace(/"/g, '&quot;')}">${escapeHtml(d.rule)}</td>
+      <td class="selector" title="${d.selector.replace(/"/g, '&quot;')}">${escapeHtml(d.selector)}</td>
+      <td class="value" title="${String(d.value).replace(/"/g, '&quot;')}">${escapeHtml(String(d.value))}</td>`;
     tb.appendChild(tr);
   }
   tbl.appendChild(tb);
   box.style.display = 'block';
 }
-function escapeHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escapeHtml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 
 async function send(type) {
   const s = $('status');
   $('resultDetails').style.display = 'none';
   try {
-    const res = await new Promise((resolve) => {
+    const res = await new Promise(resolve => {
       chrome.runtime.sendMessage({ type: 'PROXY_TO_TAB', payload: { type } }, resolve);
     });
-    if (!res) { s.textContent = 'Нет ответа от страницы.'; s.className = 'status err'; return; }
+    if (!res) {
+      s.textContent = 'Нет ответа от страницы.';
+      s.className = 'status err';
+      return;
+    }
     if (res.error || res.reason === 'unsupported-page') {
-      s.textContent = res.reason === 'unsupported-page'
-        ? 'На этой странице расширение работать не может (chrome://, extension pages).'
-        : 'Ошибка: ' + res.error;
+      s.textContent =
+        res.reason === 'unsupported-page'
+          ? 'На этой странице расширение работать не может (chrome://, extension pages).'
+          : 'Ошибка: ' + res.error;
       s.className = 'status err';
       return;
     }
@@ -92,7 +119,8 @@ async function send(type) {
         s.className = 'status ok';
         renderResultTable([{ rule: 'special', selector: res.selector || '?', value: res.value }]);
       } else {
-        s.textContent = 'Не выполнено: ' + (res.reason || 'причина неизвестна'); s.className = 'status err';
+        s.textContent = 'Не выполнено: ' + (res.reason || 'причина неизвестна');
+        s.className = 'status err';
       }
     }
   } catch (e) {
@@ -110,8 +138,9 @@ $('openOptions').addEventListener('click', () => {
 if ($('addInsertion')) {
   $('addInsertion').addEventListener('click', async () => {
     const tab = await currentTab();
-    const url = (tab && tab.url) ? tab.url : '';
-    const optionsUrl = chrome.runtime.getURL('options/options.html') + '?add=1&url=' + encodeURIComponent(url);
+    const url = tab && tab.url ? tab.url : '';
+    const optionsUrl =
+      chrome.runtime.getURL('options/options.html') + '?add=1&url=' + encodeURIComponent(url);
     await chrome.tabs.create({ url: optionsUrl });
     window.close();
   });
@@ -129,8 +158,11 @@ function scraperUrlMatches(urls, pageUrl) {
     const p = String(u || '').trim();
     if (!p) continue;
     const regex = p.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*');
-    try { if (new RegExp(regex, 'i').test(pageUrl)) return true; }
-    catch (e) { if (pageUrl.toLowerCase().includes(p.toLowerCase())) return true; }
+    try {
+      if (new RegExp(regex, 'i').test(pageUrl)) return true;
+    } catch (e) {
+      if (pageUrl.toLowerCase().includes(p.toLowerCase())) return true;
+    }
   }
   return false;
 }
@@ -159,10 +191,16 @@ async function loadScraperData() {
 
   try {
     const res = await new Promise(resolve => {
-      chrome.runtime.sendMessage({
-        type: 'PROXY_TO_TAB',
-        payload: { type: 'SCRAPE_PAGE', parentSelector: cfg.parentSelector || 'div.debug_plugin_client' }
-      }, resolve);
+      chrome.runtime.sendMessage(
+        {
+          type: 'PROXY_TO_TAB',
+          payload: {
+            type: 'SCRAPE_PAGE',
+            parentSelector: cfg.parentSelector || 'div.debug_plugin_client',
+          },
+        },
+        resolve
+      );
     });
     if (!res || !res.ok || !res.data || !res.data.length) return;
 
@@ -186,7 +224,9 @@ async function loadScraperData() {
       tbody.appendChild(tr);
     }
     tbl.appendChild(tbody);
-  } catch (e) { /* silent */ }
+  } catch (e) {
+    /* silent */
+  }
 }
 
 $('scraperScanBtn').addEventListener('click', async () => {
@@ -205,10 +245,13 @@ $('scraperScanBtn').addEventListener('click', async () => {
 
   try {
     const res = await new Promise(resolve => {
-      chrome.runtime.sendMessage({
-        type: 'PROXY_TO_TAB',
-        payload: { type: 'SCRAPE_FIELDS', parentSelector: parentSel }
-      }, resolve);
+      chrome.runtime.sendMessage(
+        {
+          type: 'PROXY_TO_TAB',
+          payload: { type: 'SCRAPE_FIELDS', parentSelector: parentSel },
+        },
+        resolve
+      );
     });
     if (!res || !res.ok) {
       status.textContent = res ? res.error : 'Нет ответа от страницы';
@@ -217,7 +260,7 @@ $('scraperScanBtn').addEventListener('click', async () => {
     }
     const existing = new Set((cfg.fields || []).map(f => f.key));
     const merged = [];
-    for (const f of (cfg.fields || [])) {
+    for (const f of cfg.fields || []) {
       if (res.fields.includes(f.key)) merged.push(f);
     }
     for (const key of res.fields) {
@@ -225,7 +268,8 @@ $('scraperScanBtn').addEventListener('click', async () => {
     }
     cfg.fields = merged;
     await new Promise(resolve => chrome.storage.local.set({ state }, resolve));
-    status.textContent = 'Найдено полей: ' + res.fields.length + '. Настройте выбор в Настройках → Спец. возможности.';
+    status.textContent =
+      'Найдено полей: ' + res.fields.length + '. Настройте выбор в Настройках → Спец. возможности.';
     status.className = 'scraper-scan-status ok';
   } catch (e) {
     status.textContent = 'Ошибка: ' + e.message;
@@ -234,74 +278,447 @@ $('scraperScanBtn').addEventListener('click', async () => {
 });
 
 const COUNTRY_NUM_TO_ALPHA2 = {
-  4:'AF',8:'AL',12:'DZ',16:'AS',20:'AD',24:'AO',28:'AG',31:'AZ',32:'AR',36:'AU',
-  40:'AT',44:'BS',48:'BH',50:'BD',51:'AM',52:'BB',56:'BE',60:'BM',64:'BT',68:'BO',
-  70:'BA',72:'BW',76:'BR',84:'BZ',86:'IO',90:'SB',96:'BN',100:'BG',104:'MM',108:'BI',
-  112:'BY',116:'KH',120:'CM',124:'CA',132:'CV',136:'KY',140:'CF',144:'LK',148:'TD',
-  152:'CL',156:'CN',158:'TW',162:'CX',166:'CC',170:'CO',174:'KM',175:'YT',178:'CG',
-  180:'CD',184:'CK',188:'CR',191:'HR',192:'CU',196:'CY',203:'CZ',204:'BJ',208:'DK',
-  212:'DM',214:'DO',218:'EC',222:'SV',226:'GQ',231:'ET',232:'ER',233:'EE',234:'FO',
-  238:'FK',242:'FJ',246:'FI',250:'FR',254:'GF',258:'PF',262:'DJ',266:'GA',268:'GE',
-  270:'GM',275:'PS',276:'DE',288:'GH',292:'GI',296:'KI',300:'GR',304:'GL',308:'GD',
-  312:'GP',316:'GU',320:'GT',324:'GN',328:'GY',332:'HT',336:'VA',340:'HN',344:'HK',
-  348:'HU',352:'IS',356:'IN',360:'ID',364:'IR',368:'IQ',372:'IE',376:'IL',380:'IT',
-  384:'CI',388:'JM',392:'JP',398:'KZ',400:'JO',404:'KE',408:'KP',410:'KR',414:'KW',
-  417:'KG',418:'LA',422:'LB',426:'LS',428:'LV',430:'LR',434:'LY',438:'LI',440:'LT',
-  442:'LU',446:'MO',450:'MG',454:'MW',458:'MY',462:'MV',466:'ML',470:'MT',474:'MQ',
-  478:'MR',480:'MU',484:'MX',492:'MC',496:'MN',498:'MD',499:'ME',500:'MS',504:'MA',
-  508:'MZ',512:'OM',516:'NA',520:'NR',524:'NP',528:'NL',530:'AN',533:'AW',540:'NC',
-  548:'VU',554:'NZ',558:'NI',562:'NE',566:'NG',570:'NU',574:'NF',578:'NO',580:'MP',
-  583:'FM',584:'MH',585:'PW',586:'PK',591:'PA',598:'PG',600:'PY',604:'PE',608:'PH',
-  612:'PN',616:'PL',620:'PT',624:'GW',626:'TL',630:'PR',634:'QA',638:'RE',642:'RO',
-  643:'RU',646:'RW',654:'SH',659:'KN',660:'AI',662:'LC',666:'PM',670:'VC',674:'SM',
-  678:'ST',682:'SA',686:'SN',688:'RS',690:'SC',694:'SL',702:'SG',703:'SK',704:'VN',
-  705:'SI',706:'SO',710:'ZA',716:'ZW',720:'YE',724:'ES',728:'SS',729:'SD',740:'SR',
-  744:'SJ',748:'SZ',752:'SE',756:'CH',760:'SY',762:'TJ',764:'TH',768:'TG',772:'TK',
-  776:'TO',780:'TT',784:'AE',788:'TN',792:'TR',795:'TM',796:'TC',798:'TV',800:'UG',
-  804:'UA',807:'MK',818:'EG',826:'GB',831:'GG',832:'JE',833:'IM',834:'TZ',840:'US',
-  850:'VI',854:'BF',858:'UY',860:'UZ',862:'VE',876:'WF',882:'WS',887:'YE',894:'ZM'
+  4: 'AF',
+  8: 'AL',
+  12: 'DZ',
+  16: 'AS',
+  20: 'AD',
+  24: 'AO',
+  28: 'AG',
+  31: 'AZ',
+  32: 'AR',
+  36: 'AU',
+  40: 'AT',
+  44: 'BS',
+  48: 'BH',
+  50: 'BD',
+  51: 'AM',
+  52: 'BB',
+  56: 'BE',
+  60: 'BM',
+  64: 'BT',
+  68: 'BO',
+  70: 'BA',
+  72: 'BW',
+  76: 'BR',
+  84: 'BZ',
+  86: 'IO',
+  90: 'SB',
+  96: 'BN',
+  100: 'BG',
+  104: 'MM',
+  108: 'BI',
+  112: 'BY',
+  116: 'KH',
+  120: 'CM',
+  124: 'CA',
+  132: 'CV',
+  136: 'KY',
+  140: 'CF',
+  144: 'LK',
+  148: 'TD',
+  152: 'CL',
+  156: 'CN',
+  158: 'TW',
+  162: 'CX',
+  166: 'CC',
+  170: 'CO',
+  174: 'KM',
+  175: 'YT',
+  178: 'CG',
+  180: 'CD',
+  184: 'CK',
+  188: 'CR',
+  191: 'HR',
+  192: 'CU',
+  196: 'CY',
+  203: 'CZ',
+  204: 'BJ',
+  208: 'DK',
+  212: 'DM',
+  214: 'DO',
+  218: 'EC',
+  222: 'SV',
+  226: 'GQ',
+  231: 'ET',
+  232: 'ER',
+  233: 'EE',
+  234: 'FO',
+  238: 'FK',
+  242: 'FJ',
+  246: 'FI',
+  250: 'FR',
+  254: 'GF',
+  258: 'PF',
+  262: 'DJ',
+  266: 'GA',
+  268: 'GE',
+  270: 'GM',
+  275: 'PS',
+  276: 'DE',
+  288: 'GH',
+  292: 'GI',
+  296: 'KI',
+  300: 'GR',
+  304: 'GL',
+  308: 'GD',
+  312: 'GP',
+  316: 'GU',
+  320: 'GT',
+  324: 'GN',
+  328: 'GY',
+  332: 'HT',
+  336: 'VA',
+  340: 'HN',
+  344: 'HK',
+  348: 'HU',
+  352: 'IS',
+  356: 'IN',
+  360: 'ID',
+  364: 'IR',
+  368: 'IQ',
+  372: 'IE',
+  376: 'IL',
+  380: 'IT',
+  384: 'CI',
+  388: 'JM',
+  392: 'JP',
+  398: 'KZ',
+  400: 'JO',
+  404: 'KE',
+  408: 'KP',
+  410: 'KR',
+  414: 'KW',
+  417: 'KG',
+  418: 'LA',
+  422: 'LB',
+  426: 'LS',
+  428: 'LV',
+  430: 'LR',
+  434: 'LY',
+  438: 'LI',
+  440: 'LT',
+  442: 'LU',
+  446: 'MO',
+  450: 'MG',
+  454: 'MW',
+  458: 'MY',
+  462: 'MV',
+  466: 'ML',
+  470: 'MT',
+  474: 'MQ',
+  478: 'MR',
+  480: 'MU',
+  484: 'MX',
+  492: 'MC',
+  496: 'MN',
+  498: 'MD',
+  499: 'ME',
+  500: 'MS',
+  504: 'MA',
+  508: 'MZ',
+  512: 'OM',
+  516: 'NA',
+  520: 'NR',
+  524: 'NP',
+  528: 'NL',
+  530: 'AN',
+  533: 'AW',
+  540: 'NC',
+  548: 'VU',
+  554: 'NZ',
+  558: 'NI',
+  562: 'NE',
+  566: 'NG',
+  570: 'NU',
+  574: 'NF',
+  578: 'NO',
+  580: 'MP',
+  583: 'FM',
+  584: 'MH',
+  585: 'PW',
+  586: 'PK',
+  591: 'PA',
+  598: 'PG',
+  600: 'PY',
+  604: 'PE',
+  608: 'PH',
+  612: 'PN',
+  616: 'PL',
+  620: 'PT',
+  624: 'GW',
+  626: 'TL',
+  630: 'PR',
+  634: 'QA',
+  638: 'RE',
+  642: 'RO',
+  643: 'RU',
+  646: 'RW',
+  654: 'SH',
+  659: 'KN',
+  660: 'AI',
+  662: 'LC',
+  666: 'PM',
+  670: 'VC',
+  674: 'SM',
+  678: 'ST',
+  682: 'SA',
+  686: 'SN',
+  688: 'RS',
+  690: 'SC',
+  694: 'SL',
+  702: 'SG',
+  703: 'SK',
+  704: 'VN',
+  705: 'SI',
+  706: 'SO',
+  710: 'ZA',
+  716: 'ZW',
+  720: 'YE',
+  724: 'ES',
+  728: 'SS',
+  729: 'SD',
+  740: 'SR',
+  744: 'SJ',
+  748: 'SZ',
+  752: 'SE',
+  756: 'CH',
+  760: 'SY',
+  762: 'TJ',
+  764: 'TH',
+  768: 'TG',
+  772: 'TK',
+  776: 'TO',
+  780: 'TT',
+  784: 'AE',
+  788: 'TN',
+  792: 'TR',
+  795: 'TM',
+  796: 'TC',
+  798: 'TV',
+  800: 'UG',
+  804: 'UA',
+  807: 'MK',
+  818: 'EG',
+  826: 'GB',
+  831: 'GG',
+  832: 'JE',
+  833: 'IM',
+  834: 'TZ',
+  840: 'US',
+  850: 'VI',
+  854: 'BF',
+  858: 'UY',
+  860: 'UZ',
+  862: 'VE',
+  876: 'WF',
+  882: 'WS',
+  887: 'YE',
+  894: 'ZM',
 };
 
 const COUNTRY_NAME_TO_ALPHA2 = {
-  'afghanistan':'AF','albania':'AL','algeria':'DZ','argentina':'AR','armenia':'AM',
-  'australia':'AU','austria':'AT','azerbaijan':'AZ','bahrain':'BH','bangladesh':'BD',
-  'belarus':'BY','belgium':'BE','bolivia':'BO','bosnia':'BA','brazil':'BR','brunei':'BN',
-  'bulgaria':'BG','cambodia':'KH','cameroon':'CM','canada':'CA','chile':'CL','china':'CN',
-  'colombia':'CO','congo':'CG','costa rica':'CR','croatia':'HR','cuba':'CU','cyprus':'CY',
-  'czech republic':'CZ','czechia':'CZ','denmark':'DK','dominican republic':'DO',
-  'ecuador':'EC','egypt':'EG','el salvador':'SV','estonia':'EE','ethiopia':'ET',
-  'finland':'FI','france':'FR','georgia':'GE','germany':'DE','ghana':'GH','greece':'GR',
-  'guatemala':'GT','honduras':'HN','hong kong':'HK','hungary':'HU','iceland':'IS',
-  'india':'IN','indonesia':'ID','iran':'IR','iraq':'IQ','ireland':'IE','israel':'IL',
-  'italy':'IT','jamaica':'JM','japan':'JP','jordan':'JO','kazakhstan':'KZ','kenya':'KE',
-  'kuwait':'KW','kyrgyzstan':'KG','laos':'LA','latvia':'LV','lebanon':'LB','libya':'LY',
-  'lithuania':'LT','luxembourg':'LU','macau':'MO','macao':'MO','madagascar':'MG',
-  'malaysia':'MY','maldives':'MV','malta':'MT','mexico':'MX','moldova':'MD','monaco':'MC',
-  'mongolia':'MN','montenegro':'ME','morocco':'MA','mozambique':'MZ','myanmar':'MM',
-  'namibia':'NA','nepal':'NP','netherlands':'NL','new zealand':'NZ','nicaragua':'NI',
-  'nigeria':'NG','north korea':'KP','north macedonia':'MK','norway':'NO','oman':'OM',
-  'pakistan':'PK','palestine':'PS','panama':'PA','paraguay':'PY','peru':'PE',
-  'philippines':'PH','poland':'PL','portugal':'PT','qatar':'QA','romania':'RO',
-  'russia':'RU','saudi arabia':'SA','senegal':'SN','serbia':'RS','singapore':'SG',
-  'slovakia':'SK','slovenia':'SI','somalia':'SO','south africa':'ZA','south korea':'KR',
-  'south sudan':'SS','spain':'ES','sri lanka':'LK','sudan':'SD','sweden':'SE',
-  'switzerland':'CH','syria':'SY','taiwan':'TW','tajikistan':'TJ','tanzania':'TZ',
-  'thailand':'TH','tunisia':'TN','turkey':'TR','turkmenistan':'TM','uganda':'UG',
-  'ukraine':'UA','united arab emirates':'AE','uae':'AE','united kingdom':'GB','uk':'GB',
-  'united states':'US','usa':'US','uruguay':'UY','uzbekistan':'UZ','venezuela':'VE',
-  'vietnam':'VN','yemen':'YE','zambia':'ZM','zimbabwe':'ZW',
-  'россия':'RU','украина':'UA','беларусь':'BY','казахстан':'KZ','грузия':'GE',
-  'армения':'AM','азербайджан':'AZ','молдова':'MD','кыргызстан':'KG','таджикистан':'TJ',
-  'туркменистан':'TM','узбекистан':'UZ','латвия':'LV','литва':'LT','эстония':'EE',
-  'польша':'PL','германия':'DE','франция':'FR','италия':'IT','испания':'ES',
-  'великобритания':'GB','сша':'US','китай':'CN','япония':'JP','индия':'IN',
-  'турция':'TR','бразилия':'BR','канада':'CA','австралия':'AU','мексика':'MX',
-  'египет':'EG','нигерия':'NG','таиланд':'TH','вьетнам':'VN','индонезия':'ID',
-  'малайзия':'MY','сингапур':'SG','корея':'KR','румыния':'RO','чехия':'CZ',
-  'болгария':'BG','сербия':'RS','хорватия':'HR','венгрия':'HU','греция':'GR',
-  'кипр':'CY','швеция':'SE','норвегия':'NO','финляндия':'FI','дания':'DK',
-  'нидерланды':'NL','бельгия':'BE','швейцария':'CH','австрия':'AT','португалия':'PT',
-  'ирландия':'IE','аргентина':'AR','колумбия':'CO','чили':'CL','перу':'PE'
+  afghanistan: 'AF',
+  albania: 'AL',
+  algeria: 'DZ',
+  argentina: 'AR',
+  armenia: 'AM',
+  australia: 'AU',
+  austria: 'AT',
+  azerbaijan: 'AZ',
+  bahrain: 'BH',
+  bangladesh: 'BD',
+  belarus: 'BY',
+  belgium: 'BE',
+  bolivia: 'BO',
+  bosnia: 'BA',
+  brazil: 'BR',
+  brunei: 'BN',
+  bulgaria: 'BG',
+  cambodia: 'KH',
+  cameroon: 'CM',
+  canada: 'CA',
+  chile: 'CL',
+  china: 'CN',
+  colombia: 'CO',
+  congo: 'CG',
+  'costa rica': 'CR',
+  croatia: 'HR',
+  cuba: 'CU',
+  cyprus: 'CY',
+  'czech republic': 'CZ',
+  czechia: 'CZ',
+  denmark: 'DK',
+  'dominican republic': 'DO',
+  ecuador: 'EC',
+  egypt: 'EG',
+  'el salvador': 'SV',
+  estonia: 'EE',
+  ethiopia: 'ET',
+  finland: 'FI',
+  france: 'FR',
+  georgia: 'GE',
+  germany: 'DE',
+  ghana: 'GH',
+  greece: 'GR',
+  guatemala: 'GT',
+  honduras: 'HN',
+  'hong kong': 'HK',
+  hungary: 'HU',
+  iceland: 'IS',
+  india: 'IN',
+  indonesia: 'ID',
+  iran: 'IR',
+  iraq: 'IQ',
+  ireland: 'IE',
+  israel: 'IL',
+  italy: 'IT',
+  jamaica: 'JM',
+  japan: 'JP',
+  jordan: 'JO',
+  kazakhstan: 'KZ',
+  kenya: 'KE',
+  kuwait: 'KW',
+  kyrgyzstan: 'KG',
+  laos: 'LA',
+  latvia: 'LV',
+  lebanon: 'LB',
+  libya: 'LY',
+  lithuania: 'LT',
+  luxembourg: 'LU',
+  macau: 'MO',
+  macao: 'MO',
+  madagascar: 'MG',
+  malaysia: 'MY',
+  maldives: 'MV',
+  malta: 'MT',
+  mexico: 'MX',
+  moldova: 'MD',
+  monaco: 'MC',
+  mongolia: 'MN',
+  montenegro: 'ME',
+  morocco: 'MA',
+  mozambique: 'MZ',
+  myanmar: 'MM',
+  namibia: 'NA',
+  nepal: 'NP',
+  netherlands: 'NL',
+  'new zealand': 'NZ',
+  nicaragua: 'NI',
+  nigeria: 'NG',
+  'north korea': 'KP',
+  'north macedonia': 'MK',
+  norway: 'NO',
+  oman: 'OM',
+  pakistan: 'PK',
+  palestine: 'PS',
+  panama: 'PA',
+  paraguay: 'PY',
+  peru: 'PE',
+  philippines: 'PH',
+  poland: 'PL',
+  portugal: 'PT',
+  qatar: 'QA',
+  romania: 'RO',
+  russia: 'RU',
+  'saudi arabia': 'SA',
+  senegal: 'SN',
+  serbia: 'RS',
+  singapore: 'SG',
+  slovakia: 'SK',
+  slovenia: 'SI',
+  somalia: 'SO',
+  'south africa': 'ZA',
+  'south korea': 'KR',
+  'south sudan': 'SS',
+  spain: 'ES',
+  'sri lanka': 'LK',
+  sudan: 'SD',
+  sweden: 'SE',
+  switzerland: 'CH',
+  syria: 'SY',
+  taiwan: 'TW',
+  tajikistan: 'TJ',
+  tanzania: 'TZ',
+  thailand: 'TH',
+  tunisia: 'TN',
+  turkey: 'TR',
+  turkmenistan: 'TM',
+  uganda: 'UG',
+  ukraine: 'UA',
+  'united arab emirates': 'AE',
+  uae: 'AE',
+  'united kingdom': 'GB',
+  uk: 'GB',
+  'united states': 'US',
+  usa: 'US',
+  uruguay: 'UY',
+  uzbekistan: 'UZ',
+  venezuela: 'VE',
+  vietnam: 'VN',
+  yemen: 'YE',
+  zambia: 'ZM',
+  zimbabwe: 'ZW',
+  россия: 'RU',
+  украина: 'UA',
+  беларусь: 'BY',
+  казахстан: 'KZ',
+  грузия: 'GE',
+  армения: 'AM',
+  азербайджан: 'AZ',
+  молдова: 'MD',
+  кыргызстан: 'KG',
+  таджикистан: 'TJ',
+  туркменистан: 'TM',
+  узбекистан: 'UZ',
+  латвия: 'LV',
+  литва: 'LT',
+  эстония: 'EE',
+  польша: 'PL',
+  германия: 'DE',
+  франция: 'FR',
+  италия: 'IT',
+  испания: 'ES',
+  великобритания: 'GB',
+  сша: 'US',
+  китай: 'CN',
+  япония: 'JP',
+  индия: 'IN',
+  турция: 'TR',
+  бразилия: 'BR',
+  канада: 'CA',
+  австралия: 'AU',
+  мексика: 'MX',
+  египет: 'EG',
+  нигерия: 'NG',
+  таиланд: 'TH',
+  вьетнам: 'VN',
+  индонезия: 'ID',
+  малайзия: 'MY',
+  сингапур: 'SG',
+  корея: 'KR',
+  румыния: 'RO',
+  чехия: 'CZ',
+  болгария: 'BG',
+  сербия: 'RS',
+  хорватия: 'HR',
+  венгрия: 'HU',
+  греция: 'GR',
+  кипр: 'CY',
+  швеция: 'SE',
+  норвегия: 'NO',
+  финляндия: 'FI',
+  дания: 'DK',
+  нидерланды: 'NL',
+  бельгия: 'BE',
+  швейцария: 'CH',
+  австрия: 'AT',
+  португалия: 'PT',
+  ирландия: 'IE',
+  аргентина: 'AR',
+  колумбия: 'CO',
+  чили: 'CL',
+  перу: 'PE',
 };
 
 function countryAlpha2(val) {
@@ -317,7 +734,7 @@ function formatScraperValue(key, val) {
   if (key === 'is_test') {
     const badge = document.createElement('span');
     badge.className = 'badge-test ' + (val === '1' || val === 1 ? 'test' : 'real');
-    badge.textContent = (val === '1' || val === 1) ? 'TEST' : 'REAL';
+    badge.textContent = val === '1' || val === 1 ? 'TEST' : 'REAL';
     span.appendChild(badge);
     return span;
   }
@@ -398,7 +815,7 @@ function getCopyfxAdminDomain(hostname) {
 
 async function copyfxSaveSession() {
   await chrome.storage.session.set({
-    copyfxCache: { entries: copyfxAllEntries, sourceUrl: copyfxSourceUrl }
+    copyfxCache: { entries: copyfxAllEntries, sourceUrl: copyfxSourceUrl },
   });
 }
 
@@ -458,14 +875,17 @@ $('copyfxGetBtn').addEventListener('click', async () => {
 
   try {
     const res = await new Promise(resolve => {
-      chrome.runtime.sendMessage({
-        type: 'PROXY_TO_TAB',
-        payload: { type: 'COPYFX_GET_TRADERS', apiUrl: cfg.apiUrl }
-      }, resolve);
+      chrome.runtime.sendMessage(
+        {
+          type: 'PROXY_TO_TAB',
+          payload: { type: 'COPYFX_GET_TRADERS', apiUrl: cfg.apiUrl },
+        },
+        resolve
+      );
     });
 
     if (!res || !res.ok) {
-      status.textContent = res ? ('Ошибка: ' + res.error) : 'Нет ответа от страницы';
+      status.textContent = res ? 'Ошибка: ' + res.error : 'Нет ответа от страницы';
       status.className = 'scraper-scan-status err';
       getBtn.disabled = false;
       return;
@@ -524,12 +944,20 @@ $('copyfxLoadMore').addEventListener('click', async () => {
 async function renderCopyfxEntries(cfg, append) {
   const container = $('copyfxEntries');
   const loadMore = $('copyfxLoadMore');
-  if (!append) { container.innerHTML = ''; copyfxShownCount = 0; }
+  if (!append) {
+    container.innerHTML = '';
+    copyfxShownCount = 0;
+  }
 
   const srcUrl = copyfxSourceUrl || '';
   const lang = getCopyfxLang(srcUrl);
-  let hostname = '', origin = '';
-  try { const u = new URL(srcUrl); hostname = u.hostname; origin = u.origin; } catch (e) {}
+  let hostname = '',
+    origin = '';
+  try {
+    const u = new URL(srcUrl);
+    hostname = u.hostname;
+    origin = u.origin;
+  } catch (e) {}
   const adminDomain = getCopyfxAdminDomain(hostname);
   const extraFields = cfg.extraFields || [];
 
@@ -633,17 +1061,25 @@ async function renderCopyfxEntries(cfg, append) {
     const btnStrategy = document.createElement('button');
     btnStrategy.className = 'copyfx-btn copyfx-btn-strategy';
     btnStrategy.textContent = 'Стратегия';
-    btnStrategy.addEventListener('click', () => chrome.tabs.create({ url: `${origin}/${lang}/copyfx/my/strategies/${sourceId}/${login}/settings` }));
+    btnStrategy.addEventListener('click', () =>
+      chrome.tabs.create({
+        url: `${origin}/${lang}/copyfx/my/strategies/${sourceId}/${login}/settings`,
+      })
+    );
 
     const btnTrader = document.createElement('button');
     btnTrader.className = 'copyfx-btn copyfx-btn-primary';
     btnTrader.textContent = 'Карточка трейдера';
-    btnTrader.addEventListener('click', () => chrome.tabs.create({ url: `${origin}/${lang}/copyfx/traders/${sourceId}/${login}` }));
+    btnTrader.addEventListener('click', () =>
+      chrome.tabs.create({ url: `${origin}/${lang}/copyfx/traders/${sourceId}/${login}` })
+    );
 
     const btnAccount = document.createElement('button');
     btnAccount.className = 'copyfx-btn copyfx-btn-account';
     btnAccount.textContent = '🔑 Карточка счета';
-    btnAccount.addEventListener('click', () => chrome.tabs.create({ url: `${adminDomain}/accounts/edit/${login}/0` }));
+    btnAccount.addEventListener('click', () =>
+      chrome.tabs.create({ url: `${adminDomain}/accounts/edit/${login}/0` })
+    );
 
     row2.appendChild(btnStrategy);
     row2.appendChild(btnTrader);
@@ -663,7 +1099,8 @@ async function renderCopyfxEntries(cfg, append) {
   copyfxShownCount += batch.length;
   if (copyfxShownCount < copyfxAllEntries.length) {
     loadMore.style.display = '';
-    loadMore.textContent = 'Загрузить следующие ' + Math.min(10, copyfxAllEntries.length - copyfxShownCount) + ' счетов';
+    loadMore.textContent =
+      'Загрузить следующие ' + Math.min(10, copyfxAllEntries.length - copyfxShownCount) + ' счетов';
   } else {
     loadMore.style.display = 'none';
   }
@@ -681,12 +1118,14 @@ function isTraderDetailPage(url) {
     const parts = new URL(url).pathname.split('/').filter(Boolean);
     const idx = parts.indexOf('traders');
     return idx !== -1 && parts.length >= idx + 3;
-  } catch (e) { return false; }
+  } catch (e) {
+    return false;
+  }
 }
 
 async function investorSaveSession() {
   await chrome.storage.session.set({
-    investorCache: { entries: investorAllEntries, login: investorTraderLogin }
+    investorCache: { entries: investorAllEntries, login: investorTraderLogin },
   });
 }
 
@@ -757,14 +1196,17 @@ $('investorGetBtn').addEventListener('click', async () => {
 
   try {
     const res = await new Promise(resolve => {
-      chrome.runtime.sendMessage({
-        type: 'PROXY_TO_TAB',
-        payload: { type: 'COPYFX_GET_INVESTORS' }
-      }, resolve);
+      chrome.runtime.sendMessage(
+        {
+          type: 'PROXY_TO_TAB',
+          payload: { type: 'COPYFX_GET_INVESTORS' },
+        },
+        resolve
+      );
     });
 
     if (!res || !res.ok) {
-      status.textContent = res ? ('Ошибка: ' + res.error) : 'Нет ответа от страницы';
+      status.textContent = res ? 'Ошибка: ' + res.error : 'Нет ответа от страницы';
       status.className = 'scraper-scan-status err';
       getBtn.disabled = false;
       return;
@@ -785,7 +1227,7 @@ $('investorGetBtn').addEventListener('click', async () => {
 
     investorAllEntries = entries;
     investorShownCount = 0;
-    investorTraderLogin = (res.body && res.body.login) ? String(res.body.login) : '';
+    investorTraderLogin = res.body && res.body.login ? String(res.body.login) : '';
     status.textContent = 'Найдено: ' + entries.length + ' инвесторов';
     status.className = 'scraper-scan-status ok';
     getBtn.style.display = 'none';
@@ -829,7 +1271,10 @@ function getCoefficient(cmv) {
 function renderInvestorEntries(append) {
   const container = $('investorEntries');
   const loadMore = $('investorLoadMore');
-  if (!append) { container.innerHTML = ''; investorShownCount = 0; }
+  if (!append) {
+    container.innerHTML = '';
+    investorShownCount = 0;
+  }
 
   const batch = investorAllEntries.slice(investorShownCount, investorShownCount + 10);
 
@@ -934,7 +1379,8 @@ function renderInvestorEntries(append) {
   investorShownCount += batch.length;
   if (investorShownCount < investorAllEntries.length) {
     loadMore.style.display = '';
-    loadMore.textContent = 'Загрузить следующие ' + Math.min(10, investorAllEntries.length - investorShownCount);
+    loadMore.textContent =
+      'Загрузить следующие ' + Math.min(10, investorAllEntries.length - investorShownCount);
   } else {
     loadMore.style.display = 'none';
   }

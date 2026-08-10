@@ -11,5 +11,5 @@ export const DEFAULT_STATE = {
   copyfxConfig: { enabled: false },
   uaRules: [],
   pageShortcuts: [],
-  activityLog: []
+  activityLog: [],
 };

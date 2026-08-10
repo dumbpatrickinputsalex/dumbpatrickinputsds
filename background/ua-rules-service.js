@@ -13,20 +13,18 @@ export class UaRulesService {
         priority: index + 1,
         action: {
           type: 'modifyHeaders',
-          requestHeaders: [
-            { header: 'User-Agent', operation: 'set', value: rule.userAgent }
-          ]
+          requestHeaders: [{ header: 'User-Agent', operation: 'set', value: rule.userAgent }],
         },
         condition: {
           urlFilter: rule.urlPattern || '*',
-          resourceTypes: ['main_frame', 'sub_frame']
-        }
+          resourceTypes: ['main_frame', 'sub_frame'],
+        },
       }));
 
     try {
       await chrome.declarativeNetRequest.updateDynamicRules({
         removeRuleIds: this.currentRules.map(r => r.id),
-        addRules: rules
+        addRules: rules,
       });
       this.currentRules = rules;
     } catch (error) {

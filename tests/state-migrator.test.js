@@ -9,8 +9,8 @@ describe('StateMigrator', () => {
     const oldState = {
       profiles: [
         { id: 'p1', name: 'Profile 1', rules: [{ id: 'r1', name: 'Rule 1' }] },
-        { id: 'p2', name: 'Profile 2', rules: [{ id: 'r2', name: 'Rule 2' }] }
-      ]
+        { id: 'p2', name: 'Profile 2', rules: [{ id: 'r2', name: 'Rule 2' }] },
+      ],
     };
 
     const result = migrator.migrate(oldState);

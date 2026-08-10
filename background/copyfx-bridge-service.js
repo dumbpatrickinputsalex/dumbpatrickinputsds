@@ -11,7 +11,7 @@ export class CopyfxBridgeService {
         target: { tabId: tabs[0].id },
         func: () => {
           return window.__dpi_copyfx_cache?.traders || null;
-        }
+        },
       });
 
       return result?.[0]?.result || { error: 'No traders data found' };
@@ -31,7 +31,7 @@ export class CopyfxBridgeService {
         target: { tabId: tabs[0].id },
         func: () => {
           return window.__dpi_copyfx_cache?.investors || null;
-        }
+        },
       });
 
       return result?.[0]?.result || { error: 'No investors data found' };

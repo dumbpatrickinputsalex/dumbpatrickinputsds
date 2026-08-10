@@ -3,7 +3,7 @@ export class UaPanel {
   constructor() {
     this.elements = {
       uaBox: document.getElementById('uaBox'),
-      uaToggle: document.getElementById('uaToggle')
+      uaToggle: document.getElementById('uaToggle'),
     };
   }
 
@@ -34,15 +34,15 @@ export class UaPanel {
   }
 
   _getState() {
-    return new Promise((resolve) => {
-      chrome.storage.local.get('state', (result) => {
+    return new Promise(resolve => {
+      chrome.storage.local.get('state', result => {
         resolve(result.state || null);
       });
     });
   }
 
   _sendMessage(type, payload) {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       chrome.runtime.sendMessage({ type, payload }, resolve);
     });
   }

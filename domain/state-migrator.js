@@ -7,7 +7,7 @@ export class StateMigrator {
       state.folders = state.profiles.map(p => ({
         id: p.id || 'folder_' + Date.now(),
         name: p.name || 'Folder',
-        rules: p.rules || []
+        rules: p.rules || [],
       }));
       state.rules = state.folders.flatMap(f => f.rules);
       delete state.profiles;
@@ -28,7 +28,7 @@ export class StateMigrator {
       copyfxConfig: { enabled: false },
       uaRules: [],
       pageShortcuts: [],
-      activityLog: []
+      activityLog: [],
     };
 
     for (const key in defaultState) {
