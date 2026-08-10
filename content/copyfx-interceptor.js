@@ -1,4 +1,5 @@
-﻿// content/copyfx-interceptor./**
+﻿// content/copyfx-interceptor.
+/**
  * Выполняет операцию "js".
  * @param {*} function ( - Описание параметра.
  * @returns {void}
