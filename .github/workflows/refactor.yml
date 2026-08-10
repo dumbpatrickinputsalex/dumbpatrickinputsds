@@ -1,0 +1,68 @@
+name: AI Refactoring Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      stage:
+        description: 'Номер этапа (0-12)'
+        required: true
+        type: choice
+        options:
+          - '0'
+          - '1'
+          - '2'
+          - '3'
+          - '4'
+          - '5'
+          - '6'
+          - '7'
+          - '8'
+          - '9'
+          - '10'
+          - '11'
+          - '12'
+
+jobs:
+  refactor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Apply stage
+        run: |
+          STAGE=${{ github.event.inputs.stage }}
+          echo "🚀 Applying stage $STAGE..."
+          
+          # Скачиваем скрипт для конкретного этапа
+          curl -s -O https://raw.githubusercontent.com/dumbpatrickinputsalex/dumbpatrickinputsds/main/scripts/stage-$STAGE.sh
+          chmod +x stage-$STAGE.sh
+          ./stage-$STAGE.sh
+          
+          echo "✅ Stage $STAGE applied!"
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "refactor: apply stage ${{ github.event.inputs.stage }}"
+          branch: refactor/stage-${{ github.event.inputs.stage }}
+          title: "Рефакторинг: этап ${{ github.event.inputs.stage }}"
+          body: |
+            Автоматический рефакторинг от AI.
+            
+            ## Что сделано
+            - Применён этап ${{ github.event.inputs.stage }}
+            
+            ## Проверка
+            - [ ] Расширение загружается
+            - [ ] Popup работает
+            - [ ] Options работают
+            - [ ] Fill All работает
+            - [ ] Нет ошибок в консоли
+            
+            ## Следующий шаг
+            После мержа этого PR запусти следующий этап.
+          base: master
